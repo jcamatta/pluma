@@ -12,6 +12,7 @@ import { handleWriteFile } from './file/write-file-handler'
 import { handleCreateFolder } from './folder/create-folder-handler'
 import { handleDeleteFolder } from './folder/delete-folder-handler'
 import { handleListFolder } from './folder/list-folder-handler'
+import { handlePickFolder } from './folder/pick-folder-handler'
 import { handleWatchFolder } from './folder/watch-folder-handler'
 
 const registerIpc = (): void => {
@@ -23,6 +24,7 @@ const registerIpc = (): void => {
   ipcMain.handle('folder:create', (_event, path: string) => handleCreateFolder(path))
   ipcMain.handle('folder:delete', (_event, path: string) => handleDeleteFolder(path))
   ipcMain.handle('folder:list', (_event, path: string) => handleListFolder(path))
+  ipcMain.handle('folder:pick', () => handlePickFolder())
 }
 
 interface EventTarget {

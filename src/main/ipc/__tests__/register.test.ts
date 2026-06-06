@@ -51,6 +51,13 @@ describe('registerIpc', () => {
     expect(handle).toHaveBeenCalledWith('folder:list', expect.any(Function))
   })
 
+  it('registers the folder:pick channel', async () => {
+    const { registerIpc } = await import('../register')
+    registerIpc()
+
+    expect(handle).toHaveBeenCalledWith('folder:pick', expect.any(Function))
+  })
+
   it('registers the folder:watch channel for the window', async () => {
     const { registerWatch } = await import('../register')
     const scope = Effect.runSync(Scope.make())

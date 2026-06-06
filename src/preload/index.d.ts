@@ -41,6 +41,10 @@ type WatchFolderError = {
   path: string
 }
 
+type PickFolderError = {
+  _tag: 'FolderSelectionCancelled' | 'FolderSelectionFailed'
+}
+
 type FolderEntry = {
   name: string
   type: 'file' | 'directory'
@@ -58,6 +62,7 @@ interface Api {
   createFolder: (path: string) => Promise<Result<string, CreateFolderError>>
   deleteFolder: (path: string) => Promise<Result<string, DeleteFolderError>>
   listFolder: (path: string) => Promise<Result<ReadonlyArray<FolderEntry>, ListFolderError>>
+  pickFolder: () => Promise<Result<string, PickFolderError>>
   watchFolder: (path: string) => Promise<Result<null, WatchFolderError>>
   onFolderChanged: (listener: (event: FolderChange) => void) => () => void
 }

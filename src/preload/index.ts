@@ -9,6 +9,7 @@ const api = {
   createFolder: (path: string) => ipcRenderer.invoke('folder:create', path),
   deleteFolder: (path: string) => ipcRenderer.invoke('folder:delete', path),
   listFolder: (path: string) => ipcRenderer.invoke('folder:list', path),
+  pickFolder: () => ipcRenderer.invoke('folder:pick'),
   watchFolder: (path: string) => ipcRenderer.invoke('folder:watch', path),
   onFolderChanged: (
     listener: (event: { type: 'created' | 'updated' | 'deleted'; path: string }) => void
