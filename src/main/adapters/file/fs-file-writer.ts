@@ -1,6 +1,8 @@
 // FileWriter adapter backed by the platform FileSystem. The only place that touches real disk I/O.
 // Maps filesystem state to the domain's typed errors: existing target -> FileAlreadyExists, missing
-// parent directory -> DirectoryNotFound, any other write failure -> FileWriteFailed.
+// parent directory -> DirectoryNotFound, any other write failure -> FileWriteFailed; for deletion,
+// a target that is not an existing regular file -> FileNotFound, any other removal failure ->
+// FileDeleteFailed. Deletion only ever removes regular files, never directories or other entries.
 
 import { FileSystem } from '@effect/platform/FileSystem'
 import { Path } from '@effect/platform/Path'
@@ -9,7 +11,9 @@ import * as Layer from 'effect/Layer'
 import { FileAlreadyExists } from '../../application/file/error/file-already-exists'
 import { DirectoryNotFound } from '../../application/file/error/directory-not-found'
 import { FileWriteFailed } from '../../application/file/error/file-write-failed'
-import { FileWriter } from '../../application/file/file-writer.port'
+import { FileNotFound } from '../../application/file/error/file-not-found'
+import { FileDeleteFailed } from '../../application/file/error/file-delete-failed'
+import { FileWriter } from '../../application/file/port/file-writer.port'
 
 const make = Effect.gen(function* () {
   const fs = yield* FileSystem
@@ -35,7 +39,19 @@ const make = Effect.gen(function* () {
         .pipe(Effect.mapError(() => new FileWriteFailed({ path: target })))
     })
 
-  return FileWriter.of({ createEmptyFile })
+  const deleteFile = (target: string): Effect.Effect<void, FileNotFound | FileDeleteFailed> =>
+    Effect.gen(function* () {
+      const info = yield* fs.stat(target).pipe(Effect.orElseSucceed(() => undefined))
+      if (info === undefined || info.type !== 'File') {
+        return yield* new FileNotFound({ path: target })
+      }
+
+      return yield* fs
+        .remove(target)
+        .pipe(Effect.mapError(() => new FileDeleteFailed({ path: target })))
+    })
+
+  return FileWriter.of({ createEmptyFile, deleteFile })
 })
 
 export const FsFileWriterLive = Layer.effect(FileWriter, make)

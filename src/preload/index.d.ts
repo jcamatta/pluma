@@ -7,8 +7,14 @@ type CreateFileError = {
   path: string
 }
 
+type DeleteFileError = {
+  _tag: 'InvalidPath' | 'FileNotFound' | 'FileDeleteFailed'
+  path: string
+}
+
 interface Api {
   createFile: (path: string) => Promise<Result<string, CreateFileError>>
+  deleteFile: (path: string) => Promise<Result<string, DeleteFileError>>
 }
 
 declare global {

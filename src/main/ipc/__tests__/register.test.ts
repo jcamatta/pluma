@@ -1,4 +1,4 @@
-// Test that registerIpc wires the create-file channel onto ipcMain.
+// Test that registerIpc wires the file channels onto ipcMain.
 
 import { describe, expect, it, vi } from 'vitest'
 
@@ -11,5 +11,12 @@ describe('registerIpc', () => {
     registerIpc()
 
     expect(handle).toHaveBeenCalledWith('file:create', expect.any(Function))
+  })
+
+  it('registers the file:delete channel', async () => {
+    const { registerIpc } = await import('../register')
+    registerIpc()
+
+    expect(handle).toHaveBeenCalledWith('file:delete', expect.any(Function))
   })
 })

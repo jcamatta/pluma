@@ -8,7 +8,7 @@ import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
 import { describe, expect, it } from 'vitest'
 import * as NodeContext from '@effect/platform-node/NodeContext'
-import { FileWriter } from '../../../application/file/file-writer.port'
+import { FileWriter } from '../../../application/file/port/file-writer.port'
 import { FsFileWriterLive } from '../fs-file-writer'
 
 const run = (target: string): Promise<Exit.Exit<void, { readonly _tag: string }>> =>

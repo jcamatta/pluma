@@ -34,11 +34,18 @@ As the app grows, place code as follows (create folders as needed):
 - `src/main/adapters/` — port implementations
 - `src/main/ipc/` — IPC endpoints that invoke use cases
 
-Group a feature's files together under the application layer (e.g. `application/file/`), with its typed errors under an `error/` subfolder and its tests under a `__tests__/` subfolder.
+Group a feature's files together under the application layer (e.g. `application/file/`), and split that feature folder by role:
 
-**Ports** are interfaces a use case depends on. Name the file `*.port.ts` and the interface with a `Port` suffix (e.g. `file-writer.port.ts` exporting `FileWriterPort`). The Effect `Context` tag for the port may keep a plain service name (e.g. `FileWriter`).
+- `usecase/` — the use cases (e.g. `usecase/create-file.ts`), with their tests under `usecase/__tests__/`.
+- `port/` — the port interfaces the use cases depend on (e.g. `port/file-writer.port.ts`).
+- `logic/` — pure logic / calculations shared by the use cases (e.g. `logic/validate-markdown-path.ts`).
+- `error/` — the feature's typed errors (e.g. `error/file-not-found.ts`).
 
-**Tests** live in a `__tests__/` folder next to the code they cover (e.g. `application/file/__tests__/create-file.test.ts`), not as siblings of the source file.
+This keeps the three application concerns visibly distinct: use cases orchestrate, ports declare the contracts they need, and `logic/` holds the pure calculations they reuse. Create a role folder only when the feature has something to put in it; a feature with a single use case and no shared logic does not need every folder up front.
+
+**Ports** are interfaces a use case depends on. Name the file `*.port.ts` and the interface with a `Port` suffix (e.g. `port/file-writer.port.ts` exporting `FileWriterPort`). The Effect `Context` tag for the port may keep a plain service name (e.g. `FileWriter`).
+
+**Tests** live in a `__tests__/` folder next to the code they cover (e.g. `application/file/usecase/__tests__/create-file.test.ts`), not as siblings of the source file.
 
 ### Result at the IPC boundary
 

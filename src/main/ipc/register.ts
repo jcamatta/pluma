@@ -3,7 +3,9 @@
 
 import { ipcMain } from 'electron'
 import { handleCreateFile } from './file/create-file-handler'
+import { handleDeleteFile } from './file/delete-file-handler'
 
 export const registerIpc = (): void => {
   ipcMain.handle('file:create', (_event, path: string) => handleCreateFile(path))
+  ipcMain.handle('file:delete', (_event, path: string) => handleDeleteFile(path))
 }

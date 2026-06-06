@@ -3,14 +3,17 @@
 
 import * as Context from 'effect/Context'
 import type * as Effect from 'effect/Effect'
-import type { FileAlreadyExists } from './error/file-already-exists'
-import type { DirectoryNotFound } from './error/directory-not-found'
-import type { FileWriteFailed } from './error/file-write-failed'
+import type { FileAlreadyExists } from '../error/file-already-exists'
+import type { DirectoryNotFound } from '../error/directory-not-found'
+import type { FileWriteFailed } from '../error/file-write-failed'
+import type { FileNotFound } from '../error/file-not-found'
+import type { FileDeleteFailed } from '../error/file-delete-failed'
 
 export interface FileWriterPort {
   readonly createEmptyFile: (
     path: string
   ) => Effect.Effect<void, FileAlreadyExists | DirectoryNotFound | FileWriteFailed>
+  readonly deleteFile: (path: string) => Effect.Effect<void, FileNotFound | FileDeleteFailed>
 }
 
 export const FileWriter = Context.GenericTag<FileWriterPort>('application/FileWriter')

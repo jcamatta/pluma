@@ -5,12 +5,12 @@ import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
 import * as Layer from 'effect/Layer'
 import { describe, expect, it } from 'vitest'
-import { FileAlreadyExists } from '../error/file-already-exists'
-import { DirectoryNotFound } from '../error/directory-not-found'
-import { FileWriteFailed } from '../error/file-write-failed'
+import { FileAlreadyExists } from '../../error/file-already-exists'
+import { DirectoryNotFound } from '../../error/directory-not-found'
+import { FileWriteFailed } from '../../error/file-write-failed'
 import { createFile } from '../create-file'
-import { FileWriter } from '../file-writer.port'
-import type { FileWriterPort } from '../file-writer.port'
+import { FileWriter } from '../../port/file-writer.port'
+import type { FileWriterPort } from '../../port/file-writer.port'
 
 const writerThatSucceeds = (created: string[]): Layer.Layer<FileWriterPort> =>
   Layer.succeed(
@@ -19,7 +19,8 @@ const writerThatSucceeds = (created: string[]): Layer.Layer<FileWriterPort> =>
       createEmptyFile: (path) =>
         Effect.sync(() => {
           created.push(path)
-        })
+        }),
+      deleteFile: () => Effect.void
     })
   )
 
@@ -29,7 +30,8 @@ const writerThatFails = (
   Layer.succeed(
     FileWriter,
     FileWriter.of({
-      createEmptyFile: () => Effect.fail(error)
+      createEmptyFile: () => Effect.fail(error),
+      deleteFile: () => Effect.void
     })
   )
 
