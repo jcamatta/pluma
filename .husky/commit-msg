@@ -1,0 +1,12 @@
+msg_file="$1"
+msg="$(head -n 1 "$msg_file" | tr -d '\r')"
+
+pattern='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9][a-z0-9-]*\))?(!)?: .{1,100}$'
+
+if ! printf '%s' "$msg" | grep -Eq "$pattern"; then
+  echo "Invalid commit message."
+  echo "Expected: type(scope): description"
+  echo "Examples: feat(ui): add sidebar, fix: handle null response, refactor(api)!: simplify client"
+  echo "Rules: use a Conventional Commit type, optional scope, optional !, and a 1-100 character description."
+  exit 1
+fi
