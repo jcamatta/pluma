@@ -12,9 +12,19 @@ type DeleteFileError = {
   path: string
 }
 
+type CreateFolderError = {
+  _tag:
+    | 'InvalidFolderPath'
+    | 'FolderAlreadyExists'
+    | 'ParentDirectoryNotFound'
+    | 'FolderCreationFailed'
+  path: string
+}
+
 interface Api {
   createFile: (path: string) => Promise<Result<string, CreateFileError>>
   deleteFile: (path: string) => Promise<Result<string, DeleteFileError>>
+  createFolder: (path: string) => Promise<Result<string, CreateFolderError>>
 }
 
 declare global {

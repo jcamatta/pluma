@@ -1,0 +1,16 @@
+// Business rule for folder paths: the trimmed path must be non-empty, and no segment may be the
+// reserved name ".pluma" (case-insensitive). Returns the trimmed path on success, fails with
+// InvalidFolderPath. This is application logic, not enforced by the adapter.
+
+import * as Effect from 'effect/Effect'
+import { InvalidFolderPath } from '../error/invalid-folder-path'
+
+const RESERVED_SEGMENT = '.pluma'
+
+export const validateFolderPath = (path: string): Effect.Effect<string, InvalidFolderPath> => {
+  const trimmed = path.trim()
+  const segments = trimmed.split(/[/\\]/).filter((segment) => segment.length > 0)
+  const hasReservedSegment = segments.some((segment) => segment.toLowerCase() === RESERVED_SEGMENT)
+  const isValid = segments.length > 0 && !hasReservedSegment
+  return isValid ? Effect.succeed(trimmed) : Effect.fail(new InvalidFolderPath({ path }))
+}

@@ -4,7 +4,8 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   createFile: (path: string) => ipcRenderer.invoke('file:create', path),
-  deleteFile: (path: string) => ipcRenderer.invoke('file:delete', path)
+  deleteFile: (path: string) => ipcRenderer.invoke('file:delete', path),
+  createFolder: (path: string) => ipcRenderer.invoke('folder:create', path)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
