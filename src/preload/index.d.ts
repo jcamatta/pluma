@@ -36,9 +36,19 @@ type ListFolderError = {
   path: string
 }
 
+type WatchFolderError = {
+  _tag: 'FolderWatchFailed'
+  path: string
+}
+
 type FolderEntry = {
   name: string
   type: 'file' | 'directory'
+}
+
+type FolderChange = {
+  type: 'created' | 'updated' | 'deleted'
+  path: string
 }
 
 interface Api {
@@ -48,6 +58,8 @@ interface Api {
   createFolder: (path: string) => Promise<Result<string, CreateFolderError>>
   deleteFolder: (path: string) => Promise<Result<string, DeleteFolderError>>
   listFolder: (path: string) => Promise<Result<ReadonlyArray<FolderEntry>, ListFolderError>>
+  watchFolder: (path: string) => Promise<Result<null, WatchFolderError>>
+  onFolderChanged: (listener: (event: FolderChange) => void) => () => void
 }
 
 declare global {

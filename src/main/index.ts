@@ -1,10 +1,17 @@
 import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import * as Effect from 'effect/Effect'
+import * as Exit from 'effect/Exit'
+import * as Scope from 'effect/Scope'
 import icon from '../../resources/icon.png?asset'
-import { registerIpc } from './ipc/register'
+import { registerIpc, registerWatch } from './ipc/register'
 
-function createWindow(): void {
+// The app-lifetime scope owns the folder watcher fiber and its OS subscription; closing it on quit
+// releases them.
+const appScope = Effect.runSync(Scope.make())
+
+function createWindow(): BrowserWindow {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -34,6 +41,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 // This method will be called when Electron has finished
@@ -52,13 +61,21 @@ app.whenReady().then(() => {
 
   registerIpc()
 
-  createWindow()
+  registerWatch({ window: createWindow(), scope: appScope })
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) {
+      registerWatch({ window: createWindow(), scope: appScope })
+    }
   })
+})
+
+// Release app-lifetime resources on quit: closing the scope interrupts the folder watcher, releasing
+// its OS subscription and PubSub.
+app.on('before-quit', () => {
+  Effect.runFork(Scope.close(appScope, Exit.void))
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common

@@ -1,9 +1,12 @@
 // Test that registerIpc wires the file channels onto ipcMain.
 
+import * as Effect from 'effect/Effect'
+import * as Scope from 'effect/Scope'
 import { describe, expect, it, vi } from 'vitest'
 
 const handle = vi.fn()
-vi.mock('electron', () => ({ ipcMain: { handle } }))
+const removeHandler = vi.fn()
+vi.mock('electron', () => ({ ipcMain: { handle, removeHandler } }))
 
 describe('registerIpc', () => {
   it('registers the file:create channel', async () => {
@@ -46,5 +49,16 @@ describe('registerIpc', () => {
     registerIpc()
 
     expect(handle).toHaveBeenCalledWith('folder:list', expect.any(Function))
+  })
+
+  it('registers the folder:watch channel for the window', async () => {
+    const { registerWatch } = await import('../register')
+    const scope = Effect.runSync(Scope.make())
+    registerWatch({
+      window: { isDestroyed: () => false, webContents: { send: vi.fn() } },
+      scope
+    })
+
+    expect(handle).toHaveBeenCalledWith('folder:watch', expect.any(Function))
   })
 })

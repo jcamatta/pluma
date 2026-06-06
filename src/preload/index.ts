@@ -8,7 +8,18 @@ const api = {
   writeFile: (path: string, content: string) => ipcRenderer.invoke('file:write', { path, content }),
   createFolder: (path: string) => ipcRenderer.invoke('folder:create', path),
   deleteFolder: (path: string) => ipcRenderer.invoke('folder:delete', path),
-  listFolder: (path: string) => ipcRenderer.invoke('folder:list', path)
+  listFolder: (path: string) => ipcRenderer.invoke('folder:list', path),
+  watchFolder: (path: string) => ipcRenderer.invoke('folder:watch', path),
+  onFolderChanged: (
+    listener: (event: { type: 'created' | 'updated' | 'deleted'; path: string }) => void
+  ) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { type: 'created' | 'updated' | 'deleted'; path: string }
+    ): void => listener(payload)
+    ipcRenderer.on('folder:changed', handler)
+    return () => ipcRenderer.removeListener('folder:changed', handler)
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
