@@ -6,7 +6,8 @@ const api = {
   createFile: (path: string) => ipcRenderer.invoke('file:create', path),
   deleteFile: (path: string) => ipcRenderer.invoke('file:delete', path),
   createFolder: (path: string) => ipcRenderer.invoke('folder:create', path),
-  deleteFolder: (path: string) => ipcRenderer.invoke('folder:delete', path)
+  deleteFolder: (path: string) => ipcRenderer.invoke('folder:delete', path),
+  listFolder: (path: string) => ipcRenderer.invoke('folder:list', path)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

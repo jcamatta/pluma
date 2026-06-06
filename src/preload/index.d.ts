@@ -26,11 +26,22 @@ type DeleteFolderError = {
   path: string
 }
 
+type ListFolderError = {
+  _tag: 'InvalidFolderPath' | 'FolderNotFound' | 'FolderReadFailed'
+  path: string
+}
+
+type FolderEntry = {
+  name: string
+  type: 'file' | 'directory'
+}
+
 interface Api {
   createFile: (path: string) => Promise<Result<string, CreateFileError>>
   deleteFile: (path: string) => Promise<Result<string, DeleteFileError>>
   createFolder: (path: string) => Promise<Result<string, CreateFolderError>>
   deleteFolder: (path: string) => Promise<Result<string, DeleteFolderError>>
+  listFolder: (path: string) => Promise<Result<ReadonlyArray<FolderEntry>, ListFolderError>>
 }
 
 declare global {

@@ -26,6 +26,15 @@ There is **no separate domain layer**. Business types, pure logic (calculations)
 
 Dependencies point inward: IPC → application. The application defines ports; adapters implement them; nothing inner imports anything outer.
 
+### Commands and queries
+
+We separate use cases into two kinds, and keep read and write paths apart.
+
+- **CQS (Command–Query Separation, at the method level).** A method either returns data (a **query** — no side effects) or changes state (a **command** — returns `void`/an ack). Never both. This is almost free and almost always worth it.
+- **Lightweight CQRS (same store).** We split the read and write paths — query use cases vs command use cases, as distinct objects — over the **same** underlying store. This is not separate databases; it is separate paths against one. The frontend already does the same with `useQuery`/`useMutation` in the [hooks](#hooks-commands-and-queries).
+
+So a use case is either a **command** (mutates; e.g. `create-file`, `delete-folder`) or a **query** (reads; e.g. `list-folder`). Keep them as separate use cases and, where it helps, separate ports — e.g. a `FolderWriter` port for commands and a `FolderReader` port for queries, rather than one port that both reads and writes.
+
 ### Target folder layout
 
 As the app grows, place code as follows (create folders as needed):
@@ -39,9 +48,10 @@ Group a feature's files together under the application layer (e.g. `application/
 - `usecase/` — the use cases (e.g. `usecase/create-file.ts`), with their tests under `usecase/__tests__/`.
 - `port/` — the port interfaces the use cases depend on (e.g. `port/file-writer.port.ts`).
 - `logic/` — pure logic / calculations shared by the use cases (e.g. `logic/validate-markdown-path.ts`).
+- `data/` — the feature's plain **Data** types: domain facts modeled as records with no behavior (e.g. `data/entry.ts` exporting `FolderEntry`). These are not value objects — they carry no methods; any operation over them is a calculation in `logic/`. Use this for the business types that cross the IPC boundary.
 - `error/` — the feature's typed errors (e.g. `error/file-not-found.ts`).
 
-This keeps the three application concerns visibly distinct: use cases orchestrate, ports declare the contracts they need, and `logic/` holds the pure calculations they reuse. Create a role folder only when the feature has something to put in it; a feature with a single use case and no shared logic does not need every folder up front.
+This keeps the application concerns visibly distinct: use cases orchestrate, ports declare the contracts they need, `logic/` holds the pure calculations they reuse, and `data/` holds the plain domain types they operate on. Create a role folder only when the feature has something to put in it; a feature with a single use case and no shared logic does not need every folder up front.
 
 **Ports** are interfaces a use case depends on. Name the file `*.port.ts` and the interface with a `Port` suffix (e.g. `port/file-writer.port.ts` exporting `FileWriterPort`). The Effect `Context` tag for the port may keep a plain service name (e.g. `FileWriter`).
 

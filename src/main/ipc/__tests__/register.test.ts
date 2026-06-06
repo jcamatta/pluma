@@ -33,4 +33,11 @@ describe('registerIpc', () => {
 
     expect(handle).toHaveBeenCalledWith('folder:delete', expect.any(Function))
   })
+
+  it('registers the folder:list channel', async () => {
+    const { registerIpc } = await import('../register')
+    registerIpc()
+
+    expect(handle).toHaveBeenCalledWith('folder:list', expect.any(Function))
+  })
 })
