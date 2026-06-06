@@ -2,7 +2,8 @@
 // Maps filesystem state to the domain's typed errors: existing target -> FileAlreadyExists, missing
 // parent directory -> DirectoryNotFound, any other write failure -> FileWriteFailed; for deletion,
 // a target that is not an existing regular file -> FileNotFound, any other removal failure ->
-// FileDeleteFailed. Deletion only ever removes regular files, never directories or other entries.
+// FileDeleteFailed; for writing content, a target that is not an existing regular file -> FileNotFound,
+// any other write failure -> FileWriteFailed. Deletion and writing only ever touch regular files.
 
 import { FileSystem } from '@effect/platform/FileSystem'
 import { Path } from '@effect/platform/Path'
@@ -51,7 +52,22 @@ const make = Effect.gen(function* () {
         .pipe(Effect.mapError(() => new FileDeleteFailed({ path: target })))
     })
 
-  return FileWriter.of({ createEmptyFile, deleteFile })
+  const writeFile = (
+    target: string,
+    content: string
+  ): Effect.Effect<void, FileNotFound | FileWriteFailed> =>
+    Effect.gen(function* () {
+      const info = yield* fs.stat(target).pipe(Effect.orElseSucceed(() => undefined))
+      if (info === undefined || info.type !== 'File') {
+        return yield* new FileNotFound({ path: target })
+      }
+
+      return yield* fs
+        .writeFileString(target, content)
+        .pipe(Effect.mapError(() => new FileWriteFailed({ path: target })))
+    })
+
+  return FileWriter.of({ createEmptyFile, deleteFile, writeFile })
 })
 
 export const FsFileWriterLive = Layer.effect(FileWriter, make)

@@ -14,6 +14,10 @@ export interface FileWriterPort {
     path: string
   ) => Effect.Effect<void, FileAlreadyExists | DirectoryNotFound | FileWriteFailed>
   readonly deleteFile: (path: string) => Effect.Effect<void, FileNotFound | FileDeleteFailed>
+  readonly writeFile: (
+    path: string,
+    content: string
+  ) => Effect.Effect<void, FileNotFound | FileWriteFailed>
 }
 
 export const FileWriter = Context.GenericTag<FileWriterPort>('application/FileWriter')
