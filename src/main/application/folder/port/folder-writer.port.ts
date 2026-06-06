@@ -6,11 +6,14 @@ import type * as Effect from 'effect/Effect'
 import type { FolderAlreadyExists } from '../error/folder-already-exists'
 import type { ParentDirectoryNotFound } from '../error/parent-directory-not-found'
 import type { FolderCreationFailed } from '../error/folder-creation-failed'
+import type { FolderNotFound } from '../error/folder-not-found'
+import type { FolderDeleteFailed } from '../error/folder-delete-failed'
 
 export interface FolderWriterPort {
   readonly createFolder: (
     path: string
   ) => Effect.Effect<void, FolderAlreadyExists | ParentDirectoryNotFound | FolderCreationFailed>
+  readonly deleteFolder: (path: string) => Effect.Effect<void, FolderNotFound | FolderDeleteFailed>
 }
 
 export const FolderWriter = Context.GenericTag<FolderWriterPort>('application/FolderWriter')

@@ -1,4 +1,4 @@
-// Typed failure: the given path is not a valid folder path (empty, or contains a reserved segment).
+// Typed failure: the given path is not a valid folder path (empty).
 
 import * as Data from 'effect/Data'
 

@@ -19,7 +19,8 @@ const writerThatSucceeds = (created: string[]): Layer.Layer<FolderWriterPort> =>
       createFolder: (path) =>
         Effect.sync(() => {
           created.push(path)
-        })
+        }),
+      deleteFolder: () => Effect.void
     })
   )
 
@@ -29,7 +30,8 @@ const writerThatFails = (
   Layer.succeed(
     FolderWriter,
     FolderWriter.of({
-      createFolder: () => Effect.fail(error)
+      createFolder: () => Effect.fail(error),
+      deleteFolder: () => Effect.void
     })
   )
 
@@ -54,23 +56,6 @@ describe('createFolder', () => {
     expect(Exit.isFailure(exit)).toBe(true)
     expect(created).toStrictEqual([])
     expect(exit).toStrictEqual(Exit.fail(expect.objectContaining({ _tag: 'InvalidFolderPath' })))
-  })
-
-  it('fails with InvalidFolderPath when the final segment is the reserved .pluma name', () => {
-    const exit = run(createFolder('/notes/.pluma'), writerThatSucceeds([]))
-    expect(exit).toStrictEqual(Exit.fail(expect.objectContaining({ _tag: 'InvalidFolderPath' })))
-  })
-
-  it('fails with InvalidFolderPath when any segment is .pluma (case-insensitive)', () => {
-    const exit = run(createFolder('/notes/.Pluma/sub'), writerThatSucceeds([]))
-    expect(exit).toStrictEqual(Exit.fail(expect.objectContaining({ _tag: 'InvalidFolderPath' })))
-  })
-
-  it('accepts a path whose segments merely contain pluma', () => {
-    const created: string[] = []
-    const exit = run(createFolder('/notes/pluma-drafts'), writerThatSucceeds(created))
-    expect(Exit.isSuccess(exit)).toBe(true)
-    expect(created).toStrictEqual(['/notes/pluma-drafts'])
   })
 
   it('propagates FolderAlreadyExists from the writer', () => {

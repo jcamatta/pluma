@@ -21,10 +21,16 @@ type CreateFolderError = {
   path: string
 }
 
+type DeleteFolderError = {
+  _tag: 'InvalidFolderPath' | 'FolderNotFound' | 'FolderDeleteFailed'
+  path: string
+}
+
 interface Api {
   createFile: (path: string) => Promise<Result<string, CreateFileError>>
   deleteFile: (path: string) => Promise<Result<string, DeleteFileError>>
   createFolder: (path: string) => Promise<Result<string, CreateFolderError>>
+  deleteFolder: (path: string) => Promise<Result<string, DeleteFolderError>>
 }
 
 declare global {
