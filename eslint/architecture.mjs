@@ -1,4 +1,4 @@
-// Hexagonal architecture boundaries: dependencies point inward (ipc -> application -> domain),
+// Hexagonal architecture boundaries: dependencies point inward (ipc -> application),
 // adapters are never imported by the application, and the renderer never reaches into main internals.
 
 import importX from 'eslint-plugin-import-x'
@@ -14,12 +14,8 @@ export const architecture = {
       'error',
       {
         zones: [
-          // Domain is the core: it must not depend on any outer layer.
-          {
-            target: './src/main/domain',
-            from: ['./src/main/application', './src/main/adapters', './src/main/ipc']
-          },
-          // Application depends on ports it defines, never on concrete adapters or the ipc layer.
+          // Application is the core: it depends on ports it defines, never on concrete adapters
+          // or the ipc layer.
           {
             target: './src/main/application',
             from: ['./src/main/adapters', './src/main/ipc']

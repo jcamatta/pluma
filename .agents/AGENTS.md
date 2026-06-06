@@ -18,21 +18,27 @@ We follow **hexagonal architecture** (ports and adapters) and **functional progr
 
 ### Layers
 
-- **Domain** — pure business types and logic. No Effect runtime concerns leak in beyond typed errors. Data and calculations only.
-- **Application** — use cases. A use case orchestrates domain logic and depends only on **ports** (interfaces), never on concrete adapters. Use cases are written in Effect.
+There is **no separate domain layer**. Business types, pure logic (calculations), and typed errors live in the **application** layer alongside the use cases that own them.
+
+- **Application** — use cases plus the business types, pure logic, and typed errors they own. A use case orchestrates this logic and depends only on **ports** (interfaces), never on concrete adapters. Use cases are written in Effect.
 - **Adapters** — concrete implementations of ports (filesystem, persistence, OS, external services). The application depends on the port; the adapter is wired in at the edge.
 - **IPC** — the endpoints. Each endpoint calls an application use case. This is the boundary where Effect is executed and the outcome is serialized.
 
-Dependencies point inward: IPC → application → domain. The application defines ports; adapters implement them; nothing inner imports anything outer.
+Dependencies point inward: IPC → application. The application defines ports; adapters implement them; nothing inner imports anything outer.
 
 ### Target folder layout
 
-Today the tree is only `src/main`, `src/preload`, `src/renderer`. As the app grows, place code as follows (create folders as needed):
+As the app grows, place code as follows (create folders as needed):
 
-- `src/main/domain/` — domain types and pure logic
-- `src/main/application/` — use cases and the port interfaces they depend on
+- `src/main/application/` — use cases, the business types/pure logic/typed errors they own, and the port interfaces they depend on
 - `src/main/adapters/` — port implementations
 - `src/main/ipc/` — IPC endpoints that invoke use cases
+
+Group a feature's files together under the application layer (e.g. `application/file/`), with its typed errors under an `error/` subfolder and its tests under a `__tests__/` subfolder.
+
+**Ports** are interfaces a use case depends on. Name the file `*.port.ts` and the interface with a `Port` suffix (e.g. `file-writer.port.ts` exporting `FileWriterPort`). The Effect `Context` tag for the port may keep a plain service name (e.g. `FileWriter`).
+
+**Tests** live in a `__tests__/` folder next to the code they cover (e.g. `application/file/__tests__/create-file.test.ts`), not as siblings of the source file.
 
 ### Result at the IPC boundary
 
@@ -44,7 +50,7 @@ type Result<T, E extends { _tag: string }> = { ok: true; value: T } | { ok: fals
 
 Every endpoint returns a `Result`. Never throw across the IPC boundary; convert the Effect's success/failure into `ok: true | false`.
 
-**Every error value carries a discriminating tag.** The `error` in `ok: false` is never a free-form string — it is a typed object with a `_tag` (or `code`) that identifies the failure, plus any data needed to render it. For example: `{ _tag: 'NoteNotFound'; id: string }`. This lets the frontend map each tag to a translated message; the backend never sends user-facing prose. Define these errors as Effect tagged errors (e.g. `Data.TaggedError`) in the domain, and serialize the tag and its fields into the `Result`.
+**Every error value carries a discriminating tag.** The `error` in `ok: false` is never a free-form string — it is a typed object with a `_tag` (or `code`) that identifies the failure, plus any data needed to render it. For example: `{ _tag: 'NoteNotFound'; id: string }`. This lets the frontend map each tag to a translated message; the backend never sends user-facing prose. Define these errors as Effect tagged errors (e.g. `Data.TaggedError`) in the application layer, and serialize the tag and its fields into the `Result`.
 
 ### Repositories
 
@@ -84,7 +90,7 @@ These rules are enforced with ESLint. Write code that already complies.
 
 The ESLint config is split by concern under `eslint/` and composed in `eslint.config.mjs` (prettier last, so it disables conflicting formatting rules). Each module owns one set of rules:
 
-- `eslint/base.mjs` — global ignores (`node_modules`, `dist`, `out`, `.references`, HTML) plus the TypeScript and React recommended configs.
+- `eslint/base.mjs` — global ignores (`node_modules`, `dist`, `out`, `coverage`, `.references`, HTML) plus the TypeScript and React recommended configs.
 - `eslint/style.mjs` — the functional style and type-safety rules below. Exports `baseRestrictedSyntax`, the shared `no-restricted-syntax` selectors.
 - `eslint/architecture.mjs` — hexagonal layer boundaries and the view/controller/plain component rules.
 - `eslint/limits.mjs` — size and complexity limits.
@@ -99,7 +105,7 @@ The ESLint config is split by concern under `eslint/` and composed in `eslint.co
 - **No type-safety escape hatches** — `@typescript-eslint/ban-ts-comment` (no `@ts-ignore` / `@ts-expect-error` / `@ts-nocheck`), `@typescript-eslint/no-non-null-assertion` (no `x!`), and `no-restricted-syntax` selectors banning `x as T` (except `as const`) and `<T>x`. _Why:_ closes the hole that `no-explicit-any` and type-coverage leave — you can have 95% type-coverage and still lie with an `as`.
 - **No disable directives** — `@eslint-community/eslint-comments/no-use` bans every ESLint directive comment (`eslint-disable`, `eslint-disable-next-line`, `eslint-enable`, …), and `reportUnusedDisableDirectives: 'error'` flags any dead ones. _Why:_ rules must not be silenced line by line. If a rule is wrong, change it in config; do not suppress it inline.
 - **Export discipline** — `import-x/no-default-export` (prefer named exports) and `import-x/group-exports`. _Why:_ approximates "one export per file" / one responsibility per file. A true single-export rule does not exist as a built-in, so named-only is the enforceable proxy; entry points and config files are exempted.
-- **Layer boundaries** — `import-x/no-restricted-paths`. _Why:_ enforces hexagonal dependencies. `domain` may not import `application`/`adapters`/`ipc`; `application` may not import `adapters`/`ipc`; the renderer may not import `src/main` internals. Dependencies point inward only.
+- **Layer boundaries** — `import-x/no-restricted-paths`. _Why:_ enforces hexagonal dependencies. `application` may not import `adapters`/`ipc`; the renderer may not import `src/main` internals. Dependencies point inward only.
 - **View / controller / plain enforcement** — `no-restricted-syntax`, scoped by filename. `*.view.tsx` may not call hooks (`use*`) or touch `window.api`. Plain components (any renderer `*.tsx` that is not a controller, view, or adapter) may not touch `window.api`. _Why:_ makes the component-type split mechanical — a view with a hook fails lint. Only controllers (through hooks) and renderer adapters may reach IPC.
 - **Size and complexity limits** — `max-params` (2), `max-lines-per-function` (75), `max-lines` (250), `max-statements` (12), `max-depth` (3), `complexity` (8), `max-nested-callbacks` (3), `max-classes-per-file` (1). _Why:_ pushes toward small, single-purpose functions and files. `max-params` is 2 rather than 1 because Electron event callbacks (`(_, window)`) and array reducers (`(acc, item)`) need two; prefer one in your own functions.
 - **No barrel imports of Effect** — `@effect/no-import-from-barrel-package` for `effect`, `@effect/platform`, `@effect/platform-node`. _Why:_ importing from the package barrel pulls in and defeats tree-shaking; import the specific module instead.
@@ -261,7 +267,9 @@ Every use case must have tests. A use case is not complete without them.
 
 Because use cases depend only on ports, test them by providing in-memory or fake adapter implementations of those ports — no real filesystem, network, or OS access in use-case tests. Cover both outcomes: success (`ok: true`) and each typed failure value (`ok: false`).
 
-Pure domain calculations should also be tested directly; they need no setup.
+Pure calculations should also be tested directly; they need no setup. Adapter tests are the place to exercise real I/O against the resource they wrap (e.g. a temp directory for a filesystem adapter).
+
+Tests live in a `__tests__/` folder beside the code under test.
 
 ## Commits
 
@@ -282,3 +290,5 @@ Do not end the subject with a period.
 Use `!` for breaking changes.
 
 Do not add `Co-authored-by` or other authored footers.
+
+This is a solo project. Do not create feature branches: commit directly to `main`. There is no PR or merge step.

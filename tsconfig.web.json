@@ -10,6 +10,7 @@
     "composite": true,
     "strict": true,
     "jsx": "react-jsx",
+    "types": ["@testing-library/jest-dom/vitest"],
     "paths": {
       "@renderer/*": [
         "./src/renderer/src/*"

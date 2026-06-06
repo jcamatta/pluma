@@ -4,7 +4,7 @@ import tseslint from '@electron-toolkit/eslint-config-ts'
 import eslintPluginReact from 'eslint-plugin-react'
 
 export const ignores = {
-  ignores: ['**/node_modules', '**/dist', '**/out', '.references/**', '**/*.html']
+  ignores: ['**/node_modules', '**/dist', '**/out', '**/coverage', '.references/**', '**/*.html']
 }
 
 export const base = [
