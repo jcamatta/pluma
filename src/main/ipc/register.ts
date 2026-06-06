@@ -1,11 +1,16 @@
 // Registers IPC endpoints on the main process. Each ipcMain.handle channel calls a handler that runs a
 // use case and returns a plain Result. The stateless command/query channels register once at app-ready
-// via registerIpc. folder:watch needs the window to push change events to the renderer, so it registers
-// per-window via registerWatch; removeHandler keeps it idempotent across window re-creation on macOS.
+// via registerIpc. folder:watch and agent:run need the window to push events to the renderer, so they
+// register per-window (registerWatch / registerAgent); removeHandler keeps them idempotent across window
+// re-creation on macOS.
 
 import { ipcMain } from 'electron'
+import type { BaseEvent } from '@ag-ui/core'
 import type * as Scope from 'effect/Scope'
+import type { RunAgentInput } from '../application/agent/data/run-agent-input'
 import type { FileEvent } from '../application/folder/data/file-event'
+import { handleAbortAgent } from './agent/abort-agent-handler'
+import { handleRunAgent } from './agent/run-agent-handler'
 import { handleCreateFile } from './file/create-file-handler'
 import { handleDeleteFile } from './file/delete-file-handler'
 import { handleWriteFile } from './file/write-file-handler'
@@ -25,11 +30,12 @@ const registerIpc = (): void => {
   ipcMain.handle('folder:delete', (_event, path: string) => handleDeleteFolder(path))
   ipcMain.handle('folder:list', (_event, path: string) => handleListFolder(path))
   ipcMain.handle('folder:pick', () => handlePickFolder())
+  ipcMain.handle('agent:abort', (_event, runId: string) => handleAbortAgent(runId))
 }
 
 interface EventTarget {
   readonly isDestroyed: () => boolean
-  readonly webContents: { readonly send: (channel: string, payload: FileEvent) => void }
+  readonly webContents: { readonly send: (channel: string, payload: FileEvent | BaseEvent) => void }
 }
 
 interface WatchDeps {
@@ -52,4 +58,18 @@ const registerWatch = (deps: WatchDeps): void => {
   )
 }
 
-export { registerIpc, registerWatch }
+const registerAgent = (window: EventTarget): void => {
+  ipcMain.removeHandler('agent:run')
+  ipcMain.handle('agent:run', (_event, input: RunAgentInput) =>
+    handleRunAgent({
+      input,
+      send: (event: BaseEvent) => {
+        if (!window.isDestroyed()) {
+          window.webContents.send('agent:event', event)
+        }
+      }
+    })
+  )
+}
+
+export { registerIpc, registerWatch, registerAgent }

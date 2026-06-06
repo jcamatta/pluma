@@ -1,5 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import type { BaseEvent } from '@ag-ui/core'
+import type { RunAgentInput } from '../main/application/agent/data/run-agent-input'
 
 // Custom APIs for renderer
 const api = {
@@ -20,6 +22,14 @@ const api = {
     ): void => listener(payload)
     ipcRenderer.on('folder:changed', handler)
     return () => ipcRenderer.removeListener('folder:changed', handler)
+  },
+  runAgent: (input: RunAgentInput) => ipcRenderer.invoke('agent:run', input),
+  abortAgent: (runId: string) => ipcRenderer.invoke('agent:abort', runId),
+  onAgentEvent: (listener: (event: BaseEvent) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: BaseEvent): void =>
+      listener(payload)
+    ipcRenderer.on('agent:event', handler)
+    return () => ipcRenderer.removeListener('agent:event', handler)
   }
 }
 

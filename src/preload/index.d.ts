@@ -1,4 +1,6 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import type { BaseEvent } from '@ag-ui/core'
+import type { RunAgentInput } from '../main/application/agent/data/run-agent-input'
 
 type Result<T, E extends { _tag: string }> = { ok: true; value: T } | { ok: false; error: E }
 
@@ -55,6 +57,10 @@ type FolderChange = {
   path: string
 }
 
+type RunAgentError = {
+  _tag: 'RunAgentFailed'
+}
+
 interface Api {
   createFile: (path: string) => Promise<Result<string, CreateFileError>>
   deleteFile: (path: string) => Promise<Result<string, DeleteFileError>>
@@ -65,6 +71,9 @@ interface Api {
   pickFolder: () => Promise<Result<string, PickFolderError>>
   watchFolder: (path: string) => Promise<Result<null, WatchFolderError>>
   onFolderChanged: (listener: (event: FolderChange) => void) => () => void
+  runAgent: (input: RunAgentInput) => Promise<Result<{ runId: string }, RunAgentError>>
+  abortAgent: (runId: string) => Promise<Result<null, never>>
+  onAgentEvent: (listener: (event: BaseEvent) => void) => () => void
 }
 
 declare global {
