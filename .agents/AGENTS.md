@@ -160,7 +160,32 @@ These were considered and left out for now to avoid new dependencies or false-po
 
 ## Frontend
 
-The frontend mirrors the backend's ports-and-adapters approach so it is highly testable. Code lives under `src/renderer/src/` in `ports/`, `adapters/`, `hooks/`, and `components/`.
+The frontend mirrors the backend's ports-and-adapters approach so it is highly testable. Code lives under `src/renderer/src/`, organized **feature-first** (see below).
+
+### Folder structure (feature-first)
+
+Group renderer code **by feature, then by role** — the same shape the backend uses for `application/<feature>/...`. A feature owns everything it needs in one folder:
+
+```
+src/renderer/src/
+  editor/                       ← a feature; owns its whole slice
+    extensions/                 ← pure logic for this feature (with __tests__/)
+    Editor.controller.tsx       ← role is in the filename suffix, not the folder
+    Editor.view.tsx
+    useManuscriptEditor.ts       ← the feature's hooks live with the feature
+    useEditorZoom.ts
+    editor-zoom-logic.ts         ← extracted pure calculations
+    __tests__/
+  components/                   ← ONLY genuinely cross-feature visual primitives
+    Scrollable.tsx
+  i18n/  App.css  App.tsx  main.tsx
+```
+
+Rules:
+
+- **Feature folders, not role folders.** Do not create top-level `hooks/` or `components/` buckets for feature code — they become junk drawers as features multiply. A hook, view, controller, or pure module that belongs to one feature lives inside that feature's folder. Only things shared across features (a generic `Scrollable`, design-system wrappers) go in a top-level `components/`.
+- **Role is encoded in the filename suffix** (`*.view.tsx`, `*.controller.tsx`, `*.ts`), which is what the eslint rules key off — so role folders add nothing.
+- **`ports/` and `adapters/`** appear inside a feature only when it actually talks to `window.api` (e.g. an IPC-backed feature). A feature with no IPC (like the editor) needs neither. When a feature has a repository port, follow the port/adapter/context pattern below.
 
 ### Styling and design tokens
 
@@ -194,6 +219,18 @@ Every component is exactly one of three kinds, and the kind is visible in the fi
 
 Example: `Editor.controller.tsx` owns the hooks, renders `Editor.view.tsx`; `Header.tsx` is a plain component.
 
+A view must not call hooks or touch `window.api` (lint-enforced on `*.view.tsx`). When a view needs a value a hook would normally compute (a `useMemo`, a context value), the controller computes it and passes it as a prop, or the view inlines the plain expression — it never reaches for the hook.
+
+### Module and export conventions
+
+These apply to all renderer modules and are partly lint-enforced (`import-x/group-exports`, `no-restricted-syntax`):
+
+- **Consolidate exports.** A module declares its symbols internally (no inline `export` keyword) and exposes them with a **single `export { … }`** and, if it has exported types, a **single `export type { … }`**, both at the bottom of the file. Scattering `export const`/`export function`/`export type` through the file fails `group-exports`. Prefer one export per file; when a cohesive module legitimately exposes several symbols (e.g. a ProseMirror extension plus its command functions and types), the bottom-of-file block is the way.
+- **No module-level mutable state — ever, including "clever" workarounds.** A `let counter = 0` at module scope is banned; so is the `const ref = { n: 0 }; ref.n++` trick that only exists to satisfy lint. If you need sequential ids or accumulating state, **hold it in the relevant state container** (e.g. a ProseMirror plugin's `apply`-threaded state object), where it is a pure function of previous state → next state. Ids that an agent echoes back stay short and sequential (`r_1`, `a_1`, `p_1`); do not switch to UUIDs to dodge a counter.
+- **`satisfies` is allowed; `as` is not.** `x satisfies T` is a checked assertion the compiler verifies — use it to constrain object/metadata literals (e.g. ProseMirror `setMeta` payloads). `x as T` overrides the checker and is banned (except `as const`). To read an `unknown` (e.g. `transaction.getMeta(...)`), write a small type-guard (`value is T`) — a pure, testable calculation — not a cast.
+- **Extract pure calculations from hooks/actions.** Keep DOM/`localStorage`/event math out of the hook body: put it in a sibling `*-logic.ts` as pure functions the hook calls, so the logic is unit-testable without a DOM. (`editor-zoom-logic.ts` is the model.)
+- **Custom CSS properties without a cast.** To set a CSS variable in a `style` prop, type the object as `CSSProperties & { '--my-var': T }` rather than casting to `CSSProperties`.
+
 ### Hooks: commands and queries
 
 Hooks come in two kinds, one export each:
@@ -219,6 +256,10 @@ When a query/mutation resolves with `ok: false`, the UI reads `error._tag` and m
 - **Controllers**: render with a fake-port provider; assert the view receives the right data and that interactions invoke the command.
 
 The port is the single seam: real = `window.api` adapter, test = in-memory adapter.
+
+No `let` in tests either. To scope a resource (e.g. a headless editor) to a single test without a shared mutable binding, use a `withResource(args, (resource) => { … })` helper that creates it, runs the body, and disposes it in `finally` — not a `let` + `beforeEach`/`afterEach` pair. The editor tests use `withEditor` for exactly this.
+
+ProseMirror's view layer calls DOM APIs jsdom omits (`document.elementFromPoint`, `Range.getClientRects`). These are polyfilled once in `vitest.setup.ts`, guarded by `typeof document !== 'undefined'` so the node test project is unaffected. Any editor test builds a real headless editor with the full extension set (see the editor test harness) so plugin state and dispatch behave as in the app.
 
 ### Base UI components
 

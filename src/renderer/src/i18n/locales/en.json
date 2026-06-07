@@ -1,3 +1,11 @@
 {
-  "appTitle": "Pluma"
+  "appTitle": "Pluma",
+  "editor": {
+    "placeholder": {
+      "heading": "Heading {{level}}",
+      "quote": "Quote",
+      "code": "Code",
+      "default": "You can address me as… The Fool."
+    }
+  }
 }
