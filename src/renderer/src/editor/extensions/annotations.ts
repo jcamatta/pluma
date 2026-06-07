@@ -8,7 +8,9 @@ import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey, type Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 
-type AnnotationSeverity = 'info' | 'warning' | 'error'
+const annotationSeverities = ['info', 'warning', 'error'] as const
+
+type AnnotationSeverity = (typeof annotationSeverities)[number]
 
 type Annotation = {
   readonly id: string
@@ -191,6 +193,7 @@ const AnnotationsExtension = Extension.create({
 export {
   AnnotationsExtension,
   annotationsPluginKey,
+  annotationSeverities,
   annotationSeverityClass,
   getAnnotations,
   getActiveAnnotationId,
