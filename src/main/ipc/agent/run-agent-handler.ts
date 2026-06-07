@@ -8,14 +8,11 @@ import * as Cause from 'effect/Cause'
 import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
 import * as Stream from 'effect/Stream'
-import type { RunAgentInput } from '../../application/agent/data/run-agent-input'
-import type { RunAgentFailed } from '../../application/agent/error/run-agent-failed'
+import type { RunAgentError, RunAgentInput } from '../../../shared/ipc/ipc-contract/agent'
+import type { Result } from '../../../shared/ipc/ipc-result'
 import { RuntimeAgent } from '../../application/agent/port/runtime-agent.port'
 import { runAgent } from '../../application/agent/usecase/run-agent'
-import type { Result } from '../result'
 import { runtimeAgent } from './runtime-agent'
-
-type SerializedError = { readonly _tag: RunAgentFailed['_tag'] }
 
 export interface RunAgentArgs {
   readonly input: RunAgentInput
@@ -24,7 +21,7 @@ export interface RunAgentArgs {
 
 export const handleRunAgent = (
   args: RunAgentArgs
-): Promise<Result<{ runId: string }, SerializedError>> => {
+): Promise<Result<{ runId: string }, RunAgentError>> => {
   const program = Effect.gen(function* () {
     const run = yield* runAgent(args.input)
     yield* Effect.forkDaemon(
@@ -34,7 +31,7 @@ export const handleRunAgent = (
   }).pipe(Effect.provideService(RuntimeAgent, runtimeAgent))
 
   return Effect.runPromiseExit(program).then(
-    (exit): Result<{ runId: string }, SerializedError> =>
+    (exit): Result<{ runId: string }, RunAgentError> =>
       Exit.match(exit, {
         onSuccess: (runId) => ({ ok: true, value: { runId } }),
         onFailure: (cause) => {

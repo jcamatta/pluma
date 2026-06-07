@@ -1,37 +1,41 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { BaseEvent } from '@ag-ui/core'
-import type { RunAgentInput } from '../main/application/agent/data/run-agent-input'
+import type { IpcChannel, IpcInput, IpcResult } from '../shared/ipc/ipc-contract'
+import type {
+  IpcEventCallback,
+  IpcEventChannel,
+  IpcEventPayload
+} from '../shared/ipc/ipc-event-contract'
+import type { WindowApi } from '../shared/ipc/window-api'
+import { assertWire } from '../shared/ipc/from-wire'
 
-// Custom APIs for renderer
-const api = {
-  createFile: (path: string) => ipcRenderer.invoke('file:create', path),
-  deleteFile: (path: string) => ipcRenderer.invoke('file:delete', path),
-  writeFile: (path: string, content: string) => ipcRenderer.invoke('file:write', { path, content }),
-  createFolder: (path: string) => ipcRenderer.invoke('folder:create', path),
-  deleteFolder: (path: string) => ipcRenderer.invoke('folder:delete', path),
-  listFolder: (path: string) => ipcRenderer.invoke('folder:list', path),
-  pickFolder: () => ipcRenderer.invoke('folder:pick'),
-  watchFolder: (path: string) => ipcRenderer.invoke('folder:watch', path),
-  onFolderChanged: (
-    listener: (event: { type: 'created' | 'updated' | 'deleted'; path: string }) => void
-  ) => {
-    const handler = (
-      _event: Electron.IpcRendererEvent,
-      payload: { type: 'created' | 'updated' | 'deleted'; path: string }
-    ): void => listener(payload)
-    ipcRenderer.on('folder:changed', handler)
-    return () => ipcRenderer.removeListener('folder:changed', handler)
-  },
-  runAgent: (input: RunAgentInput) => ipcRenderer.invoke('agent:run', input),
-  abortAgent: (runId: string) => ipcRenderer.invoke('agent:abort', runId),
-  onAgentEvent: (listener: (event: BaseEvent) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, payload: BaseEvent): void =>
-      listener(payload)
-    ipcRenderer.on('agent:event', handler)
-    return () => ipcRenderer.removeListener('agent:event', handler)
+// The whole renderer-facing surface is two generic methods derived from the shared contract, not one
+// bespoke method per channel. `invoke` forwards a request/response call; the channel literal selects
+// the input it requires and the Result it resolves to. `on` subscribes to an event channel and returns
+// an unsubscribe function. This is the single trusted boundary where wire data becomes typed: Electron
+// resolves invoke to `any` and pushes event payloads via its own listener type, so the contract's
+// IpcResult<Channel> / IpcEventPayload<Channel> are what give those values their shape downstream.
+const invoke = <Channel extends IpcChannel>(
+  channel: Channel,
+  ...args: IpcInput<Channel> extends void ? [] : [payload: IpcInput<Channel>]
+): Promise<IpcResult<Channel>> => ipcRenderer.invoke(channel, ...args)
+
+const on = <Channel extends IpcEventChannel>(
+  channel: Channel,
+  callback: IpcEventCallback<Channel>
+): (() => void) => {
+  // The listener takes the payload as `unknown` (so it stays assignable to Electron's listener type)
+  // and assertWire narrows it to this channel's IpcEventPayload before the callback. The same listener
+  // reference is used to add and remove, so unsubscribe works.
+  const listener = (_event: Electron.IpcRendererEvent, payload: unknown): void => {
+    assertWire<IpcEventPayload<Channel>>(payload, channel)
+    callback(payload)
   }
+  ipcRenderer.on(channel, listener)
+  return () => ipcRenderer.removeListener(channel, listener)
 }
+
+const api: WindowApi = { invoke, on }
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

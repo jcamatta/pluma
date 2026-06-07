@@ -3,9 +3,9 @@
 // throws across IPC.
 
 import * as Effect from 'effect/Effect'
+import type { Result } from '../../../shared/ipc/ipc-result'
 import { RuntimeAgent } from '../../application/agent/port/runtime-agent.port'
 import { abortAgent } from '../../application/agent/usecase/abort-agent'
-import type { Result } from '../result'
 import { runtimeAgent } from './runtime-agent'
 
 export const handleAbortAgent = (runId: string): Promise<Result<null, never>> => {

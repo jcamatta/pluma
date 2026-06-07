@@ -10,24 +10,23 @@ import * as Exit from 'effect/Exit'
 import * as Scope from 'effect/Scope'
 import * as Stream from 'effect/Stream'
 import * as NodeContext from '@effect/platform-node/NodeContext'
-import type { FileEvent } from '../../application/folder/data/file-event'
+import type { FolderChange } from '../../../shared/ipc/ipc-event-contract/folder'
+import type { FolderWatchError } from '../../../shared/ipc/ipc-contract/folder'
+import type { Result } from '../../../shared/ipc/ipc-result'
 import { FolderWatchFailed } from '../../application/folder/error/folder-watch-failed'
 import { FolderWatcher } from '../../application/folder/port/folder-watcher.port'
 import type { FolderWatcherPort } from '../../application/folder/port/folder-watcher.port'
 import { ParcelFolderWatcherLive } from '../../adapters/folder/parcel-folder-watcher'
-import type { Result } from '../result'
-
-type SerializedError = { readonly _tag: FolderWatchFailed['_tag']; readonly path: string }
 
 export interface WatchFolderArgs {
   readonly path: string
   readonly scope: Scope.Scope
-  readonly send: (event: FileEvent) => void
+  readonly send: (event: FolderChange) => void
 }
 
 interface WatchForward {
   readonly path: string
-  readonly send: (event: FileEvent) => void
+  readonly send: (event: FolderChange) => void
   readonly ready: Deferred.Deferred<void, FolderWatchFailed>
 }
 
@@ -43,7 +42,7 @@ const watchAndForward = (
 
 export const handleWatchFolder = (
   args: WatchFolderArgs
-): Promise<Result<null, SerializedError>> => {
+): Promise<Result<null, FolderWatchError>> => {
   const program = Effect.gen(function* () {
     const ready = yield* Deferred.make<void, FolderWatchFailed>()
     Effect.runFork(
@@ -57,7 +56,7 @@ export const handleWatchFolder = (
   })
 
   return Effect.runPromiseExit(program).then(
-    (exit): Result<null, SerializedError> =>
+    (exit): Result<null, FolderWatchError> =>
       Exit.match(exit, {
         onSuccess: () => ({ ok: true, value: null }),
         onFailure: () => ({ ok: false, error: { _tag: 'FolderWatchFailed', path: args.path } })

@@ -5,21 +5,19 @@ import * as NodeContext from '@effect/platform-node/NodeContext'
 import * as Cause from 'effect/Cause'
 import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
-import type { FileDeletionError } from '../../application/file/error/file-deletion-error'
+import type { FileDeleteError } from '../../../shared/ipc/ipc-contract/file'
+import type { Result } from '../../../shared/ipc/ipc-result'
 import { deleteFile } from '../../application/file/usecase/delete-file'
 import { FsFileWriterLive } from '../../adapters/file/fs-file-writer'
-import type { Result } from '../result'
 
-type SerializedError = { readonly _tag: FileDeletionError['_tag']; readonly path: string }
-
-export const handleDeleteFile = (path: string): Promise<Result<string, SerializedError>> => {
+export const handleDeleteFile = (path: string): Promise<Result<string, FileDeleteError>> => {
   const program = deleteFile(path).pipe(
     Effect.provide(FsFileWriterLive),
     Effect.provide(NodeContext.layer)
   )
 
   return Effect.runPromiseExit(program).then(
-    (exit): Result<string, SerializedError> =>
+    (exit): Result<string, FileDeleteError> =>
       Exit.match(exit, {
         onSuccess: (value) => ({ ok: true, value }),
         onFailure: (cause) => {

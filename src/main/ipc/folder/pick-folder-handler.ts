@@ -6,18 +6,16 @@
 import * as Cause from 'effect/Cause'
 import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
-import type { FolderSelectionError } from '../../application/folder/error/folder-selection-error'
+import type { FolderPickError } from '../../../shared/ipc/ipc-contract/folder'
+import type { Result } from '../../../shared/ipc/ipc-result'
 import { pickFolder } from '../../application/folder/usecase/pick-folder'
 import { ElectronFolderPickerLive } from '../../adapters/folder/electron-folder-picker'
-import type { Result } from '../result'
 
-type SerializedError = { readonly _tag: FolderSelectionError['_tag'] }
-
-export const handlePickFolder = (): Promise<Result<string, SerializedError>> => {
+export const handlePickFolder = (): Promise<Result<string, FolderPickError>> => {
   const program = pickFolder().pipe(Effect.provide(ElectronFolderPickerLive))
 
   return Effect.runPromiseExit(program).then(
-    (exit): Result<string, SerializedError> =>
+    (exit): Result<string, FolderPickError> =>
       Exit.match(exit, {
         onSuccess: (value) => ({ ok: true, value }),
         onFailure: (cause) => {

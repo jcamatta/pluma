@@ -5,24 +5,21 @@ import * as NodeContext from '@effect/platform-node/NodeContext'
 import * as Cause from 'effect/Cause'
 import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
-import type { FolderEntry } from '../../application/folder/data/entry'
-import type { FolderListingError } from '../../application/folder/error/folder-listing-error'
+import type { FolderEntry, FolderListError } from '../../../shared/ipc/ipc-contract/folder'
+import type { Result } from '../../../shared/ipc/ipc-result'
 import { listFolder } from '../../application/folder/usecase/list-folder'
 import { FsFolderReaderLive } from '../../adapters/folder/fs-folder-reader'
-import type { Result } from '../result'
-
-type SerializedError = { readonly _tag: FolderListingError['_tag']; readonly path: string }
 
 export const handleListFolder = (
   path: string
-): Promise<Result<ReadonlyArray<FolderEntry>, SerializedError>> => {
+): Promise<Result<ReadonlyArray<FolderEntry>, FolderListError>> => {
   const program = listFolder(path).pipe(
     Effect.provide(FsFolderReaderLive),
     Effect.provide(NodeContext.layer)
   )
 
   return Effect.runPromiseExit(program).then(
-    (exit): Result<ReadonlyArray<FolderEntry>, SerializedError> =>
+    (exit): Result<ReadonlyArray<FolderEntry>, FolderListError> =>
       Exit.match(exit, {
         onSuccess: (value) => ({ ok: true, value }),
         onFailure: (cause) => {

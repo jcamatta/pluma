@@ -5,24 +5,22 @@ import * as NodeContext from '@effect/platform-node/NodeContext'
 import * as Cause from 'effect/Cause'
 import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
-import type { FileWritingError } from '../../application/file/error/file-writing-error'
+import type { FileWriteError } from '../../../shared/ipc/ipc-contract/file'
+import type { Result } from '../../../shared/ipc/ipc-result'
 import { writeFile } from '../../application/file/usecase/write-file'
 import { FsFileWriterLive } from '../../adapters/file/fs-file-writer'
-import type { Result } from '../result'
-
-type SerializedError = { readonly _tag: FileWritingError['_tag']; readonly path: string }
 
 export const handleWriteFile = (
   path: string,
   content: string
-): Promise<Result<string, SerializedError>> => {
+): Promise<Result<string, FileWriteError>> => {
   const program = writeFile(path, content).pipe(
     Effect.provide(FsFileWriterLive),
     Effect.provide(NodeContext.layer)
   )
 
   return Effect.runPromiseExit(program).then(
-    (exit): Result<string, SerializedError> =>
+    (exit): Result<string, FileWriteError> =>
       Exit.match(exit, {
         onSuccess: (value) => ({ ok: true, value }),
         onFailure: (cause) => {

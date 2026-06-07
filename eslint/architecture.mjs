@@ -20,6 +20,14 @@ export const architecture = {
             target: './src/main/application',
             from: ['./src/main/adapters', './src/main/ipc']
           },
+          // src/shared/ipc is the API/wire layer: the contract main and the renderer agree on. Only
+          // the ipc layer (and the preload bridge) may translate to and from it. The application and
+          // adapters layers stay pure domain — they must not import shared; the ipc handlers map
+          // between the domain types and the wire contract at the boundary.
+          {
+            target: ['./src/main/application', './src/main/adapters'],
+            from: ['./src/shared']
+          },
           // The renderer must not import main-process internals; it talks through preload/IPC only.
           {
             target: './src/renderer',
@@ -50,6 +58,32 @@ export const rendererNoMainImports = {
             regex: '(^|/)main/',
             message:
               'The renderer must not import main-process code. Talk to main through the preload window.api bridge; declare the wire types on the renderer side.'
+          }
+        ]
+      }
+    ]
+  }
+}
+
+// src/shared/ipc is the API/wire layer. Only the ipc layer (and the preload bridge) may translate to
+// and from it; the application and adapters layers stay pure domain. The no-restricted-paths zone
+// above states this, but — like the renderer rule — it only fires when a resolver can resolve the
+// import to a file, and none is configured. This resolver-free backstop bans the import *specifier* by
+// regex, so any relative path into src/shared from application/adapters is rejected regardless of
+// resolver configuration.
+export const domainNoSharedImports = {
+  files: ['src/main/application/**/*.ts', 'src/main/adapters/**/*.ts'],
+  rules: {
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            // Matches any specifier with a `shared/` path segment (e.g. ../../../shared/...) at any
+            // depth, while leaving package imports untouched.
+            regex: '(^|/)shared/',
+            message:
+              'The application and adapters layers must not import src/shared. shared/ipc is the API/wire layer; only the ipc handlers may map between the domain types and the wire contract.'
           }
         ]
       }

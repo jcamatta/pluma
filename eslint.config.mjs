@@ -11,6 +11,7 @@ import { style, allowDefaultExport, allowThrowInInvariant } from './eslint/style
 import {
   architecture,
   rendererNoMainImports,
+  domainNoSharedImports,
   views,
   noDirectIpcInComponents
 } from './eslint/architecture.mjs'
@@ -30,6 +31,7 @@ export default defineConfig(
   allowDefaultExport,
   architecture,
   rendererNoMainImports,
+  domainNoSharedImports,
   limits,
   comments,
   effect,
