@@ -31,6 +31,32 @@ export const architecture = {
   }
 }
 
+// The renderer must never reach into main-process code: it talks to main only through the preload
+// `window.api` bridge. The import-x/no-restricted-paths zone above is the architectural rule, but it
+// only fires for imports a resolver can resolve to a file; this no-restricted-imports block is a
+// resolver-free backstop that bans the import *specifier* by glob, so a relative path into src/main
+// is rejected regardless of resolver configuration.
+export const rendererNoMainImports = {
+  files: ['src/renderer/**/*.{ts,tsx}'],
+  rules: {
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            // Matches any specifier with a `main/` path segment (e.g. ../../../main/...) at any
+            // depth, while leaving package imports like @ag-ui/core untouched. Uses regex because
+            // minimatch globs do not span the leading `../` segments of a relative specifier.
+            regex: '(^|/)main/',
+            message:
+              'The renderer must not import main-process code. Talk to main through the preload window.api bridge; declare the wire types on the renderer side.'
+          }
+        ]
+      }
+    ]
+  }
+}
+
 // Views are pure layout: no hooks (no use* calls) and no direct IPC. A view that needs data must
 // receive it through props from its controller.
 export const views = {

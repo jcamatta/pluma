@@ -8,7 +8,12 @@ import eslintConfigPrettier from '@electron-toolkit/eslint-config-prettier'
 
 import { ignores, base } from './eslint/base.mjs'
 import { style, allowDefaultExport, allowThrowInInvariant } from './eslint/style.mjs'
-import { architecture, views, noDirectIpcInComponents } from './eslint/architecture.mjs'
+import {
+  architecture,
+  rendererNoMainImports,
+  views,
+  noDirectIpcInComponents
+} from './eslint/architecture.mjs'
 import { limits } from './eslint/limits.mjs'
 import { comments } from './eslint/comments.mjs'
 import { effect } from './eslint/effect.mjs'
@@ -24,6 +29,7 @@ export default defineConfig(
   style,
   allowDefaultExport,
   architecture,
+  rendererNoMainImports,
   limits,
   comments,
   effect,
