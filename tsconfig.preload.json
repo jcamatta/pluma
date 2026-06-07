@@ -1,0 +1,10 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
+  "include": ["src/preload/**/*", "src/shared/**/*"],
+  "compilerOptions": {
+    "composite": true,
+    "strict": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["electron-vite/node", "node"]
+  }
+}

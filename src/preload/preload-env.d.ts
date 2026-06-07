@@ -1,6 +1,7 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
-import type { BaseEvent } from '@ag-ui/core'
-import type { RunAgentInput } from '../main/application/agent/data/run-agent-input'
+// Ambient global types for the preload bridge. This file has no top-level import/export, so its
+// `declare global` is a true global augmentation visible to every file in the program (including
+// index.ts, which assigns these onto window in the non-isolated fallback). Imported types are
+// referenced through inline `import('...')` so the file stays script-global rather than a module.
 
 type Result<T, E extends { _tag: string }> = { ok: true; value: T } | { ok: false; error: E }
 
@@ -71,14 +72,14 @@ interface Api {
   pickFolder: () => Promise<Result<string, PickFolderError>>
   watchFolder: (path: string) => Promise<Result<null, WatchFolderError>>
   onFolderChanged: (listener: (event: FolderChange) => void) => () => void
-  runAgent: (input: RunAgentInput) => Promise<Result<{ runId: string }, RunAgentError>>
+  runAgent: (
+    input: import('../main/application/agent/data/run-agent-input').RunAgentInput
+  ) => Promise<Result<{ runId: string }, RunAgentError>>
   abortAgent: (runId: string) => Promise<Result<null, never>>
-  onAgentEvent: (listener: (event: BaseEvent) => void) => () => void
+  onAgentEvent: (listener: (event: import('@ag-ui/core').BaseEvent) => void) => () => void
 }
 
-declare global {
-  interface Window {
-    electron: ElectronAPI
-    api: Api
-  }
+interface Window {
+  electron: import('@electron-toolkit/preload').ElectronAPI
+  api: Api
 }

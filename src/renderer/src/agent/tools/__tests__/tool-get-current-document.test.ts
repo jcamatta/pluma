@@ -9,8 +9,7 @@ describe('getCurrentDocument', () => {
     withEditor('# Title\n\nA paragraph.', (editor) => {
       const result = getCurrentDocument(editor)
 
-      expect(result.ok).toBe(true)
-      if (!result.ok || result.output.type !== 'text') throw new Error('expected text output')
+      if (!result.ok || result.output.type !== 'text') return expect.fail('expected text output')
       expect(result.output.text).toContain('# Title')
       expect(result.output.text).toContain('A paragraph.')
     })

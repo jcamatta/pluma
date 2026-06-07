@@ -2,10 +2,11 @@
 // tools are contributed (useFrontendTool) and read (the agent's `tools` snapshot, the bridge's
 // dispatch). Entries live in a ref-backed Map and are read imperatively, so register/unregister
 // never re-render consumers. `useToolRegistry` is the read side; `createToolRegistry` builds the
-// value the provider supplies. Names are unique — a duplicate registration warns and overwrites.
+// value the provider supplies. Names are unique — a duplicate registration overwrites (last wins).
 
 import { createContext, useContext, useMemo, useRef } from 'react'
 import type { Tool } from '@ag-ui/core'
+import { invariant } from '../../../shared/invariant'
 import type { AgentToolResult } from './tools/types'
 
 type ToolHandler = (args: unknown) => AgentToolResult | Promise<AgentToolResult>
@@ -30,9 +31,6 @@ function useCreateToolRegistry(): ToolRegistry {
   return useMemo<ToolRegistry>(
     () => ({
       register: (entry) => {
-        if (entries.current.has(entry.spec.name)) {
-          console.warn(`Frontend tool "${entry.spec.name}" is already registered; overwriting.`)
-        }
         entries.current.set(entry.spec.name, entry)
       },
       unregister: (name) => {
@@ -47,7 +45,7 @@ function useCreateToolRegistry(): ToolRegistry {
 
 function useToolRegistry(): ToolRegistry {
   const registry = useContext(AgentToolsContext)
-  if (!registry) throw new Error('useToolRegistry must be used within an AgentToolsProvider')
+  invariant(registry, 'useToolRegistry must be used within an AgentToolsProvider')
   return registry
 }
 

@@ -24,6 +24,11 @@ export const baseRestrictedSyntax = [
   {
     selector: 'TSTypeAssertion',
     message: 'Angle-bracket type assertions (`<T>x`) are forbidden. Type the value properly.'
+  },
+  {
+    selector: 'ThrowStatement',
+    message:
+      'throw is forbidden. Return a Result ({ ok: false, error }) for recoverable failures, or in Effect code fail with a typed error. For unrecoverable wiring invariants use invariant() from src/shared/invariant.ts.'
   }
 ]
 
@@ -47,10 +52,30 @@ export const style = {
     'no-param-reassign': ['error', { props: true }],
 
     // Close the type-safety holes that no-explicit-any and type-coverage miss.
-    // ts-ignore / ts-expect-error / ts-nocheck cannot silence the type-checker.
-    '@typescript-eslint/ban-ts-comment': 'error',
+    // ts-ignore / ts-expect-error / ts-nocheck cannot silence the type-checker. Override the looser
+    // electron-toolkit default (which allows ts-ignore with a description) to ban all three outright.
+    '@typescript-eslint/ban-ts-comment': [
+      'error',
+      { 'ts-ignore': true, 'ts-expect-error': true, 'ts-nocheck': true, 'ts-check': false }
+    ],
     // No non-null assertions (`x!`); narrow properly instead.
-    '@typescript-eslint/no-non-null-assertion': 'error'
+    '@typescript-eslint/no-non-null-assertion': 'error',
+
+    // No console: logging is an action that does not belong scattered in code. Surface failures as
+    // values (Result) or through an explicit logging port.
+    'no-console': 'error'
+  }
+}
+
+// The one file allowed to throw: the sanctioned invariant helper. The global ThrowStatement ban is
+// re-applied here without that selector so this file (and only this file) may throw.
+export const allowThrowInInvariant = {
+  files: ['src/shared/invariant.ts'],
+  rules: {
+    'no-restricted-syntax': [
+      'error',
+      ...baseRestrictedSyntax.filter((rule) => rule.selector !== 'ThrowStatement')
+    ]
   }
 }
 

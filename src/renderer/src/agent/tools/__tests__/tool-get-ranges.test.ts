@@ -30,8 +30,7 @@ describe('getRanges', () => {
     withEditor('the cat sat on the mat', (editor) => {
       const result = getRanges(editor, { text: 'the' })
 
-      expect(result.ok).toBe(false)
-      if (result.ok) throw new Error('expected failure')
+      if (result.ok) return expect.fail('expected failure')
       expect(result.error.startsWith('ambiguous\n')).toBe(true)
       expect(result.error).toContain('1: ')
       expect(result.error).toContain('2: ')

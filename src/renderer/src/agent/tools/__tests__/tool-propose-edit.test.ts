@@ -28,8 +28,7 @@ describe('proposeEdit', () => {
   it('fails when the range id is unknown', () => {
     withEditor('hello world', (editor) => {
       const result = proposeEdit(editor, { rangeId: 'r_99', replacementText: 'x' })
-      expect(result.ok).toBe(false)
-      if (result.ok) throw new Error('expected failure')
+      if (result.ok) return expect.fail('expected failure')
       expect(result.error).toContain('not found')
     })
   })

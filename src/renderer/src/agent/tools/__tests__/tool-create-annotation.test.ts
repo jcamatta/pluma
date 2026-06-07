@@ -53,8 +53,7 @@ describe('createAnnotationTool', () => {
         label: 'x',
         description: 'y'
       })
-      expect(result.ok).toBe(false)
-      if (result.ok) throw new Error('expected failure')
+      if (result.ok) return expect.fail('expected failure')
       expect(result.error).toContain('not found')
     })
   })

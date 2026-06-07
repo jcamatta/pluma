@@ -11,6 +11,15 @@ Do not invent business behavior. If a business rule is not explicit in the code 
 - **Never weaken the checks to pass.** Do not delete or skip tests, loosen an assertion, lower a coverage threshold, or relax a lint rule to make a build go green. If a check fails, fix the cause. If a rule genuinely needs to change, stop and ask.
 - **No new dependencies without approval.** Do not add a runtime or dev dependency without asking first, and justify why each one is needed. This is the counterpart to YAGNI.
 - **No escape hatches.** Do not silence the tools: no `eslint-disable` / `eslint-disable-next-line`, no `@ts-ignore` / `@ts-expect-error` / `@ts-nocheck`, no `as` casts (except `as const`), no non-null `!`. These are lint errors. If the types or rules are fighting you, fix the underlying code or ask.
+- **Never hack, dodge, or game a rule. No rule may be circumvented — it is strictly forbidden, on penalty of death.** A check exists to be satisfied by correct code, not routed around. When a lint or type rule blocks you, the only acceptable responses are (1) fix the underlying code so the rule passes honestly, or (2) stop and ask the human to change the rule. You may **never** find a clever way to make the error disappear while leaving the problem in place. This applies to you and to every sub-agent you spawn; pass this rule on to them.
+
+  This is broader than the escape hatches above. The following are all forbidden "hacks", even though none of them is an `eslint-disable` or a cast:
+  - **Type-dodging through permissive APIs.** Using a loosely-typed function purely to bypass a type error instead of fixing the types. Example: writing `Object.assign(window, { api })` because `window.api = api` does not type-check — that hides the missing type instead of declaring it. Fix the types (e.g. the ambient `Window` declaration) so the direct, fully-checked assignment compiles.
+  - **Weakening a rule's options.** Loosening a rule's configuration to let your code through — e.g. switching `ban-ts-comment` from banning `@ts-ignore` to `allow-with-description`, lowering a coverage threshold, raising a complexity/size limit, or adding an `allow` entry. Rule config is tightened by the human on request, never loosened by an agent to pass.
+  - **Scoping a file out of a ban.** Adding a file/glob to a rule's `ignores`, or creating an override block that turns a rule off for the file you are editing, so your violation stops being reported. The one sanctioned exception in this codebase is `src/shared/invariant.ts` for the throw ban, which the human approved; do not create new carve-outs.
+  - **Renaming/relocating to escape a rule**, restructuring code solely to fall outside a selector, or any other maneuver whose only purpose is to make the tool stop complaining rather than to make the code correct.
+
+  If you are unsure whether a fix is "honest" or a "hack", ask yourself: _after this change, is the thing the rule was protecting against actually gone, or just unreported?_ If it is merely unreported, it is a hack — do not do it. When in doubt, stop and ask.
 
 ## Architecture
 
