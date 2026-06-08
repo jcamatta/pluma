@@ -50,7 +50,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     --surface-1: oklch(0.2 0 0);
-    --surface-2: oklch(0.255 0 0);
+    --surface-2: oklch(0.25 0 0);
     --surface-3: oklch(0.31 0 0);
 
     --text-primary: oklch(0.82 0 0);

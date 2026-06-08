@@ -8,6 +8,15 @@
       "default": "You can address me as… The Fool."
     }
   },
+  "launcher": {
+    "wordmark": "Pluma",
+    "heading": "Open a folder.\nStart writing.",
+    "description": "Point Pluma at any folder and it becomes your workspace — its files appear in the explorer on the left, ready to open and edit.",
+    "openFolder": "Open Folder…",
+    "previewBadge": "A peek at your workspace",
+    "previewHeading": "The blank page\nawaits.",
+    "preview": "Preview of the Pluma workspace"
+  },
   "explorer": {
     "title": "Files",
     "newFile": "New file",

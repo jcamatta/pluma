@@ -26,7 +26,7 @@ test('picks a folder and lists its real contents', async () => {
     const { app, window } = await launchApp()
     try {
       await stubFolderPicker(app, folder)
-      await window.getByRole('button', { name: 'Open folder' }).click()
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
 
       await expect(window.getByTestId('explorer')).toBeVisible()
       await expect(window.getByTestId(`file-row:${join(folder, 'chapter-1.md')}`)).toBeVisible()
@@ -41,7 +41,7 @@ test('creates a file through the UI and selects it', async () => {
     const { app, window } = await launchApp()
     try {
       await stubFolderPicker(app, folder)
-      await window.getByRole('button', { name: 'Open folder' }).click()
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
       await expect(window.getByTestId('explorer')).toBeVisible()
 
       await window.getByRole('button', { name: 'New file' }).first().click()
@@ -66,7 +66,7 @@ test('reflects an externally created file via the OS watcher', async () => {
     const { app, window } = await launchApp()
     try {
       await stubFolderPicker(app, folder)
-      await window.getByRole('button', { name: 'Open folder' }).click()
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
       await expect(window.getByTestId('explorer')).toBeVisible()
 
       await writeFile(join(folder, 'external.md'), '# external')
@@ -84,7 +84,7 @@ test('deletes a file through the UI', async () => {
     const { app, window } = await launchApp()
     try {
       await stubFolderPicker(app, folder)
-      await window.getByRole('button', { name: 'Open folder' }).click()
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
 
       const path = join(folder, 'gone.md')
       const row = window.getByTestId(`file-row:${path}`)
@@ -108,7 +108,7 @@ test('reflects an externally deleted file via the OS watcher', async () => {
     const { app, window } = await launchApp()
     try {
       await stubFolderPicker(app, folder)
-      await window.getByRole('button', { name: 'Open folder' }).click()
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
 
       const path = join(folder, 'vanish.md')
       await expect(window.getByTestId(`file-row:${path}`)).toBeVisible()

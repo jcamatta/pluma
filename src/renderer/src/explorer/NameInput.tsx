@@ -58,7 +58,7 @@ export function NameInput({
       }}
       onBlur={() => commit(value)}
       placeholder={placeholder}
-      className="min-w-0 flex-1 rounded-md border border-action-primary bg-surface-1 px-2 py-1 font-ui text-sm font-semibold text-text-primary outline-none"
+      className="min-w-0 flex-1 rounded-md border border-action-primary bg-surface-2 px-2 py-1 font-ui text-sm  text-text-primary outline-none"
     />
   )
 }

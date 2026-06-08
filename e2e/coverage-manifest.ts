@@ -12,7 +12,7 @@
 // file.open), dock + rail (agent.run, agent.abort, agent.event), settings.
 
 // A shipped UI feature (a screen/region of the conversation layout).
-const FEATURES = ['explorer'] as const
+const FEATURES = ['launcher', 'explorer'] as const
 
 // A shipped user-facing operation, one per real IPC channel the UI exercises end to end.
 const OPERATIONS = [

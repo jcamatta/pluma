@@ -7,32 +7,18 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditorController } from './editor/Editor.controller'
 import { ExplorerController } from './explorer/Explorer.controller'
-import { useRootFolder } from './explorer/useRootFolder'
-import { Button } from '@base-ui/react'
-import { Folder, PanelLeft } from 'lucide-react'
+import { LauncherController } from './launcher/Launcher.controller'
+import { PanelLeft } from 'lucide-react'
 import { EdgeTab } from './components/EdgeTab'
 
 export const App = (): React.JSX.Element => {
   const { t } = useTranslation()
-  const { root, pick } = useRootFolder()
+  const [root, setRoot] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [explorerOpen, setExplorerOpen] = useState(true)
 
   if (root === null) {
-    return (
-      <main className="flex h-screen items-center justify-center bg-surface-1 font-ui text-text-primary">
-        <Button
-          type="button"
-          onClick={() => void pick()}
-          className="flex items-center gap-2 rounded-full bg-action-primary px-4 py-2 text-sm font-semibold text-text-on-accent"
-        >
-          <span className="flex text-on-accent">
-            <Folder size={16} />
-          </span>
-          {t('explorer.pickFolder')}
-        </Button>
-      </main>
-    )
+    return <LauncherController onPicked={setRoot} />
   }
 
   return (

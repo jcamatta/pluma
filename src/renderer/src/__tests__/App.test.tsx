@@ -31,7 +31,7 @@ describe('App', () => {
   it('shows the open-folder affordance before a folder is picked', () => {
     installFakeWindowApi({})
     renderApp()
-    expect(screen.getByText('Open folder')).toBeInTheDocument()
+    expect(screen.getByText('Open Folder…')).toBeInTheDocument()
   })
 
   it('mounts the explorer and editor after a folder is picked', async () => {
@@ -41,7 +41,7 @@ describe('App', () => {
     })
     renderApp()
 
-    fireEvent.click(screen.getByText('Open folder'))
+    fireEvent.click(screen.getByText('Open Folder…'))
 
     await waitFor(() => {
       expect(screen.getByText('Files')).toBeInTheDocument()

@@ -12,7 +12,7 @@ test('capture the explorer', async () => {
     const { app, window } = await launchApp()
     try {
       await stubFolderPicker(app, folder)
-      await window.getByRole('button', { name: 'Open folder' }).click()
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
       await window.getByTestId('explorer').waitFor()
       await window.screenshot({ path: 'e2e/.artifacts/explorer.png' })
     } finally {
