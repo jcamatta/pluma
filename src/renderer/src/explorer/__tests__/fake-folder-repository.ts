@@ -1,0 +1,65 @@
+// In-memory fake of the explorer's repository ports for hook/controller tests. Backed by a Map from
+// folder path to its entries; implements the reader (list) and writer (create/delete/watch/onChange)
+// and returns Result values exactly like the real IPC adapter — ok: false is a value, never thrown.
+// `emit` lets a test fire a folder:changed event the watcher subscribers receive. No window.api, no
+// Electron: the single seam the tests drive instead of the real adapter.
+
+import type { Result } from '../../../../shared/ipc/ipc-result'
+import type { FolderEntry } from '../../../../shared/ipc/ipc-contract/folder'
+import type { FolderChange } from '../../../../shared/ipc/ipc-event-contract/folder'
+import type { FolderReaderPort } from '../ports/folder-reader.port'
+import type { FolderWriterPort } from '../ports/folder-writer.port'
+import type { Repositories } from '../RepositoriesContext'
+
+type FakeRepository = Repositories & {
+  readonly emit: (change: FolderChange) => void
+  readonly created: () => readonly string[]
+  readonly deleted: () => readonly string[]
+}
+
+function createFakeFolderRepository(
+  listings: Readonly<Record<string, readonly FolderEntry[]>>
+): FakeRepository {
+  const subscribers = new Set<(change: FolderChange) => void>()
+  const created: string[] = []
+  const deleted: string[] = []
+
+  const reader: FolderReaderPort = {
+    list: (path) => {
+      const entries = listings[path]
+      const result: Result<readonly FolderEntry[], { _tag: 'FolderNotFound'; path: string }> =
+        entries
+          ? { ok: true, value: entries }
+          : { ok: false, error: { _tag: 'FolderNotFound', path } }
+      return Promise.resolve(result)
+    }
+  }
+
+  const record = (bucket: string[], path: string): Promise<Result<string, never>> => {
+    bucket.push(path)
+    return Promise.resolve({ ok: true, value: path })
+  }
+
+  const writer: FolderWriterPort = {
+    createFile: (path) => record(created, path),
+    createFolder: (path) => record(created, path),
+    deleteFile: (path) => record(deleted, path),
+    deleteFolder: (path) => record(deleted, path),
+    watch: () => Promise.resolve({ ok: true, value: null }),
+    onChange: (callback) => {
+      subscribers.add(callback)
+      return () => subscribers.delete(callback)
+    }
+  }
+
+  return {
+    reader,
+    writer,
+    emit: (change) => subscribers.forEach((cb) => cb(change)),
+    created: () => created,
+    deleted: () => deleted
+  }
+}
+
+export { createFakeFolderRepository }
+export type { FakeRepository }

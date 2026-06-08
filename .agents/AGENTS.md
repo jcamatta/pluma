@@ -202,8 +202,8 @@ All styling uses the design tokens defined in `src/renderer/src/App.css`. **Neve
 
 The only allowed tokens are those exposed by the `@theme inline` block in `App.css`:
 
-- **Surface colors**: `surface-1`, `surface-2`, `surface-3`, `surface-inverse-1`
-- **Text colors**: `text-primary`, `text-secondary`, `text-muted`, `text-inverse-primary`
+- **Surface colors**: `surface-1`, `surface-2`, `surface-3`
+- **Text colors**: `text-primary`, `text-secondary`, `text-muted`, `text-on-accent`
 - **Action colors**: `action-primary`, `action-secondary`, `action-destructive`
 - **Feedback colors**: `feedback-success`, `feedback-warning`, `feedback-error`, `feedback-info`
 - **Structural**: `border`, `overlay`
@@ -242,16 +242,22 @@ These apply to all renderer modules and are partly lint-enforced (`import-x/grou
 
 ### Hooks: commands and queries
 
+All renderer data access goes through **TanStack Query** (`@tanstack/react-query`, already a dependency). Never hand-roll fetching/caching with `useState` + `useEffect` over `window.api`; a `useEffect` that calls a port and stuffs the result into state is a query written the wrong way — use `useQuery`/`useQueries`. The `QueryClient` is provided once at the app root.
+
+This is **CQS in the renderer**: a hook is either a query or a command, never both. They are **separate hooks with separate exports** — do not return a `useQuery` and a `useMutation` from one hook. Reads and writes stay on distinct paths against the same store, mirroring the backend's command/query use-case split.
+
 Hooks come in two kinds, one export each:
 
-- **Query** — reads/fetches data. Wraps `useQuery` (TanStack Query); its `data` is a `Result<T, E>`, and the UI branches on `data.ok`. Example: `useNotes`.
-- **Command** — performs a mutation. Wraps `useMutation`; the result is a `Result`, and queries are invalidated when it returns `ok: true`. Example: `useAddNote`.
+- **Query** — reads/fetches data. Wraps `useQuery`/`useQueries` (TanStack Query); its `data` is a `Result<T, E>`, and the UI branches on `data.ok`. Side-effect-free. Examples: `useNotes`, the explorer's `useFolderListings`.
+- **Command** — performs a mutation. Wraps `useMutation`; the result is a `Result`, and it **invalidates the affected query keys** when it returns `ok: true` (never on `ok: false`). Examples: `useAddNote`, the explorer's `useCreateEntry` / `useDeleteEntry`.
 
-A hook never talks to Electron directly. It obtains a **repository port** and calls it.
+**Query keys** are a per-resource tuple from one shared pure helper so the query hook and every command that invalidates it agree on the same key (e.g. the explorer's `folderListingKey(path)` → `['folder', path]`). Do not inline ad-hoc key arrays at call sites.
+
+A hook never talks to Electron directly. It obtains a **repository port** and calls it. The explorer feature (`src/renderer/src/explorer/`) is the worked reference for this whole section: reader/writer ports split by CQS, an IPC adapter, `RepositoriesProvider`/`useRepos`, query + command hooks, and an in-memory fake in tests.
 
 ### Ports and adapters in the renderer
 
-- A **repository port** is a plain interface returning `Promise<Result<T, E>>` (e.g. `NotesRepository` with `all`, `getById`, `add`, `remove`). It carries the `Result` but never `window.api`.
+- A **repository port** is a plain interface returning `Promise<Result<T, E>>` (e.g. `NotesRepository` with `all`, `getById`, `add`, `remove`). It carries the `Result` but never `window.api`. Where it clarifies the CQS split, separate the read and write ports — a reader port for queries and a writer port for commands — rather than one port that both reads and writes (the explorer splits `FolderReaderPort` / `FolderWriterPort`).
 - Ports are supplied through a React **context** (`RepositoriesProvider` / `useRepos`). The app root provides the real adapters; tests provide fakes.
 - The **real adapter** implements the port over `window.api` and **passes the IPC `Result` through unchanged**. `ok: false` is a value, not an error — the adapter never throws on it. The query/mutation resolves with the `Result`; the UI reads `data.ok`. React Query's `isError` is reserved for genuine infrastructure failures (the IPC channel itself failing), not for `ok: false`.
 - The **test adapter** is an in-memory implementation of the same port (e.g. `Map`-backed) that likewise returns `Result` values. Use-case-style tests and hook tests run against it; Electron never runs.

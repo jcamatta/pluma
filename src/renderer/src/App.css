@@ -8,7 +8,7 @@
   --text-primary: oklch(0.4 0 0);
   --text-secondary: oklch(0.54 0 0);
   --text-muted: oklch(0.63 0 0);
-  --text-inverse-primary: #f4f2ed;
+  --text-on-accent: #f4f2ed;
 
   --color-accent: oklch(0.55 0.04 250);
   --color-destructive: oklch(0.55 0.19 25);
@@ -29,6 +29,19 @@
 
   --font-ui-family: 'Source Sans 3', sans-serif;
   --font-editor-family: 'Source Serif 4', serif;
+
+  /* Hairline separators and hover wash, derived from ink-on-surface so they read on any surface and
+     adapt per theme. The design uses three line weights and one hover tint. */
+  --line: color-mix(in srgb, var(--text-primary) 9%, transparent);
+  --line2: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  --line3: color-mix(in srgb, var(--text-primary) 16%, transparent);
+  --hover: color-mix(in srgb, var(--text-primary) 5%, transparent);
+
+  /* Layout + motion structure ported verbatim from the design (these are not palette). */
+  --explorer-w: 280px;
+  --rail-w: 360px;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-emph: cubic-bezier(0.2, 0.9, 0.25, 1);
 }
 
 /* Dark tokens apply when the user explicitly chooses dark, or when they leave
@@ -43,7 +56,7 @@
     --text-primary: oklch(0.82 0 0);
     --text-secondary: oklch(0.66 0 0);
     --text-muted: oklch(0.54 0 0);
-    --text-inverse-primary: #11100e;
+    --text-on-accent: #11100e;
 
     --color-accent: oklch(0.7 0.05 250);
     --color-destructive: oklch(0.64 0.19 25);
@@ -68,7 +81,7 @@
   --text-primary: oklch(0.95 0 0);
   --text-secondary: oklch(0.78 0 0);
   --text-muted: oklch(0.62 0 0);
-  --text-inverse-primary: #11100e;
+  --text-on-accent: #11100e;
 
   --color-accent: oklch(0.7 0.05 250);
   --color-destructive: oklch(0.64 0.19 25);
@@ -89,12 +102,11 @@
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
-  --color-surface-inverse-1: var(--surface-inverse-1);
 
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
-  --color-text-inverse-primary: var(--text-inverse-primary);
+  --color-text-on-accent: var(--text-on-accent);
 
   --color-border: var(--border);
   --color-overlay: var(--overlay);
@@ -116,6 +128,18 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* Focus ring in our accent token, not the browser's default (which shows as a bright orange UA
+   outline on some platforms). :focus-visible scopes it to keyboard navigation, so a mouse click on a
+   button does not draw a ring. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.ProseMirror:focus-visible {
+  outline: none;
 }
 
 html,
@@ -380,4 +404,16 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Explorer row actions: hidden until the row is hovered or focus is within it. Matches the design's
+   reveal-on-hover affordance for the per-row create/delete buttons. */
+.row-actions {
+  opacity: 0;
+  transition: opacity 0.15s var(--ease);
+}
+
+[data-row]:hover > .row-actions,
+[data-row]:focus-within > .row-actions {
+  opacity: 1;
 }

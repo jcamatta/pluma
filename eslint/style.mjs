@@ -29,7 +29,29 @@ export const baseRestrictedSyntax = [
     selector: 'ThrowStatement',
     message:
       'throw is forbidden. Return a Result ({ ok: false, error }) for recoverable failures, or in Effect code fail with a typed error. For unrecoverable wiring invariants use invariant() from src/shared/invariant.ts.'
-  }
+  },
+  // Icons must come from a library — lucide-react (preferred) or @base-ui/react — never hand-rolled
+  // SVG. These selectors ban the JSX tags an ad-hoc icon is drawn from. <svg> only ever appears in
+  // renderer JSX, so applying this project-wide is harmless and guarantees no scoped block (which
+  // re-spreads this array) accidentally drops it. Genuine non-icon inline SVG is not a use case here.
+  ...['svg', 'path', 'circle', 'rect', 'polyline', 'polygon', 'line', 'ellipse'].map((tag) => ({
+    selector: `JSXOpeningElement[name.name='${tag}']`,
+    message: `Hand-rolled SVG icons are forbidden. Use an icon from lucide-react (e.g. <Folder />) or @base-ui/react instead of drawing <${tag}> by hand.`
+  })),
+  // Raw HTML elements that have a clear @base-ui/react equivalent are forbidden — use the Base UI
+  // component so behavior (focus, a11y, state) is consistent. Compound Base UI primitives (Select,
+  // Dialog) are not 1:1 drop-ins for the native element, but only Base UI is allowed for these widgets,
+  // so the native tags are banned and the caller must compose the Base UI component instead.
+  ...[
+    { tag: 'button', component: 'Button' },
+    { tag: 'input', component: 'Input' },
+    { tag: 'hr', component: 'Separator' },
+    { tag: 'select', component: 'Select' },
+    { tag: 'dialog', component: 'Dialog' }
+  ].map(({ tag, component }) => ({
+    selector: `JSXOpeningElement[name.name='${tag}']`,
+    message: `Raw <${tag}> is forbidden. Use ${component} from @base-ui/react instead.`
+  }))
 ]
 
 export const style = {

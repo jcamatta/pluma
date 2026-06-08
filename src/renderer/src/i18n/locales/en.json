@@ -7,5 +7,18 @@
       "code": "Code",
       "default": "You can address me as… The Fool."
     }
+  },
+  "explorer": {
+    "title": "Files",
+    "newFile": "New file",
+    "newFolder": "New folder",
+    "deleteFile": "Delete file",
+    "deleteFolder": "Delete folder",
+    "collapse": "Collapse files",
+    "open": "Open files",
+    "untitled": "Untitled",
+    "empty": "No files yet. Use the buttons above to add a file or folder.",
+    "noFolder": "No folder open. Pick one to start.",
+    "pickFolder": "Open folder"
   }
 }
