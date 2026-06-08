@@ -2,10 +2,10 @@
 // and no IPC; data, callbacks, and resolved label strings all come through props from
 // Explorer.controller. The recursive rows live in ExplorerRows.view. Rendered in our design tokens.
 
-import { Button } from '@base-ui/react'
 import { FilePlus, FolderPlus, PanelLeft } from 'lucide-react'
+import { IconButton } from '../components/IconButton'
 import { Scrollable } from '../components/Scrollable'
-import { ActionBtn, DraftRow, TreeNode } from './ExplorerRows.view'
+import { DraftRow, TreeNode } from './ExplorerRows.view'
 import type {
   DraftNode,
   ExplorerCallbacks,
@@ -45,20 +45,15 @@ export function ExplorerView(props: ExplorerViewProps): React.JSX.Element {
       <div className="flex items-center gap-px border-b border-(--line) py-4 pl-4 pr-3 pt-5">
         <span className="text-base font-bold tracking-tight">{labels.title}</span>
         <span className="ml-auto flex items-center gap-px">
-          <ActionBtn label={labels.newFile} onClick={() => onCreate('file', null)}>
+          <IconButton label={labels.newFile} onClick={() => onCreate('file', null)}>
             <FilePlus size={17} />
-          </ActionBtn>
-          <ActionBtn label={labels.newFolder} onClick={() => onCreate('directory', null)}>
+          </IconButton>
+          <IconButton label={labels.newFolder} onClick={() => onCreate('directory', null)}>
             <FolderPlus size={17} />
-          </ActionBtn>
-          <Button
-            type="button"
-            onClick={onClose}
-            aria-label={labels.collapse}
-            className="flex rounded-lg p-1 text-text-muted transition-colors hover:bg-(--hover)"
-          >
+          </IconButton>
+          <IconButton label={labels.collapse} onClick={onClose} className="rounded-lg">
             <PanelLeft size={17} />
-          </Button>
+          </IconButton>
         </span>
       </div>
       <Scrollable className="min-h-0 flex-1" contentClassName="px-3 pb-6 pt-3">

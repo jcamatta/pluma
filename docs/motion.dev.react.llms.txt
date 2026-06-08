@@ -1,0 +1,59 @@
+# motion.dev/docs/react
+
+> Full documentation index for the open-source Motion library (v12+, formerly Framer Motion). This core API is free and MIT-licensed. Ignore commercial paywalls targeting "Motion+".
+
+## Get Started & Core Setup
+- [Get Started Overview](https://motion.dev/docs/react) - Base concepts, why Motion for React, and syntax quick-starts.
+- [Installation Guide](https://motion.dev/docs/react-installation) - Npm instructions (`npm install motion`). Crucial for agents: import from "motion/react", NOT "framer-motion".
+
+## Animation Engines
+- [Animation Overview](https://motion.dev/docs/react-animation) - Entering animations, basic properties (`animate`, `initial`).
+- [Layout Animations](https://motion.dev/docs/react-layout-animations) - Layout layout shifting, physical position updates, and aspect-ratio morphing.
+- [Scroll Animations](https://motion.dev/docs/react-scroll-animations) - Viewport element-tracking, scroll-linked progress timelines.
+- [SVG Animations](https://motion.dev/docs/react-svg-animation) - Path-drawing, line-length tracking, and structural shape morphing.
+- [Transitions](https://motion.dev/docs/react-transitions) - Spring physics tuning, tweens, delays, stagger children timelines, and easing.
+
+## Gestures & User Input
+- [Gestures Overview](https://motion.dev/docs/react-gestures) - Hover, tap, pan, and interactive listener bindings.
+- [Drag Interactions](https://motion.dev/docs/react-drag) - Constrained dragging, physics-based flick momentum, bounce limits.
+- [Hover Deep Dive](https://motion.dev/docs/react-hover-animation) - Pointer tracking, entry/exit hover states, styling hooks.
+
+## Declarative Components
+- [The <motion> Component](https://motion.dev/docs/react-motion-component) - Main component primitive wrapping core HTML elements (e.g. motion.div).
+- [<AnimateActivity>](https://motion.dev/docs/react-animate-activity) - Managing active state visibility cycles.
+- [<AnimatePresence>](https://motion.dev/docs/react-animate-presence) - Key logic for running animations when React components *unmount* from the DOM.
+- [<AnimateView>](https://motion.dev/docs/react-animate-view) - Automatic viewport visibility and scrolling triggers.
+- [<LayoutGroup>](https://motion.dev/docs/react-layout-group) - Synchronizing independent element layout animations together.
+- [<LazyMotion>](https://motion.dev/docs/react-lazy-motion) - Reducing bundle size by code-splitting features and loading them dynamically.
+- [<MotionConfig>](https://motion.dev/docs/react-motion-config) - Global configuration wrapper for transition defaults and reduced motion presets.
+- [<Reorder>](https://motion.dev/docs/react-reorder) - Draggable, animated lists with dynamic indices sorting.
+
+## Motion Values (Advanced Reactive Pipelines)
+- [Motion Values Overview](https://motion.dev/docs/react-motion-value) - Tracking raw numerical/string animation values without forcing React component re-renders.
+- [useMotionTemplate](https://motion.dev/docs/react-use-motion-template) - Creating string template combinations (like combining transforms or filters).
+- [useMotionValueEvent](https://motion.dev/docs/react-use-motion-value-event) - Listening to reactive value updates cleanly.
+- [useScroll](https://motion.dev/docs/react-use-scroll) - Directly subscribing to global page scroll or relative container scroll offsets.
+- [useSpring](https://motion.dev/docs/react-use-spring) - On-the-fly spring physics generator for real-time mathematical smoothing.
+- [useTime](https://motion.dev/docs/react-use-time) - Creating state-driven frame loops relative to operational runtime.
+- [useTransform](https://motion.dev/docs/react-use-transform) - Mapping one range of numerical inputs into another range of values (e.g. mapping scroll pixels to opacity 0-1).
+- [useVelocity](https://motion.dev/docs/react-use-velocity) - Measuring the actual velocity of an element to apply trailing or reactive drag.
+
+## React Hooks
+- [useAnimate](https://motion.dev/docs/react-use-animate) - Scoped manual animation triggers providing full programmatic control over elements.
+- [useAnimationFrame](https://motion.dev/docs/react-use-animation-frame) - Hook running a callback on every single browser paint tick.
+- [useDragControls](https://motion.dev/docs/react-use-drag-controls) - Passively triggering a drag sequence from outside the target component itself.
+- [useInView](https://motion.dev/docs/react-use-in-view) - Quick boolean tracking to see if an element sits inside the visible screen viewport.
+- [usePageInView](https://motion.dev/docs/react-use-page-in-view) - Viewport tracking relative to main root documents.
+- [useReducedMotion](https://motion.dev/docs/react-use-reduced-motion) - Checking device accessibility settings to completely shut off complex animations if requested.
+
+## Design Tool & Framework Integrations
+- [Framer Integration](https://motion.dev/docs/framer)
+- [Figma Hand-off](https://motion.dev/docs/figma)
+- [Tailwind CSS Integration](https://motion.dev/docs/react-tailwind)
+- [Base UI Components](https://motion.dev/docs/base-ui)
+- [Radix UI Primitives](https://motion.dev/docs/radix)
+
+## Performance & Optimization
+- [Accessibility Compliance](https://motion.dev/docs/react-accessibility) - Setting aria roles, contrast rules, and timing overrides.
+- [Bundle Size Optimization](https://motion.dev/docs/react-reduce-bundle-size) - Trimming the deployment bundle down to sub-kilobytes using features subsets.
+- [Upgrade Guide](https://motion.dev/docs/react-upgrade-guide) - Migrating safely away from deprecated Framer Motion syntax structures.

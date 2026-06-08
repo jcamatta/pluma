@@ -2,39 +2,10 @@
 // the inline draft row). Pure — no hooks, no IPC; everything comes through the RowContext from the
 // parent ExplorerView. Rendered in our design tokens.
 
-import { Button } from '@base-ui/react'
 import { ChevronDown, FilePlus, FileText, Folder, FolderPlus, Trash2 } from 'lucide-react'
-import { motion } from 'motion/react'
+import { IconButton } from '../components/IconButton'
 import { NameInput } from './NameInput'
 import type { RowContext, TreeNodeModel } from './explorer-view-types'
-
-function ActionBtn({
-  label,
-  onClick,
-  children
-}: {
-  readonly label: string
-  readonly onClick: () => void
-  readonly children: React.ReactNode
-}): React.JSX.Element {
-  return (
-    <Button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation()
-        onClick()
-      }}
-      aria-label={label}
-      title={label}
-      className="flex rounded-md p-1 text-text-muted transition-colors hover:bg-(--hover) hover:text-text-primary"
-      render={
-        <motion.button whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}>
-          {children}
-        </motion.button>
-      }
-    />
-  )
-}
 
 function RowActions({ children }: { readonly children: React.ReactNode }): React.JSX.Element {
   // Hidden until the row is hovered/focused; the `.row-actions` rule in App.css drives the reveal.
@@ -99,18 +70,27 @@ function FolderRow({
           {node.name}
         </span>
         <RowActions>
-          <ActionBtn label={ctx.labels.newFile} onClick={() => ctx.onCreate('file', node.path)}>
+          <IconButton
+            label={ctx.labels.newFile}
+            onClick={() => ctx.onCreate('file', node.path)}
+            stopPropagation
+          >
             <FilePlus size={15} />
-          </ActionBtn>
-          <ActionBtn
+          </IconButton>
+          <IconButton
             label={ctx.labels.newFolder}
             onClick={() => ctx.onCreate('directory', node.path)}
+            stopPropagation
           >
             <FolderPlus size={15} />
-          </ActionBtn>
-          <ActionBtn label={ctx.labels.deleteFolder} onClick={() => ctx.onDelete(node.path)}>
+          </IconButton>
+          <IconButton
+            label={ctx.labels.deleteFolder}
+            onClick={() => ctx.onDelete(node.path)}
+            stopPropagation
+          >
             <Trash2 size={15} />
-          </ActionBtn>
+          </IconButton>
         </RowActions>
       </div>
       {node.open && (
@@ -160,9 +140,13 @@ function FileRow({
         {node.name}
       </span>
       <RowActions>
-        <ActionBtn label={ctx.labels.deleteFile} onClick={() => ctx.onDelete(node.path)}>
+        <IconButton
+          label={ctx.labels.deleteFile}
+          onClick={() => ctx.onDelete(node.path)}
+          stopPropagation
+        >
           <Trash2 size={15} />
-        </ActionBtn>
+        </IconButton>
       </RowActions>
     </div>
   )
@@ -183,4 +167,4 @@ function TreeNode({
   return <FileRow node={node} depth={depth} ctx={ctx} />
 }
 
-export { TreeNode, DraftRow, ActionBtn }
+export { TreeNode, DraftRow }

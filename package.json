@@ -62,12 +62,14 @@
     "@tiptap/markdown": "^3.26.0",
     "@tiptap/pm": "^3.26.0",
     "@tiptap/react": "^3.26.0",
+    "clsx": "^2.1.1",
     "diff": "^9.0.0",
     "effect": "^3.21.3",
     "i18next": "^26.3.1",
     "lucide-react": "^1.17.0",
     "motion": "^12.40.0",
-    "react-i18next": "^17.0.8"
+    "react-i18next": "^17.0.8",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@effect/eslint-plugin": "^0.3.2",
