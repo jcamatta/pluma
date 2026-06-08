@@ -38,7 +38,7 @@ export const App = (): React.JSX.Element => {
       )}
 
       <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-surface-3">
-        <EditorController content={content} />
+        <EditorController path={selected} content={content} />
         {!explorerOpen && (
           <EdgeTab
             side="left"
