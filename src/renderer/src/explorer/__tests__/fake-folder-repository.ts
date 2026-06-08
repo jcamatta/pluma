@@ -9,6 +9,7 @@ import type { FolderEntry } from '../../../../shared/ipc/ipc-contract/folder'
 import type { FolderChange } from '../../../../shared/ipc/ipc-event-contract/folder'
 import type { FolderReaderPort } from '../ports/folder-reader.port'
 import type { FolderWriterPort } from '../ports/folder-writer.port'
+import type { FileReaderPort } from '../ports/file-reader.port'
 import type { Repositories } from '../RepositoriesContext'
 
 type FakeRepository = Repositories & {
@@ -18,7 +19,8 @@ type FakeRepository = Repositories & {
 }
 
 function createFakeFolderRepository(
-  listings: Readonly<Record<string, readonly FolderEntry[]>>
+  listings: Readonly<Record<string, readonly FolderEntry[]>>,
+  files: Readonly<Record<string, string>> = {}
 ): FakeRepository {
   const subscribers = new Set<(change: FolderChange) => void>()
   const created: string[] = []
@@ -31,6 +33,17 @@ function createFakeFolderRepository(
         entries
           ? { ok: true, value: entries }
           : { ok: false, error: { _tag: 'FolderNotFound', path } }
+      return Promise.resolve(result)
+    }
+  }
+
+  const fileReader: FileReaderPort = {
+    read: (path) => {
+      const content = files[path]
+      const result: Result<string, { _tag: 'FileNotFound'; path: string }> =
+        content === undefined
+          ? { ok: false, error: { _tag: 'FileNotFound', path } }
+          : { ok: true, value: content }
       return Promise.resolve(result)
     }
   }
@@ -55,6 +68,7 @@ function createFakeFolderRepository(
   return {
     reader,
     writer,
+    fileReader,
     emit: (change) => subscribers.forEach((cb) => cb(change)),
     created: () => created,
     deleted: () => deleted

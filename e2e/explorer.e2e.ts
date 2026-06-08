@@ -5,6 +5,7 @@
 // @e2e feature:explorer
 // @e2e operation:folder.pick operation:folder.list operation:folder.create operation:folder.delete
 // @e2e operation:folder.watch operation:folder.changed operation:file.create operation:file.delete
+// @e2e operation:file.read
 
 import { join } from 'node:path'
 import { access, readdir, writeFile, rm } from 'node:fs/promises'
@@ -59,6 +60,29 @@ test('creates a file through the UI and selects it', async () => {
       await app.close()
     }
   })
+})
+
+test('reads a selected file into the editor', async () => {
+  await withTempFolder(
+    [{ name: 'chapter-1.md', content: '# Chapter One\n\nOnce upon a time.' }],
+    async (folder) => {
+      const { app, window } = await launchApp()
+      try {
+        await stubFolderPicker(app, folder)
+        await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+
+        const row = window.getByTestId(`file-row:${join(folder, 'chapter-1.md')}`)
+        await expect(row).toBeVisible()
+        await row.click()
+
+        // Selecting the file must read its real content through the file:read IPC and render it.
+        await expect(window.locator('.ProseMirror h1')).toHaveText('Chapter One')
+        await expect(window.locator('.ProseMirror')).toContainText('Once upon a time.')
+      } finally {
+        await app.close()
+      }
+    }
+  )
 })
 
 test('reflects an externally created file via the OS watcher', async () => {

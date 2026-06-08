@@ -23,7 +23,8 @@ const OPERATIONS = [
   'folder.watch',
   'folder.changed',
   'file.create',
-  'file.delete'
+  'file.delete',
+  'file.read'
 ] as const
 
 type Feature = (typeof FEATURES)[number]

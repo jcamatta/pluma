@@ -9,17 +9,27 @@ import {
   FOLDER_LIST_CHANNEL,
   FOLDER_WATCH_CHANNEL
 } from '../../../../shared/ipc/ipc-contract/folder'
-import { FILE_CREATE_CHANNEL, FILE_DELETE_CHANNEL } from '../../../../shared/ipc/ipc-contract/file'
+import {
+  FILE_CREATE_CHANNEL,
+  FILE_DELETE_CHANNEL,
+  FILE_READ_CHANNEL
+} from '../../../../shared/ipc/ipc-contract/file'
 import { FOLDER_CHANGED_CHANNEL } from '../../../../shared/ipc/ipc-event-contract/folder'
 import type { FolderReaderPort } from '../ports/folder-reader.port'
 import type { FolderWriterPort } from '../ports/folder-writer.port'
+import type { FileReaderPort } from '../ports/file-reader.port'
 
 function createFolderRepository(): {
   readonly reader: FolderReaderPort
   readonly writer: FolderWriterPort
+  readonly fileReader: FileReaderPort
 } {
   const reader: FolderReaderPort = {
     list: (path) => window.api.invoke(FOLDER_LIST_CHANNEL, path)
+  }
+
+  const fileReader: FileReaderPort = {
+    read: (path) => window.api.invoke(FILE_READ_CHANNEL, path)
   }
 
   const writer: FolderWriterPort = {
@@ -31,7 +41,7 @@ function createFolderRepository(): {
     onChange: (callback) => window.api.on(FOLDER_CHANGED_CHANNEL, callback)
   }
 
-  return { reader, writer }
+  return { reader, writer, fileReader }
 }
 
 export { createFolderRepository }

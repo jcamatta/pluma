@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditorController } from './editor/Editor.controller'
 import { ExplorerController } from './explorer/Explorer.controller'
+import { useFileContent } from './explorer/useFileContent'
 import { LauncherController } from './launcher/Launcher.controller'
 import { PanelLeft } from 'lucide-react'
 import { EdgeTab } from './components/EdgeTab'
@@ -16,6 +17,8 @@ export const App = (): React.JSX.Element => {
   const [root, setRoot] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [explorerOpen, setExplorerOpen] = useState(true)
+  const fileContent = useFileContent(selected)
+  const content = fileContent && fileContent.ok ? fileContent.value : null
 
   if (root === null) {
     return <LauncherController onPicked={setRoot} />
@@ -35,7 +38,7 @@ export const App = (): React.JSX.Element => {
       )}
 
       <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-surface-3">
-        <EditorController />
+        <EditorController content={content} />
         {!explorerOpen && (
           <EdgeTab
             side="left"

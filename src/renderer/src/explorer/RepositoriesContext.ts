@@ -6,10 +6,12 @@ import { createContext, useContext } from 'react'
 import { invariant } from '../../../shared/invariant'
 import type { FolderReaderPort } from './ports/folder-reader.port'
 import type { FolderWriterPort } from './ports/folder-writer.port'
+import type { FileReaderPort } from './ports/file-reader.port'
 
 interface Repositories {
   readonly reader: FolderReaderPort
   readonly writer: FolderWriterPort
+  readonly fileReader: FileReaderPort
 }
 
 const RepositoriesContext = createContext<Repositories | undefined>(undefined)
