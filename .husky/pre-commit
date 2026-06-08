@@ -1,4 +1,1 @@
-npm run format
-git add -u
-npm run lint
-npm run test
+npx lint-staged
