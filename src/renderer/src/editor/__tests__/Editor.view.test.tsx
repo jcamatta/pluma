@@ -1,23 +1,30 @@
-// EditorView renders the editor content and applies the zoom CSS variable. Pure-props render.
+// EditorView is the editor panel: it composes the top bar (file name + settings) above the manuscript
+// surface. Pure-props render.
 
 import { createRef } from 'react'
 import { describe, expect, it } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { EditorView } from '../Editor.view'
 import { withEditor } from '../extensions/__tests__/editor-test-harness'
 
 describe('EditorView', () => {
-  it('renders the editor surface with the zoom variable applied', () => {
+  it('renders the top bar with the file name and the manuscript surface', () => {
     withEditor('hello', (editor) => {
       const containerRef = createRef<HTMLDivElement>()
 
       const { container } = render(
-        <EditorView editor={editor} zoom={1.25} containerRef={containerRef} />
+        <EditorView
+          editor={editor}
+          zoom={1}
+          containerRef={containerRef}
+          fileName="Act I"
+          settingsLabel="Settings"
+          onOpenSettings={() => undefined}
+        />
       )
 
-      const zoomContainer = container.querySelector('[style*="--editor-zoom"]')
-      expect(zoomContainer).not.toBeNull()
-      expect(zoomContainer?.getAttribute('style')).toContain('1.25')
+      expect(screen.getByText('Act I')).toBeInTheDocument()
+      expect(screen.getByLabelText('Settings')).toBeInTheDocument()
       expect(container.querySelector('.ProseMirror')).not.toBeNull()
     })
   })

@@ -29,6 +29,9 @@ test('edits a file and autosaves it back to disk', async () => {
         const surface = window.locator('.ProseMirror')
         await expect(surface.locator('h1')).toHaveText('Chapter One')
 
+        // The top bar shows the open file's name (basename without the .md extension).
+        await expect(window.getByText('chapter-1', { exact: true })).toBeVisible()
+
         // Type at the end of the document; the debounced autosave must persist it to the real file.
         await surface.click()
         await window.keyboard.press('End')

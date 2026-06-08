@@ -51,4 +51,19 @@ describe('App', () => {
       expect(document.querySelector('.ProseMirror')).not.toBeNull()
     })
   })
+
+  it('mounts the editor top bar in the editor panel', async () => {
+    installFakeWindowApi({
+      [FOLDER_PICK_CHANNEL]: () => ({ ok: true, value: '/workspace' }),
+      [FOLDER_LIST_CHANNEL]: () => ({ ok: true, value: [{ name: 'Act I.md', type: 'file' }] })
+    })
+    renderApp()
+
+    fireEvent.click(screen.getByText('Open Folder…'))
+
+    // No file selected yet: the bar shows the untitled fallback and exposes the settings trigger. The
+    // basename-from-path derivation is covered by editor-file-name-logic and Editor.view tests.
+    expect(await screen.findByText('Untitled')).toBeInTheDocument()
+    expect(screen.getByLabelText('Settings')).toBeInTheDocument()
+  })
 })

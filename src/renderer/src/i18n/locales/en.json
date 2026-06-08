@@ -1,6 +1,8 @@
 {
   "appTitle": "Pluma",
   "editor": {
+    "untitled": "Untitled",
+    "settings": "Settings",
     "placeholder": {
       "heading": "Heading {{level}}",
       "quote": "Quote",

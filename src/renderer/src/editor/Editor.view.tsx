@@ -1,32 +1,36 @@
-// Pure editor layout: the zoom container plus the scrollable manuscript surface. Receives the editor
-// instance, the current zoom, and the container ref from its controller; holds no hooks of its own.
+// The editor panel layout: the top bar (file name + settings) above the manuscript surface, matching the
+// design's editor pane. Pure — every value comes through props from the controller, and it holds no hooks
+// of its own. The two pieces it composes, EditorTopBar and EditorManuscript, own their own markup.
 
-import { EditorContent, EditorContext, type Editor as TiptapEditor } from '@tiptap/react'
-import { type CSSProperties } from 'react'
-import { Scrollable } from '../components/Scrollable'
+import { type Editor as TiptapEditor } from '@tiptap/react'
+import { EditorTopBar } from './EditorTopBar'
+import { EditorManuscript } from './EditorManuscript'
 
 type EditorViewProps = {
   readonly editor: TiptapEditor
   readonly zoom: number
   readonly containerRef: React.RefObject<HTMLDivElement | null>
+  readonly fileName: string
+  readonly settingsLabel: string
+  readonly onOpenSettings: () => void
 }
 
-type ZoomStyle = CSSProperties & { readonly '--editor-zoom': number }
-
-export function EditorView({ editor, zoom, containerRef }: EditorViewProps): React.JSX.Element {
-  const zoomStyle: ZoomStyle = { '--editor-zoom': zoom }
-
+export function EditorView({
+  editor,
+  zoom,
+  containerRef,
+  fileName,
+  settingsLabel,
+  onOpenSettings
+}: EditorViewProps): React.JSX.Element {
   return (
-    <EditorContext.Provider value={{ editor }}>
-      <div ref={containerRef} className="flex h-full min-h-0" style={zoomStyle}>
-        <Scrollable
-          className="min-h-0 flex-1"
-          contentClassName="flex min-h-full px-10 py-10"
-          scrollbarClassName="py-4"
-        >
-          <EditorContent className="flex min-h-full w-full min-w-0 flex-col" editor={editor} />
-        </Scrollable>
-      </div>
-    </EditorContext.Provider>
+    <>
+      <EditorTopBar
+        fileName={fileName}
+        settingsLabel={settingsLabel}
+        onOpenSettings={onOpenSettings}
+      />
+      <EditorManuscript editor={editor} zoom={zoom} containerRef={containerRef} />
+    </>
   )
 }
