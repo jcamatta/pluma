@@ -6,7 +6,7 @@ Do not invent business behavior. If a business rule is not explicit in the code 
 
 ### Working agreement
 
-- **Definition of done.** A task is done only when `npm run lint`, `npm run test`, `npm run type-coverage`, and `npm run build` all pass. Run them yourself and report them green before saying a task is complete. Never declare something finished without the checks passing.
+- **Definition of done.** A task is done only when `npm run lint`, `npm run test`, `npm run type-coverage`, and `npm run build` all pass. Run them yourself and report them green before saying a task is complete. Never declare something finished without the checks passing. `npm run test` includes the **e2e coverage audit** (see "End-to-end testing"), so a new UI feature or IPC channel is not done until the manifest and its real-app spec exist. For any task that ships or changes user-facing UI, also run `npm run test:e2e` (the real desktop-app suite) and report it green — it is the gate for UI work even though, being slow, it is not in the pre-push hook.
 - **Minimal diff.** Change only what the task requires. Do not reformat, rename, or refactor unrelated code, and do not touch files outside the scope of the request.
 - **Never weaken the checks to pass.** Do not delete or skip tests, loosen an assertion, lower a coverage threshold, or relax a lint rule to make a build go green. If a check fails, fix the cause. If a rule genuinely needs to change, stop and ask.
 - **No new dependencies without approval.** Do not add a runtime or dev dependency without asking first, and justify why each one is needed. This is the counterpart to YAGNI.
@@ -328,6 +328,25 @@ Available Base UI components (fetch the relevant page before using one you have 
 
 Use lucide-react icons for common UI iconography when an icon exists.
 
+### Animation (Motion)
+
+All animation and interactivity uses the **Motion** library (open-source, formerly Framer Motion). We want motion everywhere — even simple interactions (hovers, taps, mounts/unmounts, layout shifts) should be animated, not static.
+
+**Never assume you know the Motion API. Consult the docs before writing any animation.** The reference index is [docs/motion.dev.react.llms.txt](docs/motion.dev.react.llms.txt) — it lists every Motion page; fetch the specific page you need before using a feature for the first time.
+
+**New Motion syntax only — never old Framer Motion v11.**
+
+- Import from `motion/react`, **never** `framer-motion`. The package is `motion`.
+- Use the current open-source API (v12+). Do not reach for deprecated v11 patterns; when unsure whether something changed, check the [Upgrade Guide](https://motion.dev/docs/react-upgrade-guide).
+
+**Core patterns** (see the docs for full detail):
+
+- **Tailwind + Motion** ([guide](https://motion.dev/docs/react-tailwind)): static and responsive styling stays in `className`; animation lives in Motion props (`initial`, `animate`, `exit`, `whileHover`, `whileTap`, `layout`). Do not put `transition-*` utility classes on a Motion-animated element — Motion's inline styles and Tailwind transitions conflict.
+- **Base UI + Motion** ([guide](https://motion.dev/docs/base-ui)): animate Base UI primitives through their `render` prop, swapping the default element for a `motion.*` component (e.g. `<Menu.Trigger render={<motion.button … />} />`). For exit animations, wrap in `AnimatePresence`; for primitives that own their own mounting (Popover, Context Menu), hoist `open`/`onOpenChange`, add `keepMounted` to the Portal, and conditionally render it inside `AnimatePresence`. Animate `opacity`/`transform`/`filter`/`clipPath` so exits run hardware-accelerated and unmount cleanly.
+- **Accessibility:** respect reduced-motion (`useReducedMotion` / `MotionConfig`) — see the [accessibility page](https://motion.dev/docs/react-accessibility).
+
+Motion lives in the renderer and is animation, not data — it sits in views/plain components and obeys all the rules above (no `as`, design tokens only, one export per file).
+
 ### Translation
 
 Always use the `t` hook from react-i18next for user-facing text when the surrounding code is localized or the text belongs to product UI.
@@ -343,6 +362,35 @@ Because use cases depend only on ports, test them by providing in-memory or fake
 Pure calculations should also be tested directly; they need no setup. Adapter tests are the place to exercise real I/O against the resource they wrap (e.g. a temp directory for a filesystem adapter).
 
 Tests live in a `__tests__/` folder beside the code under test.
+
+## End-to-end testing
+
+Every user-facing feature and every user-triggered operation must be covered by an end-to-end test that drives the **real desktop app**. This is non-negotiable and it is mechanically enforced (see the audit below). Unit/jsdom tests (Vitest) cover logic, views, hooks, and use cases; e2e covers the app as a user actually uses it.
+
+### Drive the real app — never mock `window.api`
+
+- e2e uses **Playwright's Electron driver** (`_electron.launch`) against the **built** app (`out/main/index.js`). This runs the real main process, the real preload, the real `window.api`/IPC, the real use cases, and the real OS watcher. A spec interacts with the first window exactly as a user would.
+- **Do not mock or stub `window.api`, IPC, the filesystem, or any use case in e2e.** Mocking the wire would test a fiction and would not reflect reality. If you find yourself wanting to fake the backend in an e2e test, that test belongs in Vitest instead.
+- **The one and only sanctioned stub is a native OS dialog** a human would otherwise click and Playwright cannot drive (e.g. the folder chooser). Override it in the **main process** via `electronApp.evaluate` (see `e2e/support/stub-folder-picker.ts`). Everything the stub feeds into — the real `FolderPicker` port, `list-folder`, the watcher — still runs for real. Do not extend this exception to anything that is application behavior.
+- Real resources are created on disk and cleaned up: use a `withTempFolder(seeds, (folder) => …)`-style helper (no `let`), and always `await app.close()` in a `finally`.
+
+### Layout and naming
+
+- Specs and harness live in `e2e/`. Spec files are named `*.e2e.ts`; shared helpers live in `e2e/support/`. The e2e folder is its own TypeScript project (`tsconfig.e2e.json`, run by `npm run typecheck:e2e`) and has its own ESLint block (`eslint/e2e.mjs`) — it is **not** renderer/main source, so the view/controller/IPC rules do not apply, but the hard bans (no escape hatches, no `as`, no disable directives, no `let`) still do.
+- `npm run test:e2e` runs the real-app suite (Playwright). It is slow (it builds and launches Electron) and is run on demand / for UI work, **not** in the pre-push hook.
+
+### Locators
+
+Prefer **role/label locators** (`getByRole('button', { name: … })`, `getByPlaceholder`, `getByText`) over test ids — the UI is already accessibility-labelled (`aria-label`, placeholders via `t`), and role locators double as an accessibility check. Add a **`data-testid`** only when there is no stable accessible handle (e.g. a container, or a row that must be located by its file path). Test-id convention: `feature-thing:key` (e.g. `file-row:<absolute-path>`, `explorer`). Never assert on Tailwind/structural classes except where a class encodes state with no accessible equivalent.
+
+### Forced coverage (the audit)
+
+There is no honest line-coverage metric for an externally driven Electron process, so we enforce **existence and a declared claim** instead, and let the real-app spec do the validating:
+
+- `e2e/coverage-manifest.ts` is the single source of truth: it lists every **shipped** feature (`FEATURES`) and every **shipped** user-facing operation (`OPERATIONS`, one id per real IPC channel a user can trigger).
+- Each spec declares what it covers with `@e2e` header tags: `@e2e feature:<id>` and `@e2e operation:<id>`.
+- `e2e/__tests__/audit.test.ts` (a fast Vitest test, part of `npm run test`) fails if any manifest id is not claimed by some spec.
+- **Do not pre-list unbuilt features in the manifest.** When a feature or IPC channel ships, the _same change_ adds its id(s) to the manifest **and** a real-app spec that claims and exercises them. This keeps the gate green incrementally while making it impossible to ship UI or a new channel without an e2e test. Adding a manifest id without a spec (or vice versa) turns the gate red — that is the point; satisfy it by writing the real spec, never by removing the id.
 
 ## Commits
 

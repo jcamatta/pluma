@@ -15,7 +15,11 @@ export default defineConfig({
         test: {
           name: 'node',
           environment: 'node',
-          include: ['src/main/**/*.{test,spec}.ts', 'src/preload/**/*.{test,spec}.ts']
+          include: [
+            'src/main/**/*.{test,spec}.ts',
+            'src/preload/**/*.{test,spec}.ts',
+            'e2e/**/*.{test,spec}.ts'
+          ]
         }
       },
       {

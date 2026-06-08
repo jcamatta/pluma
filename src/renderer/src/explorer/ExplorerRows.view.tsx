@@ -4,6 +4,7 @@
 
 import { Button } from '@base-ui/react'
 import { ChevronDown, FilePlus, FileText, Folder, FolderPlus, Trash2 } from 'lucide-react'
+import { motion } from 'motion/react'
 import { NameInput } from './NameInput'
 import type { RowContext, TreeNodeModel } from './explorer-view-types'
 
@@ -26,9 +27,12 @@ function ActionBtn({
       aria-label={label}
       title={label}
       className="flex rounded-md p-1 text-text-muted transition-colors hover:bg-(--hover) hover:text-text-primary"
-    >
-      {children}
-    </Button>
+      render={
+        <motion.button whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}>
+          {children}
+        </motion.button>
+      }
+    />
   )
 }
 

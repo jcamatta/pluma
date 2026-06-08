@@ -20,6 +20,7 @@ import { comments } from './eslint/comments.mjs'
 import { effect } from './eslint/effect.mjs'
 import { react } from './eslint/react.mjs'
 import { tailwindClassnames } from './eslint/tailwind-classnames.mjs'
+import { e2e } from './eslint/e2e.mjs'
 
 export default defineConfig(
   // Report (and fail on) eslint-disable directives that are not actually suppressing anything.
@@ -41,6 +42,7 @@ export default defineConfig(
   views,
   noDirectIpcInComponents,
   allowThrowInInvariant,
+  e2e,
   // The lint config modules themselves are plain-JS tooling, not application source: a `.mjs` value
   // cannot carry a TS return-type annotation, so explicit-function-return-type (meant to document app
   // API boundaries) does not apply to the local rule helpers here. Scoped off for these files only,
