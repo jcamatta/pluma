@@ -5,7 +5,12 @@
 
 import type { Result } from '../ipc-result'
 import type { AgentAbortContract, AgentRunContract } from './agent'
-import type { FileCreateContract, FileDeleteContract, FileWriteContract } from './file'
+import type {
+  FileCreateContract,
+  FileDeleteContract,
+  FileWriteContract,
+  FileReadContract
+} from './file'
 import type {
   FolderCreateContract,
   FolderDeleteContract,
@@ -18,6 +23,7 @@ type IpcContract =
   | FileCreateContract
   | FileDeleteContract
   | FileWriteContract
+  | FileReadContract
   | FolderCreateContract
   | FolderDeleteContract
   | FolderListContract

@@ -7,6 +7,7 @@ import type { IpcContractDefinition } from './types'
 const FILE_CREATE_CHANNEL = 'file:create'
 const FILE_DELETE_CHANNEL = 'file:delete'
 const FILE_WRITE_CHANNEL = 'file:write'
+const FILE_READ_CHANNEL = 'file:read'
 
 interface FileCreateError {
   readonly _tag: 'InvalidPath' | 'FileAlreadyExists' | 'DirectoryNotFound' | 'FileWriteFailed'
@@ -20,6 +21,11 @@ interface FileDeleteError {
 
 interface FileWriteError {
   readonly _tag: 'InvalidPath' | 'FileNotFound' | 'FileWriteFailed'
+  readonly path: string
+}
+
+interface FileReadError {
+  readonly _tag: 'InvalidPath' | 'FileNotFound' | 'FileReadFailed'
   readonly path: string
 }
 
@@ -44,14 +50,24 @@ type FileWriteContract = IpcContractDefinition<
   FileWriteError
 >
 
+type FileReadContract = IpcContractDefinition<
+  typeof FILE_READ_CHANNEL,
+  string,
+  string,
+  FileReadError
+>
+
 export {
   FILE_CREATE_CHANNEL,
   FILE_DELETE_CHANNEL,
   FILE_WRITE_CHANNEL,
+  FILE_READ_CHANNEL,
   type FileCreateError,
   type FileDeleteError,
   type FileWriteError,
+  type FileReadError,
   type FileCreateContract,
   type FileDeleteContract,
-  type FileWriteContract
+  type FileWriteContract,
+  type FileReadContract
 }

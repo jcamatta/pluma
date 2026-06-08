@@ -16,7 +16,8 @@ import {
 import {
   FILE_CREATE_CHANNEL,
   FILE_DELETE_CHANNEL,
-  FILE_WRITE_CHANNEL
+  FILE_WRITE_CHANNEL,
+  FILE_READ_CHANNEL
 } from '../../shared/ipc/ipc-contract/file'
 import {
   FOLDER_CREATE_CHANNEL,
@@ -35,6 +36,7 @@ import { handleRunAgent } from './agent/run-agent-handler'
 import { handleCreateFile } from './file/create-file-handler'
 import { handleDeleteFile } from './file/delete-file-handler'
 import { handleWriteFile } from './file/write-file-handler'
+import { handleReadFile } from './file/read-file-handler'
 import { handleCreateFolder } from './folder/create-folder-handler'
 import { handleDeleteFolder } from './folder/delete-folder-handler'
 import { handleListFolder } from './folder/list-folder-handler'
@@ -47,6 +49,7 @@ const registerIpc = (): void => {
   ipcMain.handle(FILE_WRITE_CHANNEL, (_event, payload: { path: string; content: string }) =>
     handleWriteFile(payload.path, payload.content)
   )
+  ipcMain.handle(FILE_READ_CHANNEL, (_event, path: string) => handleReadFile(path))
   ipcMain.handle(FOLDER_CREATE_CHANNEL, (_event, path: string) => handleCreateFolder(path))
   ipcMain.handle(FOLDER_DELETE_CHANNEL, (_event, path: string) => handleDeleteFolder(path))
   ipcMain.handle(FOLDER_LIST_CHANNEL, (_event, path: string) => handleListFolder(path))
