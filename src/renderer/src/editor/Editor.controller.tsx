@@ -2,9 +2,9 @@
 // top bar (file name + settings) and the manuscript surface. useManuscriptEditor owns building the editor
 // and syncing it with the content prop — the markdown of the selected file (null when none is loaded).
 // useAutoSave persists edits back to the open file (path) with a debounce. The top bar's file name is
-// derived from path; opening the settings modal is a later task, so onOpenSettings is a no-op for now. The
-// editor is null until it finishes initializing on the client, so this renders nothing until it is ready.
-// Frontend tools attach here in a later step.
+// derived from path; onOpenSettings comes from the app shell, which owns the settings modal's open state.
+// The editor is null until it finishes initializing on the client, so this renders nothing until it is
+// ready. Frontend tools attach here in a later step.
 
 import { useTranslation } from 'react-i18next'
 import { useEditorZoom } from './useEditorZoom'
@@ -16,11 +16,13 @@ import { editorFileName } from './editor-file-name-logic'
 type EditorControllerProps = {
   readonly path: string | null
   readonly content: string | null
+  readonly onOpenSettings: () => void
 }
 
 export function EditorController({
   path,
-  content
+  content,
+  onOpenSettings
 }: EditorControllerProps): React.JSX.Element | null {
   const { t } = useTranslation()
   const editor = useManuscriptEditor(content)
@@ -36,7 +38,7 @@ export function EditorController({
       containerRef={containerRef}
       fileName={editorFileName(path, t('editor.untitled'))}
       settingsLabel={t('editor.settings')}
-      onOpenSettings={() => {}}
+      onOpenSettings={onOpenSettings}
     />
   )
 }

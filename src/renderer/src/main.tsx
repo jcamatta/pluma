@@ -13,6 +13,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { invariant } from '../../shared/invariant'
 import { App } from './App'
 import { RepositoriesProvider } from './explorer/RepositoriesProvider'
+import { initSettings } from './settings/settings'
+
+// Apply the stored theme before the first paint so the app does not flash the default palette.
+initSettings()
 
 const queryClient = new QueryClient()
 

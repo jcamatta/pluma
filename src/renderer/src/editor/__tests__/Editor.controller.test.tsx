@@ -15,7 +15,11 @@ function renderController(
 ): ReturnType<typeof render> {
   return render(
     <ReposHarness repos={repos}>
-      <EditorController path={props.path} content={props.content} />
+      <EditorController
+        path={props.path}
+        content={props.content}
+        onOpenSettings={() => undefined}
+      />
     </ReposHarness>
   )
 }

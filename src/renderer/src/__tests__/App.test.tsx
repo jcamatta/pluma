@@ -66,4 +66,18 @@ describe('App', () => {
     expect(await screen.findByText('Untitled')).toBeInTheDocument()
     expect(screen.getByLabelText('Settings')).toBeInTheDocument()
   })
+
+  it('opens the settings modal from the top-bar settings button', async () => {
+    installFakeWindowApi({
+      [FOLDER_PICK_CHANNEL]: () => ({ ok: true, value: '/workspace' }),
+      [FOLDER_LIST_CHANNEL]: () => ({ ok: true, value: [] })
+    })
+    renderApp()
+
+    fireEvent.click(screen.getByText('Open Folder…'))
+
+    fireEvent.click(await screen.findByLabelText('Settings'))
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('Appearance')).toBeInTheDocument()
+  })
 })

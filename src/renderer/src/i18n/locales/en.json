@@ -19,6 +19,17 @@
     "previewHeading": "The blank page\nawaits.",
     "preview": "Preview of the Pluma workspace"
   },
+  "settings": {
+    "title": "Settings",
+    "close": "Close settings",
+    "theme": {
+      "title": "Appearance",
+      "description": "Choose how Pluma looks.",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    }
+  },
   "explorer": {
     "title": "Files",
     "newFile": "New file",

@@ -32,7 +32,7 @@ function IconButton({
       aria-label={label}
       title={label}
       className={cn(
-        'flex rounded-md p-1 text-text-muted transition-colors hover:bg-(--hover) hover:text-text-primary',
+        'flex cursor-pointer rounded-md p-1 text-text-muted transition-colors hover:bg-(--hover) hover:text-text-primary',
         className
       )}
       render={

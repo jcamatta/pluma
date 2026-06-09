@@ -1,16 +1,20 @@
 @import 'tailwindcss';
 
 :root {
-  --surface-1: oklch(0.92 0 0);
-  --surface-2: oklch(0.94 0 0);
-  --surface-3: oklch(0.98 0 0);
+  /* Golden paper, not clinical white: warm chroma on the golden axis (hue 68°) and surface-3 pulled
+     under pure white so the page reads like warm cream rather than a lightbox. */
+  --surface-1: oklch(0.92 0.016 68);
+  --surface-2: oklch(0.95 0.018 68);
+  --surface-3: oklch(0.97 0.02 68);
 
-  --text-primary: oklch(0.4 0 0);
-  --text-secondary: oklch(0.54 0 0);
-  --text-muted: oklch(0.63 0 0);
-  --text-on-accent: #f4f2ed;
+  /* Ink as warm sepia rather than neutral gray. */
+  --text-primary: oklch(0.4 0.026 68);
+  --text-secondary: oklch(0.54 0.022 68);
+  --text-muted: oklch(0.63 0.018 68);
+  --text-on-accent: #f9f4ec;
 
-  --color-accent: oklch(0.55 0.04 250);
+  /* Terracotta/clay accent (the pluma-design #D97757 family) — sits with the golden warmth. */
+  --color-accent: oklch(0.64 0.13 47);
   --color-destructive: oklch(0.55 0.19 25);
   --color-success: oklch(0.55 0.13 150);
   --color-warning: oklch(0.62 0.13 70);
@@ -49,16 +53,17 @@
    data-theme="light" always wins, even on a dark OS. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --surface-1: oklch(0.2 0 0);
-    --surface-2: oklch(0.25 0 0);
-    --surface-3: oklch(0.31 0 0);
+    /* Warm golden charcoal, not flat black-gray: same golden axis (hue 68°) as light mode. */
+    --surface-1: oklch(0.2 0.012 68);
+    --surface-2: oklch(0.255 0.013 68);
+    --surface-3: oklch(0.31 0.014 68);
 
-    --text-primary: oklch(0.82 0 0);
-    --text-secondary: oklch(0.66 0 0);
-    --text-muted: oklch(0.54 0 0);
+    --text-primary: oklch(0.95 0.012 68);
+    --text-secondary: oklch(0.78 0.014 68);
+    --text-muted: oklch(0.62 0.014 68);
     --text-on-accent: #11100e;
 
-    --color-accent: oklch(0.7 0.05 250);
+    --color-accent: oklch(0.72 0.13 50);
     --color-destructive: oklch(0.64 0.19 25);
     --color-success: oklch(0.72 0.15 150);
     --color-warning: oklch(0.78 0.14 70);
@@ -74,16 +79,17 @@
 }
 
 :root[data-theme='dark'] {
-  --surface-1: oklch(0.2 0 0);
-  --surface-2: oklch(0.255 0 0);
-  --surface-3: oklch(0.31 0 0);
+  /* Warm golden charcoal, kept identical to the system-dark block above. */
+  --surface-1: oklch(0.2 0.012 68);
+  --surface-2: oklch(0.255 0.013 68);
+  --surface-3: oklch(0.31 0.014 68);
 
-  --text-primary: oklch(0.95 0 0);
-  --text-secondary: oklch(0.78 0 0);
-  --text-muted: oklch(0.62 0 0);
+  --text-primary: oklch(0.95 0.012 68);
+  --text-secondary: oklch(0.78 0.014 68);
+  --text-muted: oklch(0.62 0.014 68);
   --text-on-accent: #11100e;
 
-  --color-accent: oklch(0.7 0.05 250);
+  --color-accent: oklch(0.72 0.13 50);
   --color-destructive: oklch(0.64 0.19 25);
   --color-success: oklch(0.72 0.15 150);
   --color-warning: oklch(0.78 0.14 70);

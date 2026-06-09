@@ -11,12 +11,16 @@ import { useFileContent } from './explorer/useFileContent'
 import { LauncherController } from './launcher/Launcher.controller'
 import { PanelLeft } from 'lucide-react'
 import { EdgeTab } from './components/EdgeTab'
+import { SettingsDialog } from './settings/SettingsDialog'
+import { useSettings } from './settings/useSettings'
 
 export const App = (): React.JSX.Element => {
   const { t } = useTranslation()
   const [root, setRoot] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [explorerOpen, setExplorerOpen] = useState(true)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const settings = useSettings()
   const fileContent = useFileContent(selected)
   const content = fileContent && fileContent.ok ? fileContent.value : null
 
@@ -38,7 +42,11 @@ export const App = (): React.JSX.Element => {
       )}
 
       <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-surface-3">
-        <EditorController path={selected} content={content} />
+        <EditorController
+          path={selected}
+          content={content}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
         {!explorerOpen && (
           <EdgeTab
             side="left"
@@ -48,6 +56,8 @@ export const App = (): React.JSX.Element => {
           />
         )}
       </div>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} />
     </main>
   )
 }
