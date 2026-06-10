@@ -9,8 +9,9 @@ import { EditorController } from './editor/Editor.controller'
 import { ExplorerController } from './explorer/Explorer.controller'
 import { useFileContent } from './explorer/useFileContent'
 import { LauncherController } from './launcher/Launcher.controller'
-import { PanelLeft } from 'lucide-react'
+import { MessagesSquare, PanelLeft } from 'lucide-react'
 import { EdgeTab } from './components/EdgeTab'
+import { ConversationRailController } from './rail/ConversationRail.controller'
 import { SettingsDialog } from './settings/SettingsDialog'
 import { useSettings } from './settings/useSettings'
 
@@ -19,6 +20,7 @@ export const App = (): React.JSX.Element => {
   const [root, setRoot] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [explorerOpen, setExplorerOpen] = useState(true)
+  const [railOpen, setRailOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const settings = useSettings()
   const fileContent = useFileContent(selected)
@@ -55,7 +57,21 @@ export const App = (): React.JSX.Element => {
             onOpen={() => setExplorerOpen(true)}
           />
         )}
+        {!railOpen && (
+          <EdgeTab
+            side="right"
+            label={t('rail.open')}
+            icon={<MessagesSquare size={17} />}
+            onOpen={() => setRailOpen(true)}
+          />
+        )}
       </div>
+
+      {railOpen && (
+        <div className="flex-none" style={{ width: 'var(--rail-w)' }}>
+          <ConversationRailController onClose={() => setRailOpen(false)} onSend={() => undefined} />
+        </div>
+      )}
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} />
     </main>

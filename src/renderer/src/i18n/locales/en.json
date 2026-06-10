@@ -42,5 +42,16 @@
     "empty": "No files yet. Use the buttons above to add a file or folder.",
     "noFolder": "No folder open. Pick one to start.",
     "pickFolder": "Open folder"
+  },
+  "rail": {
+    "chats": "Chats",
+    "newChat": "New chat",
+    "open": "Open chat",
+    "collapse": "Collapse panel",
+    "newChatEmpty": "Ask the assistant to read, review, or revise your manuscript.",
+    "composerPlaceholder": "Ask anything about your manuscript…",
+    "send": "Send",
+    "toSend": "to send",
+    "stop": "Stop"
   }
 }

@@ -148,6 +148,13 @@
   outline: none;
 }
 
+/* The rail composer sits inside its own styled card, so the textarea opts out of the global accent
+   ring (which, clipped by the card's rounded overflow, would otherwise show as a stray line) — the same
+   way the ProseMirror surface owns its own focus treatment. */
+[data-rail-composer]:focus-visible {
+  outline: none;
+}
+
 html,
 body,
 #root {
