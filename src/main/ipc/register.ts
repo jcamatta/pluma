@@ -11,6 +11,8 @@ import type * as Scope from 'effect/Scope'
 import {
   AGENT_ABORT_CHANNEL,
   AGENT_RUN_CHANNEL,
+  AGENT_TOOL_RESULT_CHANNEL,
+  type AgentToolResultMessage,
   type RunAgentInput
 } from '../../shared/ipc/ipc-contract/agent'
 import {
@@ -26,13 +28,18 @@ import {
   FOLDER_PICK_CHANNEL,
   FOLDER_WATCH_CHANNEL
 } from '../../shared/ipc/ipc-contract/folder'
-import { AGENT_EVENT_CHANNEL } from '../../shared/ipc/ipc-event-contract/agent'
+import {
+  AGENT_EVENT_CHANNEL,
+  AGENT_TOOL_CALL_CHANNEL,
+  type AgentToolCall
+} from '../../shared/ipc/ipc-event-contract/agent'
 import {
   FOLDER_CHANGED_CHANNEL,
   type FolderChange
 } from '../../shared/ipc/ipc-event-contract/folder'
 import { handleAbortAgent } from './agent/abort-agent-handler'
 import { handleRunAgent } from './agent/run-agent-handler'
+import { handleSubmitToolResult } from './agent/submit-tool-result-handler'
 import { handleCreateFile } from './file/create-file-handler'
 import { handleDeleteFile } from './file/delete-file-handler'
 import { handleWriteFile } from './file/write-file-handler'
@@ -55,12 +62,15 @@ const registerIpc = (): void => {
   ipcMain.handle(FOLDER_LIST_CHANNEL, (_event, path: string) => handleListFolder(path))
   ipcMain.handle(FOLDER_PICK_CHANNEL, () => handlePickFolder())
   ipcMain.handle(AGENT_ABORT_CHANNEL, (_event, runId: string) => handleAbortAgent(runId))
+  ipcMain.handle(AGENT_TOOL_RESULT_CHANNEL, (_event, message: AgentToolResultMessage) =>
+    handleSubmitToolResult(message)
+  )
 }
 
 interface EventTarget {
   readonly isDestroyed: () => boolean
   readonly webContents: {
-    readonly send: (channel: string, payload: FolderChange | BaseEvent) => void
+    readonly send: (channel: string, payload: FolderChange | BaseEvent | AgentToolCall) => void
   }
 }
 
@@ -92,6 +102,11 @@ const registerAgent = (window: EventTarget): void => {
       send: (event: BaseEvent) => {
         if (!window.isDestroyed()) {
           window.webContents.send(AGENT_EVENT_CHANNEL, event)
+        }
+      },
+      sendToolCall: (call: AgentToolCall) => {
+        if (!window.isDestroyed()) {
+          window.webContents.send(AGENT_TOOL_CALL_CHANNEL, call)
         }
       }
     })

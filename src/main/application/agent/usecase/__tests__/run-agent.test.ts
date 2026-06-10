@@ -18,11 +18,15 @@ const events: readonly BaseEvent[] = [
   { type: EventType.RUN_FINISHED }
 ]
 
+// The frontend-tool-call sender; runAgent forwards it to the port. These tests don't drive tool calls.
+const noopSendToolCall = (): void => {}
+
 const agentThatSucceeds = (runId: string): Layer.Layer<RuntimeAgentPort> =>
   Layer.succeed(
     RuntimeAgent,
     RuntimeAgent.of({
       run: () => Effect.succeed({ runId, events: Stream.fromIterable(events) }),
+      submitToolResult: () => Effect.void,
       abort: () => Effect.void
     })
   )
@@ -32,6 +36,7 @@ const agentThatFails = (error: RunAgentFailed): Layer.Layer<RuntimeAgentPort> =>
     RuntimeAgent,
     RuntimeAgent.of({
       run: () => Effect.fail(error),
+      submitToolResult: () => Effect.void,
       abort: () => Effect.void
     })
   )
@@ -39,7 +44,7 @@ const agentThatFails = (error: RunAgentFailed): Layer.Layer<RuntimeAgentPort> =>
 describe('runAgent', () => {
   it('returns the runId and streams the AG-UI events on success', async () => {
     const program = Effect.gen(function* () {
-      const run = yield* runAgent({ messages: [], tools: [] })
+      const run = yield* runAgent({ messages: [], tools: [] }, noopSendToolCall)
       const collected = yield* Stream.runCollect(run.events)
       return { runId: run.runId, events: Chunk.toReadonlyArray(collected) }
     })
@@ -53,7 +58,7 @@ describe('runAgent', () => {
   it('propagates RunAgentFailed from the agent', async () => {
     const error = new RunAgentFailed({ runId: 'run-1' })
     const exit = await Effect.runPromiseExit(
-      Effect.provide(runAgent({ messages: [], tools: [] }), agentThatFails(error))
+      Effect.provide(runAgent({ messages: [], tools: [] }, noopSendToolCall), agentThatFails(error))
     )
 
     expect(exit).toStrictEqual(Exit.fail(error))

@@ -7,5 +7,5 @@ import type { Options } from '@anthropic-ai/claude-agent-sdk'
 
 export type ClaudeRunOptions = Pick<
   Options,
-  'includePartialMessages' | 'tools' | 'resume' | 'model' | 'effort'
+  'includePartialMessages' | 'tools' | 'resume' | 'model' | 'effort' | 'mcpServers' | 'hooks'
 >
