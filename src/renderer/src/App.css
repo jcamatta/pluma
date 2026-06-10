@@ -148,6 +148,13 @@
   outline: none;
 }
 
+/* The rail composer sits inside its own styled card, so the textarea opts out of the global accent
+   ring (which, clipped by the card's rounded overflow, would otherwise show as a stray line) — the same
+   way the ProseMirror surface owns its own focus treatment. */
+[data-rail-composer]:focus-visible {
+  outline: none;
+}
+
 html,
 body,
 #root {
@@ -410,6 +417,21 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* The activity feed's working spinner: an accent ring with one bright arc, rotating. Used by the
+   live LogRow glyph and the ConversationTurn header while a run is in flight. Size is set by the
+   caller via width/height utilities; the ring thickness scales with it. */
+.spinner-ring {
+  border: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+  border-top-color: var(--color-accent);
+  border-radius: 999px;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Each activity step rises in as it lands in the feed. */
+.rise-in {
+  animation: rise-in 0.3s var(--ease) both;
 }
 
 /* Explorer row actions: hidden until the row is hovered or focus is within it. Matches the design's

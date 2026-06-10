@@ -202,4 +202,4 @@ Inherited recommended sets that are also enforced: TypeScript (`@typescript-esli
 
 Conventional Commits: `<type>(<scope>): <description>`. Allowed types: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`. Scope is optional, used when it clarifies the affected area. Keep the description short, imperative, and lowercase; no trailing period. Use `!` for breaking changes. Do not add `Co-authored-by` or other footers.
 
-This is a solo project: no feature branches — commit directly to `main`. There is no PR or merge step.
+Every plan and every change goes on its own branch — never commit on a trunk branch (`main`/`master`/`develop`). Branch names follow [Conventional Branch](https://conventionalbranch.org): `<type>/<description>` with type one of `feature`/`feat`, `bugfix`/`fix`, `hotfix`, `release`, `chore`, and a lowercase letters/digits/hyphens description (dots only for release versions) — e.g. `feature/chat-panel`, `fix/null-response`. The `commit-msg` hook refuses a commit on a trunk branch or from a non-conforming branch name.

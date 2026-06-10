@@ -8,11 +8,11 @@
 // claims them — otherwise the audit goes red. So the manifest grows in lockstep with the app, the gate
 // stays green incrementally, and nothing ships without a spec that drives the real desktop app.
 //
-// Plan 03 sequence still to land (add each here with its spec when built): dock + rail (agent.run,
-// agent.abort, agent.event).
+// Plan 03 sequence still to land (add each here with its spec when built): dock + rail abort
+// (agent.abort).
 
 // A shipped UI feature (a screen/region of the conversation layout).
-const FEATURES = ['launcher', 'explorer', 'editor', 'settings'] as const
+const FEATURES = ['launcher', 'explorer', 'editor', 'settings', 'rail'] as const
 
 // A shipped user-facing operation, one per real IPC channel the UI exercises end to end.
 const OPERATIONS = [
@@ -25,7 +25,9 @@ const OPERATIONS = [
   'file.create',
   'file.delete',
   'file.read',
-  'file.write'
+  'file.write',
+  'agent.run',
+  'agent.event'
 ] as const
 
 type Feature = (typeof FEATURES)[number]

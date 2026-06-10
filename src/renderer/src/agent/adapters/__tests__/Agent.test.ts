@@ -12,6 +12,7 @@ class TestAgent extends Agent {
   readonly listeners = new Set<(event: BaseEvent) => void>()
   readonly off = vi.fn()
   readonly aborted = vi.fn()
+  readonly resumeIds: string[] = []
   start: StartRunResult = { ok: true, runId: 'run-1' }
 
   emit(event: BaseEvent): void {
@@ -19,6 +20,7 @@ class TestAgent extends Agent {
   }
 
   protected override startRun(): Promise<StartRunResult> {
+    this.resumeIds.push(this.resumeThreadId())
     return Promise.resolve(this.start)
   }
 
@@ -79,6 +81,20 @@ describe('Agent.run', () => {
     subscription.unsubscribe()
 
     expect(agent.off).toHaveBeenCalledOnce()
+  })
+
+  it('opens a fresh session on the first run, then resumes the SDK session id main reports', () => {
+    const agent = new TestAgent()
+
+    // First turn: no session yet, so nothing to resume (a fresh session opens).
+    agent.run(input).subscribe({ next: () => undefined })
+    expect(agent.resumeIds).toEqual([''])
+
+    // Main reports the real SDK session id via RUN_STARTED.threadId; the next turn must resume that —
+    // never AG-UI's own random threadId, which the SDK would reject as an unknown session.
+    agent.emit({ type: EventType.RUN_STARTED, threadId: 'sdk-session-7' })
+    agent.run(input).subscribe({ next: () => undefined })
+    expect(agent.resumeIds).toEqual(['', 'sdk-session-7'])
   })
 
   it('aborts an in-flight run on unsubscribe once the runId is known', async () => {

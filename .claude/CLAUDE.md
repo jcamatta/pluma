@@ -1,3 +1,36 @@
+## How we work
+
+Build features the same way every time: **plan first, then execute the plan one small piece at a time.**
+
+### Plan first
+
+Before writing code for a feature, write a plan. The plan exists to split a big feature into **small, independently committable units** — small enough to pass the commit-size budget (see below), each one ending with the checks green. We do not implement a feature in one large change; we slice it.
+
+- **Plans live in `docs/plans/`,** one file per feature (e.g. `04-chat-panel.md`, `agent-architecture.md`). A plan names the feature, states what "done" looks like, lists the sequenced steps, and records the constraints and open questions.
+- A plan's steps are the unit of work. Each step is sized so its commit fits the budget and leaves every check passing.
+
+### Then execute, and record what you did
+
+As you complete a step, **mark it done in its plan file and write a short note of what landed** — which files, which decisions, what is still open — so the next agent can pick up from there with the whole context **without re-reading the codebase and guessing.** The plan is the running handoff record. Keep the "what's next" pointer accurate.
+
+Write these notes as functional progress: what the step delivered and why a decision was made. Do not narrate the mechanics of editing. Git already tracks the diff.
+
+### When a plan is done, delete it
+
+`docs/plans/` holds only **active** plans. When a plan is complete — every step checked off, all its work shipped (checks green, e2e where required), nothing left for anyone to pick up — **delete the plan file.** This keeps the folder a short list of what's in flight rather than an ever-growing archive. A half-done plan with deferred items is not done; it stays.
+
+The history is not lost: a removed plan lives forever in git (`git log -- docs/plans/<name>.md` to read it back). Do the deletion as **its own small `docs:` commit** ("remove plan X, complete"), not folded into the last feature commit, so the timeline reads cleanly. (`docs/` is weight 0, so this never touches the commit-size budget.)
+
+### Commit-size budget (enforced, like ESLint)
+
+A pre-commit hook (`.husky/check-commit-size.sh`) rejects commits that are too large, so changes stay small and reviewable. Treat it as a hard rule on the same footing as a lint rule — **do not route around it; split the work instead** (this is exactly why we plan in small steps). The budget:
+
+- **Max 300 weighted source lines** (added + deleted) per commit.
+- **Max 15 source files** touched per commit.
+- **A commit over 30 source lines must change at least one test file** — code and its tests land together.
+
+**Only files under `src/` carry weight.** Everything outside `src/` — `docs/` (including `FILE.md` and the plans), config, scripts, the `e2e/` harness, lockfiles, snapshots, generated files — counts as weight 0, so updating docs/plans alongside code never pushes a commit over the budget. Within `src/`, `*.test.*` / `*.spec.*` / `*.e2e.*` / `__tests__` count as tests (they satisfy the "needs tests" check but do not add weight). If a commit trips the hook, the answer is never to weaken the hook — it is to make a smaller, coherent commit.
+
 ## General rules
 
 Prefer the smallest implementation that satisfies the current requirement. Follow YAGNI.
@@ -111,7 +144,20 @@ These rules are enforced with ESLint. Write code that already complies.
 - **One export per file.** This is the strong default. The only allowed exceptions are a type/interface co-located with the single export it describes, and barrel `index.ts` files that only re-export. Do not split these artificially.
 - **One responsibility per file.** A file does one thing; if it grows a second concern, split it.
 - **No inline comments.** Do not write comments in the middle of code — the code should read clearly on its own.
-- **One file-header comment.** Start each file with a short comment explaining what the file is about. Keep it to a line or two.
+- **No file-header comments — document files in `docs/FILE.md` instead.** Do **not** start a file with a header comment explaining what it is about. We keep that explanation out of the source entirely and write it once, centrally, in `docs/FILE.md` (see "Documenting files" below). A source file carries no prose about its own purpose.
+
+## Documenting files (`docs/FILE.md`)
+
+Instead of a header comment in each source file, every file's purpose is described in **`docs/FILE.md`** — a central index of what each file in the project is about.
+
+- **Whenever you create, edit, or delete a file under `src/`, update `docs/FILE.md` in the same change.** Create → add its entry. Delete → remove its entry. Edit that changes what the file is for → revise its entry. (A pure refactor that does not change a file's responsibility needs no `FILE.md` change.)
+- **Key every entry by the exact repo-relative path,** verbatim — e.g. `src/main/application/file/usecase/create-file.ts`, not just `create-file.ts`. Filenames like `index.ts` / `types.ts` collide across features, so the full path is what makes an entry unambiguous (and what the sync hook matches against).
+- **Write a functional description:** what the file does — its responsibility, the role it plays, the contract it exposes. One to a few sentences per file.
+- **Do not put change-history or process notes in `FILE.md`.** No "this file was added in plan 04", no "edited to fix X", no plan IDs. That belongs to git and to the plan files, not here. `FILE.md` describes the file as it is now, not how it got here.
+
+This is enforced at pre-commit by `.husky/check-file-doc-sync.sh`: a staged **added** `src/` file whose path is absent from `FILE.md` fails the commit, and a staged **deleted** `src/` file whose path still appears in `FILE.md` fails too. The hook checks for the path string only — it cannot judge whether the description is accurate or current; that is on you.
+
+`docs/FILE.md` replaces the per-file header comment; together with the plans it lets an agent understand the codebase's shape without opening every file.
 
 ## Tooling and enforcement
 
@@ -124,6 +170,8 @@ The ESLint config is split by concern under `eslint/` and composed in `eslint.co
 - `eslint/comments.mjs` — bans ESLint disable directives.
 - `eslint/effect.mjs` — Effect-specific rules.
 - `eslint/react.mjs` — React hooks and fast-refresh rules.
+
+Alongside ESLint, a **pre-commit commit-size hook** (`.husky/check-commit-size.sh`) is enforced — see "Commit-size budget" at the top. It is a hard gate just like a lint rule: never loosen its thresholds or exclude a file to slip a large commit through; split the commit instead.
 
 ### What each rule enforces
 
@@ -163,7 +211,8 @@ These were considered and left out for now to avoid new dependencies or false-po
 
 ### Git hooks (husky)
 
-- **pre-commit** (fast): `format` (prettier --write, then `git add -u` to restage) → `lint` → `test`.
+- **commit-msg**: refuses a commit made on a trunk branch (`main`/`master`/`develop`) or from a branch whose name is not a valid Conventional Branch name; validates the subject against Conventional Commits (type, optional scope/`!`, 1–100 char description); and rejects any authored/attribution footer — `Co-authored-by`, `Signed-off-by`, `Generated with`, and the like.
+- **pre-commit** (fast): `check-commit-size` → `check-file-doc-sync` (every added `src/` file has a `docs/FILE.md` entry; every deleted one no longer does) → `format` (prettier --write, then `git add -u` to restage) → `lint` → `test`.
 - **pre-push** (heavy): `test:coverage` → `type-coverage` → `build`.
 
 `start` (the Electron preview) is never run in a hook — it does not exit. Run it manually.
@@ -411,6 +460,12 @@ Do not end the subject with a period.
 
 Use `!` for breaking changes.
 
-Do not add `Co-authored-by` or other authored footers.
+Do not add `Co-authored-by` or other authored/attribution footers (`Signed-off-by`, "Generated with", etc.). This is enforced by the `commit-msg` hook, not just convention.
 
-This is a solo project. Do not create feature branches: commit directly to `main`. There is no PR or merge step.
+**Always work on a branch — never commit on a trunk branch (`main`/`master`/`develop`).** Every plan and every change gets its own branch, and branch names follow [Conventional Branch](https://conventionalbranch.org): `<type>/<description>`, where `type` is one of `feature`/`feat`, `bugfix`/`fix`, `hotfix`, `release`, or `chore`, and the description is lowercase letters, digits, and hyphens (dots only for release version numbers). Examples: `feature/chat-panel`, `fix/null-response`, `release/1.2.0`. This is enforced by the `commit-msg` hook, which refuses a commit made on a trunk branch or from a branch whose name does not match the grammar. Create the branch before you start the work.
+
+**A plan is worked entirely on its branch, then opened as a PR for review.** Commit through the plan's steps on the branch — including the final commit that removes the completed plan file (see "When a plan is done"). When the plan is finished and the checks are green, push the branch and open a **pull request into `main`** with a structured description: what was done, the files involved and their purpose, how to validate it manually in the running app, what tests were run, and any open questions. The human reviews the PR and gives final approval — **do not merge it yourself.** The `finish-plan` skill runs this whole closing sequence (verify done → run checks → draft the PR body → remove the plan → push → open the PR); invoke it when a plan is complete.
+
+Keep each commit within the **commit-size budget** (see "How we work" → "Commit-size budget"); it is enforced at pre-commit. If a change is too big, that is a planning signal — split it into the plan's next step, not a workaround.
+
+**Docs travel with the code.** `docs/FILE.md` and the relevant `docs/plans/` entry are part of the change, not a separate chore: a commit that adds, edits, or deletes a `src/` file includes its `FILE.md` update in the same commit (a pre-commit hook enforces that `FILE.md` stays in sync — see "Documenting files"), and a commit that advances a feature updates that feature's plan. `.md` weight is excluded from the commit-size budget, so this never pushes a commit over the limit.

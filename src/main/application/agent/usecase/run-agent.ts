@@ -7,12 +7,13 @@ import type { RunAgentInput } from '../data/run-agent-input'
 import type { RunAgentOutput } from '../data/run-agent-output'
 import type { RunAgentFailed } from '../error/run-agent-failed'
 import { RuntimeAgent } from '../port/runtime-agent.port'
-import type { RuntimeAgentPort } from '../port/runtime-agent.port'
+import type { RuntimeAgentPort, SendToolCall } from '../port/runtime-agent.port'
 
 export const runAgent = (
-  input: RunAgentInput
+  input: RunAgentInput,
+  sendToolCall: SendToolCall
 ): Effect.Effect<RunAgentOutput, RunAgentFailed, RuntimeAgentPort> =>
   Effect.gen(function* () {
     const agent = yield* RuntimeAgent
-    return yield* agent.run(input)
+    return yield* agent.run(input, sendToolCall)
   })

@@ -15,6 +15,7 @@ const agentRecording = (aborted: string[]): Layer.Layer<RuntimeAgentPort> =>
     RuntimeAgent,
     RuntimeAgent.of({
       run: () => Effect.succeed({ runId: 'run-1', events: Stream.empty }),
+      submitToolResult: () => Effect.void,
       abort: (runId) =>
         Effect.sync(() => {
           aborted.push(runId)

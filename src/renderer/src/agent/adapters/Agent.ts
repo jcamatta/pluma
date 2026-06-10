@@ -12,7 +12,7 @@ import {
   type RunAgentResult
 } from '@ag-ui/client'
 import type { AgentSubscriber } from '@ag-ui/client'
-import type { BaseEvent, Tool } from '@ag-ui/core'
+import { EventType, type BaseEvent, type Tool } from '@ag-ui/core'
 import { Observable, type Subscriber } from 'rxjs'
 import { AGENT_ABORT_CHANNEL, AGENT_RUN_CHANNEL } from '../../../../shared/ipc/ipc-contract/agent'
 import { AGENT_EVENT_CHANNEL } from '../../../../shared/ipc/ipc-event-contract/agent'
@@ -30,6 +30,11 @@ interface RunState {
 export class Agent extends AbstractAgent {
   private readonly api: WindowApi
   private readonly tools: () => readonly Tool[]
+  // The Claude SDK session to resume on the next turn. AbstractAgent mints its own random threadId, but
+  // the SDK only knows the session id it reports back via RUN_STARTED.threadId. We start with none (so
+  // the first turn opens a fresh session) and adopt the reported id so later turns resume the same one —
+  // never sending AG-UI's threadId as a `resume`, which would fail with "No conversation found".
+  private sessionId: string | undefined = undefined
 
   constructor(api: WindowApi = window.api, tools: () => readonly Tool[] = () => []) {
     super()
@@ -49,6 +54,7 @@ export class Agent extends AbstractAgent {
     return new Observable<BaseEvent>((subscriber) => {
       const state: RunState = { runId: undefined, done: false }
       const off = this.onEvent((event) => {
+        this.adoptSession(event)
         if (!state.done && emitEvent(subscriber, event)) state.done = true
       })
 
@@ -68,9 +74,25 @@ export class Agent extends AbstractAgent {
 
   // The three IPC operations the run bridges, as protected seams: production talks to window.api; tests
   // subclass and override these, so no fake of the channel-generic WindowApi is needed.
+  // Records the real SDK session id the first RUN_STARTED reports, so the next turn resumes it. Reading
+  // `threadId` off the event keeps this tied to main's source of truth (system/init.session_id).
+  private adoptSession(event: BaseEvent): void {
+    if (event.type !== EventType.RUN_STARTED || !('threadId' in event)) return
+    const reported = event.threadId
+    if (typeof reported === 'string' && reported.length > 0) this.sessionId = reported
+  }
+
+  // The threadId to send for the next run: the SDK session id once we have one (so the turn resumes it),
+  // else empty (toRunInput omits it and a fresh session opens). Protected so tests can read the choice.
+  protected resumeThreadId(): string {
+    return this.sessionId ?? ''
+  }
+
   protected startRun(input: RunAgentInput): Promise<StartRunResult> {
+    // Send the SDK session id (when we have one) as the threadId, not AG-UI's random one — only a real
+    // session can be resumed. The first turn has none, so toRunInput omits it and a fresh session opens.
     return this.api
-      .invoke(AGENT_RUN_CHANNEL, toRunInput(input))
+      .invoke(AGENT_RUN_CHANNEL, toRunInput({ ...input, threadId: this.resumeThreadId() }))
       .then((result) =>
         result.ok
           ? { ok: true, runId: result.value.runId }

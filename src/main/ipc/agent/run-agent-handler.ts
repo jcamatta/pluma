@@ -9,6 +9,7 @@ import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
 import * as Stream from 'effect/Stream'
 import type { RunAgentError, RunAgentInput } from '../../../shared/ipc/ipc-contract/agent'
+import type { AgentToolCall } from '../../../shared/ipc/ipc-event-contract/agent'
 import type { Result } from '../../../shared/ipc/ipc-result'
 import { RuntimeAgent } from '../../application/agent/port/runtime-agent.port'
 import { runAgent } from '../../application/agent/usecase/run-agent'
@@ -17,13 +18,14 @@ import { runtimeAgent } from './runtime-agent'
 export interface RunAgentArgs {
   readonly input: RunAgentInput
   readonly send: (event: BaseEvent) => void
+  readonly sendToolCall: (call: AgentToolCall) => void
 }
 
 export const handleRunAgent = (
   args: RunAgentArgs
 ): Promise<Result<{ runId: string }, RunAgentError>> => {
   const program = Effect.gen(function* () {
-    const run = yield* runAgent(args.input)
+    const run = yield* runAgent(args.input, args.sendToolCall)
     yield* Effect.forkDaemon(
       Stream.runForEach(run.events, (event) => Effect.sync(() => args.send(event)))
     )

@@ -1,14 +1,7 @@
 // Business types for frontend tools: the result a handler returns. `AgentToolOutput` is what the
 // agent ultimately sees (text or structured JSON); `AgentToolResult` wraps it in a success/error
 // discriminated union so a handler can report a recoverable failure (range drifted, not found,
-// ambiguous) without throwing. Ported from the reference `shared/agent/tools.ts`, renderer-local.
+// ambiguous) without throwing. These are defined once in the shared IPC contract (they cross the wire
+// as the agent:tool-result payload) and re-exported here so the renderer keeps a single source.
 
-type AgentToolOutput =
-  | { readonly type: 'text'; readonly text: string }
-  | { readonly type: 'json'; readonly value: unknown }
-
-type AgentToolResult =
-  | { readonly ok: true; readonly output: AgentToolOutput }
-  | { readonly ok: false; readonly error: string }
-
-export type { AgentToolOutput, AgentToolResult }
+export type { AgentToolOutput, AgentToolResult } from '../../../../shared/ipc/ipc-contract/agent'

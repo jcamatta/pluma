@@ -4,7 +4,7 @@
 // the preload bridge then see it automatically.
 
 import type { Result } from '../ipc-result'
-import type { AgentAbortContract, AgentRunContract } from './agent'
+import type { AgentAbortContract, AgentRunContract, AgentToolResultContract } from './agent'
 import type {
   FileCreateContract,
   FileDeleteContract,
@@ -31,6 +31,7 @@ type IpcContract =
   | FolderWatchContract
   | AgentRunContract
   | AgentAbortContract
+  | AgentToolResultContract
 
 type IpcChannel = IpcContract['channel']
 
