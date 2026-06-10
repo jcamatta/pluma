@@ -20,6 +20,7 @@ interface RailLabels {
   readonly composerPlaceholder: string
   readonly send: string
   readonly toSend: string
+  readonly stop: string
 }
 
 interface ConversationRailViewProps {
@@ -29,9 +30,12 @@ interface ConversationRailViewProps {
   // The turn content; when absent the empty state is shown.
   readonly children?: ReactNode
   readonly hasTurn: boolean
+  // Whether a run is in flight: the composer swaps Send for Stop and blocks resubmission.
+  readonly working: boolean
   readonly value: string
   readonly onChange: (value: string) => void
   readonly onSubmit: () => void
+  readonly onStop: () => void
   readonly onNewChat: () => void
   readonly onClose: () => void
 }
@@ -41,9 +45,11 @@ export function ConversationRailView({
   title,
   children,
   hasTurn,
+  working,
   value,
   onChange,
   onSubmit,
+  onStop,
   onNewChat,
   onClose
 }: ConversationRailViewProps): React.JSX.Element {
@@ -74,9 +80,12 @@ export function ConversationRailView({
         placeholder={labels.composerPlaceholder}
         toSend={labels.toSend}
         send={labels.send}
+        stop={labels.stop}
+        working={working}
         value={value}
         onChange={onChange}
         onSubmit={onSubmit}
+        onStop={onStop}
       />
     </div>
   )

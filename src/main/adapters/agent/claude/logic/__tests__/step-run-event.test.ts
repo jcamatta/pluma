@@ -3,8 +3,22 @@
 // by their own tests.
 
 import { EventType } from '@ag-ui/core'
+import type { SDKMessage, SDKResultMessage } from '@anthropic-ai/claude-agent-sdk'
 import { describe, expect, it } from 'vitest'
 import { newRunAccumulator, stepRunEvent } from '../step-run-event'
+
+// A result message carries many fields the fold ignores; the branch reads only subtype and is_error. We
+// build a literal with just those and trust it as an SDKMessage at this test boundary via an `asserts`
+// narrowing (the same no-cast tool the production code uses), so each test states only what it exercises.
+function asSdkMessage(literal: { type: string }): asserts literal is SDKMessage {
+  void literal
+}
+
+const resultMessage = (subtype: SDKResultMessage['subtype'], isError: boolean): SDKMessage => {
+  const literal = { type: 'result', subtype, is_error: isError }
+  asSdkMessage(literal)
+  return literal
+}
 
 describe('stepRunEvent', () => {
   it('maps a user message with a tool_result to a TOOL_CALL_RESULT event', () => {
@@ -27,6 +41,29 @@ describe('stepRunEvent', () => {
         content: 'ok',
         role: 'tool'
       }
+    ])
+  })
+
+  it('finishes the run on a successful result', () => {
+    const acc = newRunAccumulator()
+    const [, events] = stepRunEvent('run-1')(acc, resultMessage('success', false))
+
+    expect(events).toStrictEqual([
+      {
+        type: EventType.RUN_FINISHED,
+        threadId: acc.threadId,
+        runId: 'run-1',
+        outcome: { type: 'success' }
+      }
+    ])
+  })
+
+  it('errors the run on a failed result instead of a false finish', () => {
+    const acc = newRunAccumulator()
+    const [, events] = stepRunEvent('run-1')(acc, resultMessage('error_during_execution', true))
+
+    expect(events).toStrictEqual([
+      { type: EventType.RUN_ERROR, runId: 'run-1', message: 'error_during_execution' }
     ])
   })
 

@@ -12,7 +12,8 @@ const labels: RailLabels = {
   newChatEmpty: 'Ask the assistant.',
   composerPlaceholder: 'Ask anything…',
   send: 'Send',
-  toSend: 'to send'
+  toSend: 'to send',
+  stop: 'Stop'
 }
 
 const noop = (): void => undefined
@@ -21,9 +22,11 @@ const baseProps = {
   labels,
   title: 'New chat',
   hasTurn: false,
+  working: false,
   value: '',
   onChange: noop,
   onSubmit: noop,
+  onStop: noop,
   onNewChat: noop,
   onClose: noop
 }
@@ -63,6 +66,28 @@ describe('ConversationRailView', () => {
     })
 
     expect(onSubmit).toHaveBeenCalledTimes(2)
+  })
+
+  it('swaps Send for Stop while a run is in flight, and fires onStop', () => {
+    const onStop = vi.fn()
+    const onSubmit = vi.fn()
+    render(
+      <ConversationRailView
+        {...baseProps}
+        working
+        value="hello"
+        onStop={onStop}
+        onSubmit={onSubmit}
+      />
+    )
+
+    // The action slot is Stop, not Send; ⌘↵ no longer resubmits while working.
+    expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument()
+    fireEvent.keyDown(screen.getByPlaceholderText('Ask anything…'), { key: 'Enter', metaKey: true })
+    expect(onSubmit).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stop' }))
+    expect(onStop).toHaveBeenCalledOnce()
   })
 
   it('reports composer edits through onChange', () => {

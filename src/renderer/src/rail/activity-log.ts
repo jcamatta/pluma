@@ -110,7 +110,11 @@ function createActivityReducer(labels: ActivityLabels): ActivityReducer {
       return { ...state, log: settleToolCall(state.log, event) }
     }
     if (event.type === EventType.TEXT_MESSAGE_CONTENT) return onTextContent(state, event)
-    if (event.type === EventType.RUN_FINISHED) return { ...state, status: 'done' }
+    // RUN_FINISHED also fires after a failure (the run still finalizes); keep an already-errored status
+    // rather than masking the failure as done.
+    if (event.type === EventType.RUN_FINISHED) {
+      return state.status === 'error' ? state : { ...state, status: 'done' }
+    }
     if (event.type === EventType.RUN_ERROR) return onRunError(state, event)
     return state
   }

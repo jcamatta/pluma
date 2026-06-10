@@ -52,6 +52,14 @@
     "composerPlaceholder": "Ask anything about your manuscript…",
     "send": "Send",
     "toSend": "to send",
-    "stop": "Stop"
+    "stop": "Stop",
+    "thinking": "Thinking…",
+    "worked": "Worked",
+    "runFailed": "Run failed",
+    "step_one": "{{count}} step",
+    "step_other": "{{count}} steps",
+    "calling": "Calling {{tool}}…",
+    "done": "{{tool}}",
+    "runError": "Run failed: {{message}}"
   }
 }

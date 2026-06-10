@@ -79,7 +79,10 @@ const abortRun = (active: ActiveRef): Effect.Effect<void> =>
     if (run === undefined) return
     run.bridge.rejectAll('Run aborted before the tool result arrived.')
     yield* Ref.set(active, { ...run, aborted: true })
-    yield* Effect.promise(() => run.query.interrupt())
+    // Best-effort: the SDK's interrupt rejects when the query has no live session yet (aborted before
+    // its first turn, or already finished). Abort is a no-op in those cases, so swallow the rejection
+    // rather than let it surface as a handler defect.
+    yield* Effect.tryPromise(() => run.query.interrupt()).pipe(Effect.ignore)
   })
 
 const make = Ref.make<ActiveRun | undefined>(undefined).pipe(

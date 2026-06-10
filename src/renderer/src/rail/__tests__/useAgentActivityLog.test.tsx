@@ -40,6 +40,26 @@ class FakeAgent extends AbstractAgent {
     })
   }
 
+  // AG-UI surfaces a run's lifecycle through these callbacks, not as onEvent events — the hook turns them
+  // back into synthetic RUN_STARTED/RUN_FINISHED for the reducer. The fake drives them the same way.
+  startRunLifecycle(): void {
+    void this.sub?.onRunInitialized?.({
+      messages: [],
+      state: {},
+      agent: this,
+      input: this.makeInput()
+    })
+  }
+
+  finishRunLifecycle(): void {
+    void this.sub?.onRunFinalized?.({
+      messages: [],
+      state: {},
+      agent: this,
+      input: this.makeInput()
+    })
+  }
+
   hasSubscriber(): boolean {
     return this.sub !== undefined
   }
@@ -74,13 +94,13 @@ describe('useAgentActivityLog', () => {
     const { getByTestId } = render(<Probe />)
     expect(getByTestId('status').textContent).toBe('idle')
 
-    act(() => agent.emit({ type: EventType.RUN_STARTED }))
+    act(() => agent.startRunLifecycle())
     expect(getByTestId('status').textContent).toBe('working')
 
     act(() => agent.emit({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: 'm1', delta: 'hi' }))
     expect(getByTestId('summary').textContent).toBe('hi')
 
-    act(() => agent.emit({ type: EventType.RUN_FINISHED }))
+    act(() => agent.finishRunLifecycle())
     expect(getByTestId('status').textContent).toBe('done')
   })
 
