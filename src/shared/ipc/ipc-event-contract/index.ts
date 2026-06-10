@@ -1,10 +1,10 @@
 // The event IPC registry. Every event channel's contract joins the IpcEventContract union, and the
 // per-channel payload and callback types are derived from it by matching on the channel literal.
 
-import type { AgentEventContract } from './agent'
+import type { AgentEventContract, AgentToolCallContract } from './agent'
 import type { FolderChangedContract } from './folder'
 
-type IpcEventContract = FolderChangedContract | AgentEventContract
+type IpcEventContract = FolderChangedContract | AgentEventContract | AgentToolCallContract
 
 type IpcEventChannel = IpcEventContract['channel']
 
