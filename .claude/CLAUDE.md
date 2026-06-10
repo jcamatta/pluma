@@ -211,6 +211,7 @@ These were considered and left out for now to avoid new dependencies or false-po
 
 ### Git hooks (husky)
 
+- **commit-msg**: validates the subject against Conventional Commits (type, optional scope/`!`, 1–100 char description) and rejects any authored/attribution footer — `Co-authored-by`, `Signed-off-by`, `Generated with`, and the like.
 - **pre-commit** (fast): `check-commit-size` → `check-file-doc-sync` (every added `src/` file has a `docs/FILE.md` entry; every deleted one no longer does) → `format` (prettier --write, then `git add -u` to restage) → `lint` → `test`.
 - **pre-push** (heavy): `test:coverage` → `type-coverage` → `build`.
 
@@ -459,7 +460,7 @@ Do not end the subject with a period.
 
 Use `!` for breaking changes.
 
-Do not add `Co-authored-by` or other authored footers.
+Do not add `Co-authored-by` or other authored/attribution footers (`Signed-off-by`, "Generated with", etc.). This is enforced by the `commit-msg` hook, not just convention.
 
 This is a solo project. Do not create feature branches: commit directly to `main`. There is no PR or merge step.
 

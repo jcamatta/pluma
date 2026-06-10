@@ -10,3 +10,11 @@ if ! printf '%s' "$msg" | grep -Eq "$pattern"; then
   echo "Rules: use a Conventional Commit type, optional scope, optional !, and a 1-100 character description."
   exit 1
 fi
+
+# No authored/attribution footers — the message is the change, not who or what wrote it.
+forbidden='co-authored-by|signed-off-by|generated with|co-written-by|assisted-by'
+if grep -Eiq "$forbidden" "$msg_file"; then
+  echo "Forbidden trailer in commit message."
+  echo "Remove Co-authored-by / Signed-off-by / 'Generated with' / similar attribution footers."
+  exit 1
+fi
