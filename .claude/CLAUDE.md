@@ -212,10 +212,16 @@ These were considered and left out for now to avoid new dependencies or false-po
 ### Git hooks (husky)
 
 - **commit-msg**: refuses a commit made on a trunk branch (`main`/`master`/`develop`) or from a branch whose name is not a valid Conventional Branch name; validates the subject against Conventional Commits (type, optional scope/`!`, 1–100 char description); and rejects any authored/attribution footer — `Co-authored-by`, `Signed-off-by`, `Generated with`, and the like.
-- **pre-commit** (fast): `check-commit-size` → `check-file-doc-sync` (every added `src/` file has a `docs/FILE.md` entry; every deleted one no longer does) → `format` (prettier --write, then `git add -u` to restage) → `lint` → `test`.
+- **pre-commit**: `check-commit-size` → `check-file-doc-sync` (every added `src/` file has a `docs/FILE.md` entry; every deleted one no longer does) → `lint-staged` (eslint --fix + prettier on staged files) → `veto` (the reviewer gate, see below).
 - **pre-push** (heavy): `test:coverage` → `type-coverage` → `build`.
 
 `start` (the Electron preview) is never run in a hook — it does not exit. Run it manually.
+
+### Reviewer gate (veto)
+
+The final pre-commit step runs `npx veto .veto/ --staged`: an LLM reviewer (`.veto/architect.yaml`) that judges the staged diff against the team's **semantic** rules — the architecture and working-agreement calls that pass ESLint but still break the design (layering, CQS, the IPC `Result` boundary, Effect-not-throw, actions-vs-calculations, the component-type split, design tokens, …). It deliberately does **not** re-litigate anything the linters and type-coverage already own; those run before it.
+
+This gate is intentionally not fast, and that is fine — with an agent writing the code, the constraint is no longer cycle time but confidence that the change is correct, so a per-commit judgment review is time well spent. **If a commit is blocked by the reviewer, read `.veto/runs/latest.md` (or `latest.json`) for the findings, fix the underlying code, then commit again** — never route around the gate, exactly as with every other check.
 
 ## Frontend
 
