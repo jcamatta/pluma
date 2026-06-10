@@ -211,7 +211,7 @@ These were considered and left out for now to avoid new dependencies or false-po
 
 ### Git hooks (husky)
 
-- **commit-msg**: validates the subject against Conventional Commits (type, optional scope/`!`, 1–100 char description) and rejects any authored/attribution footer — `Co-authored-by`, `Signed-off-by`, `Generated with`, and the like.
+- **commit-msg**: refuses a commit made on a trunk branch (`main`/`master`/`develop`) or from a branch whose name is not a valid Conventional Branch name; validates the subject against Conventional Commits (type, optional scope/`!`, 1–100 char description); and rejects any authored/attribution footer — `Co-authored-by`, `Signed-off-by`, `Generated with`, and the like.
 - **pre-commit** (fast): `check-commit-size` → `check-file-doc-sync` (every added `src/` file has a `docs/FILE.md` entry; every deleted one no longer does) → `format` (prettier --write, then `git add -u` to restage) → `lint` → `test`.
 - **pre-push** (heavy): `test:coverage` → `type-coverage` → `build`.
 
@@ -462,7 +462,9 @@ Use `!` for breaking changes.
 
 Do not add `Co-authored-by` or other authored/attribution footers (`Signed-off-by`, "Generated with", etc.). This is enforced by the `commit-msg` hook, not just convention.
 
-This is a solo project. Do not create feature branches: commit directly to `main`. There is no PR or merge step.
+**Always work on a branch — never commit on a trunk branch (`main`/`master`/`develop`).** Every plan and every change gets its own branch, and branch names follow [Conventional Branch](https://conventionalbranch.org): `<type>/<description>`, where `type` is one of `feature`/`feat`, `bugfix`/`fix`, `hotfix`, `release`, or `chore`, and the description is lowercase letters, digits, and hyphens (dots only for release version numbers). Examples: `feature/chat-panel`, `fix/null-response`, `release/1.2.0`. This is enforced by the `commit-msg` hook, which refuses a commit made on a trunk branch or from a branch whose name does not match the grammar. Create the branch before you start the work.
+
+**A plan is worked entirely on its branch, then opened as a PR for review.** Commit through the plan's steps on the branch — including the final commit that removes the completed plan file (see "When a plan is done"). When the plan is finished and the checks are green, push the branch and open a **pull request into `main`** with a structured description: what was done, the files involved and their purpose, how to validate it manually in the running app, what tests were run, and any open questions. The human reviews the PR and gives final approval — **do not merge it yourself.** The `finish-plan` skill runs this whole closing sequence (verify done → run checks → draft the PR body → remove the plan → push → open the PR); invoke it when a plan is complete.
 
 Keep each commit within the **commit-size budget** (see "How we work" → "Commit-size budget"); it is enforced at pre-commit. If a change is too big, that is a planning signal — split it into the plan's next step, not a workaround.
 
