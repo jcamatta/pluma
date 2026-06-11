@@ -137,7 +137,7 @@ Deliver the identity. No context yet.
 - `docs/FILE.md`: entries for new module(s).
 - **Note when landed:** which file holds the prompt, what the identity says.
 
-### Step 2 — Carry AG-UI `context` through the input + data type
+### Step 2 — Carry AG-UI `context` through the input + data type ✅
 
 Plumbing only — no prompt change yet, so it stays small.
 
@@ -188,3 +188,12 @@ Deliver the loaded-at-start context.
   drafted by the agent — flag for the human's voice pass in the PR (open question 1).
 - **Localization of replies (open question in step 1's scope): not implemented.** No `locale` was
   added; deferred per "Out of scope" unless the human asks.
+- **Step 2 landed.** Entry shape is `AgentContextEntry { description; value }`, defined twice (one
+  export each): `src/main/application/agent/data/agent-context-entry.ts` for the application layer,
+  and inline in `src/shared/ipc/ipc-contract/agent.ts` for the wire (the contract redeclares its
+  types independently of the application, as it already does for `RunAgentInput`/`RunAgentState`).
+  `context?: readonly AgentContextEntry[]` added to both `RunAgentInput`s — optional, so existing
+  callers/tests are untouched. The path `context` travels: renderer `to-run-input.ts` maps AG-UI's
+  `input.context` → IPC `context`; `register.ts`/`run-agent-handler.ts`/`runAgent`/the port all hand
+  `RunAgentInput` through unchanged (no per-field transform), so it reaches the adapter's `startRun`
+  with no extra wiring. Not yet consumed — step 3 folds it into the opening message.
