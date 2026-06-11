@@ -54,7 +54,12 @@ const startRun = (
       try: () =>
         query({
           prompt: streamInput(input.messages),
-          options: buildOptions({ threadId: input.threadId, state: input.state, toolServer })
+          options: buildOptions({
+            threadId: input.threadId,
+            cwd: input.cwd,
+            state: input.state,
+            toolServer
+          })
         }),
       catch: () => new RunAgentFailed({ runId })
     })

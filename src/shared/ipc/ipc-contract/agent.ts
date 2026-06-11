@@ -18,6 +18,7 @@ interface RunAgentState {
 interface RunAgentInput {
   readonly messages: readonly Message[]
   readonly threadId?: string
+  readonly cwd?: string
   readonly tools: readonly Tool[]
   readonly state?: RunAgentState
 }

@@ -34,7 +34,7 @@ export const App = (): React.JSX.Element => {
 
   return (
     <AgentToolsProvider>
-      <AgentProvider>
+      <AgentProvider cwd={root}>
         <main className="flex h-screen gap-3 bg-surface-1 p-4 font-ui text-text-primary">
           {explorerOpen && (
             <div className="flex-none" style={{ width: 'var(--explorer-w)' }}>

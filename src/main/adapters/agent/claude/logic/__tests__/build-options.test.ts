@@ -14,7 +14,7 @@ const toolServer = createSdkMcpServer({ name: 'pluma-frontend-tools', version: '
 describe('buildOptions', () => {
   it('disables built-in tools and applies default model/effort when nothing is given', () => {
     expect(
-      buildOptions({ threadId: undefined, state: undefined, toolServer: undefined })
+      buildOptions({ threadId: undefined, cwd: undefined, state: undefined, toolServer: undefined })
     ).toStrictEqual({
       includePartialMessages: true,
       tools: [],
@@ -25,7 +25,12 @@ describe('buildOptions', () => {
 
   it('forwards the threadId as resume when present', () => {
     expect(
-      buildOptions({ threadId: 'thread-1', state: undefined, toolServer: undefined })
+      buildOptions({
+        threadId: 'thread-1',
+        cwd: undefined,
+        state: undefined,
+        toolServer: undefined
+      })
     ).toStrictEqual({
       includePartialMessages: true,
       tools: [],
@@ -35,10 +40,17 @@ describe('buildOptions', () => {
     })
   })
 
+  it('forwards the cwd when present and omits it when absent', () => {
+    const base = { threadId: undefined, state: undefined, toolServer: undefined }
+    expect(buildOptions({ ...base, cwd: '/work/space' }).cwd).toBe('/work/space')
+    expect('cwd' in buildOptions({ ...base, cwd: undefined })).toBe(false)
+  })
+
   it('overrides the defaults with effort and model from the run state', () => {
     expect(
       buildOptions({
         threadId: undefined,
+        cwd: undefined,
         state: { effort: 'high', model: 'claude-opus-4-8' },
         toolServer: undefined
       })
@@ -51,7 +63,12 @@ describe('buildOptions', () => {
   })
 
   it('registers a provided tool server under mcpServers with the stream-holding hook', () => {
-    const options = buildOptions({ threadId: undefined, state: undefined, toolServer })
+    const options = buildOptions({
+      threadId: undefined,
+      cwd: undefined,
+      state: undefined,
+      toolServer
+    })
 
     expect(options.mcpServers).toStrictEqual({ frontend: toolServer })
     expect(options.hooks?.PreToolUse).toHaveLength(1)

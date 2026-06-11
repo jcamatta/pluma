@@ -140,7 +140,16 @@ naming convention, not a second id.
 
 ### Workspace cwd (prerequisite — fixes the keying)
 
-0. **Thread the workspace folder into the agent as `cwd`.** The workspace folder (opened in the
+0. ✅ **DONE.** Workspace folder now flows to `query()` as `cwd`. `App` passes its `root` to
+   `AgentProvider`, which pushes it into the `Agent` via a new `setCwd` (mutable field, like the
+   existing `sessionId`); on each run the `Agent` stamps `cwd` onto `forwardedProps`, `to-run-input`
+   lifts it (via a `'cwd' in`-narrowing guard, no `as`) to a top-level `cwd` on the IPC `RunAgentInput`
+   (added in both `shared/ipc/ipc-contract/agent.ts` and `application/agent/data/run-agent-input.ts`),
+   and `build-options` maps it into the SDK options (`ClaudeRunOptions` Pick now includes `cwd`).
+   Covered by `to-run-input.test.ts` (lift + omit) and `build-options.test.ts` (present + omit). This
+   alone makes resume key under the workspace. **Next: step 1 (data + error + reader port).**
+
+   **Thread the workspace folder into the agent as `cwd`.** The workspace folder (opened in the
    launcher, watched by `folder:watch`) must be the `cwd` for `query()` so sessions are keyed there.
    `claude-runtime-agent.ts` passes no `cwd` today, so the SDK keys sessions by the Electron process's
    directory — wrong. This step routes the workspace path to `query({ options: { cwd } })`.
