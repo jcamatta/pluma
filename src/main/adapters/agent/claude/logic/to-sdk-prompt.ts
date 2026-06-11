@@ -1,18 +1,10 @@
-// Calculation: map the AG-UI conversation (Message[]) to the Claude SDK streaming-input messages. Only
-// the turns Claude accepts as input are kept — user, assistant, and system — each flattened to text
-// content. Other AG-UI roles (tool, reasoning, activity, developer) are not input turns and are dropped.
+// Calculation: map the AG-UI conversation (Message[]) to the Claude SDK streaming-input messages. Prior
+// history is not replayed here — the SDK `resume` carries it, so re-sending it would double-count the
+// conversation (and re-injecting an assistant turn as user input corrupts the resumed session). Only the
+// new user input is sent: the user turns after the last assistant reply, each flattened to text content.
 
 import type { Message } from '@ag-ui/core'
 import type { SDKUserMessage } from '@anthropic-ai/claude-agent-sdk'
-
-type SdkRole = 'user' | 'assistant' | 'system'
-
-const sdkRole = (message: Message): SdkRole | null => {
-  if (message.role === 'user') return 'user'
-  if (message.role === 'assistant') return 'assistant'
-  if (message.role === 'system') return 'system'
-  return null
-}
 
 const textContent = (message: Message): string => {
   if (typeof message.content === 'string') return message.content
@@ -23,14 +15,18 @@ const textContent = (message: Message): string => {
     .join('\n')
 }
 
-const toSdkMessage = (message: Message, role: SdkRole): SDKUserMessage => ({
+const toSdkMessage = (message: Message): SDKUserMessage => ({
   type: 'user',
   parent_tool_use_id: null,
-  message: { role, content: textContent(message) }
+  message: { role: 'user', content: textContent(message) }
 })
 
+// The new user input: every message after the last assistant turn (the whole conversation on the first
+// turn, just the latest user message once a reply has landed and the session resumes).
+const newUserTurns = (messages: readonly Message[]): readonly Message[] => {
+  const lastAssistant = messages.map((m) => m.role).lastIndexOf('assistant')
+  return messages.slice(lastAssistant + 1).filter((message) => message.role === 'user')
+}
+
 export const toSdkPrompt = (messages: readonly Message[]): readonly SDKUserMessage[] =>
-  messages.flatMap((message) => {
-    const role = sdkRole(message)
-    return role === null ? [] : [toSdkMessage(message, role)]
-  })
+  newUserTurns(messages).map(toSdkMessage)
