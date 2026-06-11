@@ -203,6 +203,12 @@ rename/delete use cases).**
    trimmed/truncated title; empty → a fallback key). The list use case prefers a thread's **stored**
    name (from step 2b's write) over the derived title when present. Update `FILE.md`.
 
+2b. ✅ **DONE (write slice).** Landed `data/rename-thread-input.ts` (`RenameThreadInput`: cwd/id/title
+— bundled to stay within max-params 2), `error/thread-write-failed.ts` (tagged),
+`port/thread-writer.port.ts` (`ThreadWriter` tag + `renameThread(input)` / `deleteThread(cwd, id)`),
+and the `rename-thread` + `delete-thread` command use cases (return void). Tests cover delegation +
+`ThreadWriteFailed`. **Next: step 3 (Claude thread-reader adapter).**
+
 2b. **Writer port + rename/delete command use cases.** Add
 `application/agent/port/thread-writer.port.ts` (`ThreadWriterPort` with `renameThread(cwd, id, title)`
 and `deleteThread(cwd, id)`, each → `Effect<void, ThreadWriteFailed>`) and the tagged error

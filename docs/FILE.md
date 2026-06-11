@@ -30,3 +30,13 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/main/application/agent/logic/__tests__/derive-thread-title.test.ts` — tests for the title-derivation calculation.
 - `src/main/application/agent/usecase/__tests__/list-threads.test.ts` — tests for the listThreads use case against an in-memory reader fake.
 - `src/main/application/agent/usecase/__tests__/get-thread-history.test.ts` — tests for the getThreadHistory use case against an in-memory reader fake.
+
+### src/main/application/agent — threads (write)
+
+- `src/main/application/agent/data/rename-thread-input.ts` — plain record (cwd, id, title) bundling the rename arguments.
+- `src/main/application/agent/error/thread-write-failed.ts` — tagged error for a thread rename/delete that could not be completed.
+- `src/main/application/agent/port/thread-writer.port.ts` — writer port for renaming and deleting threads under a workspace cwd (CQS-separate from the reader).
+- `src/main/application/agent/usecase/rename-thread.ts` — command use case persisting a user-chosen thread title via the writer port.
+- `src/main/application/agent/usecase/delete-thread.ts` — command use case removing a thread's session via the writer port.
+- `src/main/application/agent/usecase/__tests__/rename-thread.test.ts` — tests for the renameThread use case against an in-memory writer fake.
+- `src/main/application/agent/usecase/__tests__/delete-thread.test.ts` — tests for the deleteThread use case against an in-memory writer fake.
