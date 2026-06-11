@@ -4,11 +4,13 @@
 // useAutoSave persists edits back to the open file (path) with a debounce. The top bar's file name is
 // derived from path; onOpenSettings comes from the app shell, which owns the settings modal's open state.
 // The editor is null until it finishes initializing on the client, so this renders nothing until it is
-// ready. Frontend tools attach here in a later step.
+// ready. useEditorTools contributes the editor's frontend tools to the agent registry for as long as
+// the editor column is mounted.
 
 import { useTranslation } from 'react-i18next'
 import { useEditorZoom } from './useEditorZoom'
 import { useManuscriptEditor } from './useManuscriptEditor'
+import { useEditorTools } from './useEditorTools'
 import { useAutoSave } from './useAutoSave'
 import { EditorView } from './Editor.view'
 import { editorFileName } from './editor-file-name-logic'
@@ -27,6 +29,7 @@ export function EditorController({
   const { t } = useTranslation()
   const editor = useManuscriptEditor(content)
   const { containerRef, zoom } = useEditorZoom()
+  useEditorTools(editor)
   useAutoSave(editor, path)
 
   if (!editor) return null

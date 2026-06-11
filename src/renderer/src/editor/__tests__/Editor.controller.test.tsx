@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
+import { AgentToolsProvider } from '../../agent/AgentToolsProvider'
 import { EditorController } from '../Editor.controller'
 import { createFakeFolderRepository } from '../../explorer/__tests__/fake-folder-repository'
 import type { FakeRepository } from '../../explorer/__tests__/fake-folder-repository'
@@ -15,11 +16,13 @@ function renderController(
 ): ReturnType<typeof render> {
   return render(
     <ReposHarness repos={repos}>
-      <EditorController
-        path={props.path}
-        content={props.content}
-        onOpenSettings={() => undefined}
-      />
+      <AgentToolsProvider>
+        <EditorController
+          path={props.path}
+          content={props.content}
+          onOpenSettings={() => undefined}
+        />
+      </AgentToolsProvider>
     </ReposHarness>
   )
 }

@@ -18,3 +18,8 @@ The index is populated incrementally as files are touched, so it starts mostly e
 ### src/main/application/file
 - `src/main/application/file/usecase/create-file.ts` — command use case that creates a markdown file at a validated path.
 -->
+
+### src/renderer/src/editor
+
+- `src/renderer/src/editor/useEditorTools.ts` — contributes the editor's five frontend tools (get_current_selection, get_current_document, get_ranges, create_annotation, propose_edit) to the agent tool registry for the lifetime of the editor column, binding each handler to the live `Editor` and returning a recoverable error when no document is open.
+- `src/renderer/src/editor/__tests__/useEditorTools.test.tsx` — tests that `useEditorTools` registers all five tools, dispatches a handler against the live editor (get_ranges → propose_edit lands a proposal), and reports a recoverable error when no editor is mounted.

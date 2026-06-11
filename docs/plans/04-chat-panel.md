@@ -22,9 +22,21 @@ children.
 
 ---
 
-## Progress (updated 2026-06-10)
+## Progress (updated 2026-06-11)
 
 Pick up the next unchecked item in §3. What has landed so far:
+
+- **B5 (the gate) + Q3 — DONE.** The `propose_edit` round-trip is proven end to end into a real
+  headless editor: [tool-round-trip.integration.test.tsx](../../src/renderer/src/agent/__tests__/tool-round-trip.integration.test.tsx)
+  drives an `agent:tool-call` for `get_ranges` through `useToolBridge` into the real handlers and a
+  real TipTap editor, feeds its result into a `propose_edit` call, and asserts the proposal lands in
+  the editor's plugin state. **Q3 resolved without a new provider:** rather than lifting the editor
+  into an `EditorProvider`, the editor column registers its tools where the live `Editor` already
+  exists — [useEditorTools.ts](../../src/renderer/src/editor/useEditorTools.ts) binds all five
+  handlers to the mounted editor and contributes them via `useFrontendTool`, called from
+  [Editor.controller.tsx](../../src/renderer/src/editor/Editor.controller.tsx). Handlers return a
+  recoverable `{ ok: false }` ("No document is open") while no editor is mounted, so a call before the
+  manuscript loads never throws. Unit-tested (registration + live dispatch + the no-editor case).
 
 - **Multi-turn fix — DONE.** A second message used to error and drop the reply: the streaming input
   replayed the whole conversation on every turn _while also_ resuming the SDK session, so history was
@@ -119,14 +131,8 @@ until the rail feature is complete (it needs an agent e2e fixture; a live-SDK ru
 The conversation/activity/composer/stop half of the rail is built and shipping (see §Progress), and
 multi-turn chat is fixed. What is left:
 
-- **B5 (the gate) — next.** Prove a `propose_edit` round-trips into a _live editor_. The machinery is
-  built on both sides (the model is offered the renderer's tools, a call suspends in main and reaches
-  `useToolBridge`, the result returns inside the run), but there is no integration test driving a tool
-  call into a real headless editor, and `propose_edit` has not been seen to land an inline diff in
-  `npm run dev`. Needs the shared editor instance (Q3) first. **Do not wire the rail's artifact chips
-  until this round-trips** — they have nothing real to show.
 - **F5 — artifact chips** wired to real editor decorations (chips render + toggle paint + locate).
-  Blocked by B5 and Q4.
+  Unblocked now that B5/Q3 landed; still needs Q4 (where artifact-visibility state lives).
 - **F6 — `es.json`.** No Spanish namespace exists for any feature yet; this is a whole-app concern,
   deferred.
 - **Design-fidelity pass** — component-by-component against `app.jsx`.
@@ -263,8 +269,9 @@ views.
 1. ~~**B1 + B4** — shared channels + preload typing.~~ **DONE.**
 2. ~~**B2 + B3** — generate SDK tools, suspend handler, pending map, abort cleanup.~~ **DONE.**
 3. ~~**F1** — `useToolBridge` in `AgentProvider`.~~ **DONE.**
-4. **B5 (GATE)** — prove a `propose_edit` round-trips into the live editor. _Do not proceed to chips
-   until green._ Blocked on Q3 (shared editor instance). **← next.**
+4. ~~**B5 (GATE)** — prove a `propose_edit` round-trips into the live editor.~~ **DONE** — gate test
+   (`tool-round-trip.integration.test.tsx`) + the editor column registers its tools via
+   `useEditorTools`/`useFrontendTool` (Q3 resolved without a separate `EditorProvider`).
 5. ~~**F2** — `useThreads`/activity reducer + tests.~~ **DONE** (`activity-log.ts` + `useAgentActivityLog`).
 6. ~~**F3** — leaf views + snapshot tests.~~ **DONE** for the conversation half (`ThreadDot`, `LogRow`,
    `ConversationTurn`); `TurnArtifacts`/`ChatListRow` deferred to F5/Q5.
@@ -308,8 +315,10 @@ All of AGENTS' rules apply. The ones that bite here:
 - [ ] **Q2 — Activity-log copy (F2):** the prototype's step text is scripted. What real text do we
       show per AG-UI event (tool start / tool result / thinking / text / run finished/errored)?
       (Affects F2/F3.)
-- [ ] **Q3 — Shared editor instance (F7):** add an `EditorProvider` so the tool handlers and the
-      manuscript share one `Editor`? (Blocks F5/F7; coordinate with the editor column.)
+- [x] **Q3 — Shared editor instance (F7): RESOLVED.** No `EditorProvider` was needed — the editor
+      column registers its tools where the live `Editor` already exists, via `useEditorTools` +
+      `useFrontendTool` in `Editor.controller`. Handlers close over the mounted editor and report a
+      recoverable "no document open" error before it mounts.
 - [ ] **Q4 — Artifact-visibility state (F5):** the chip checkboxes toggle whether a decoration paints
       in the manuscript. Where does that visibility state live — App-shell-owned (`activeKeys`, per
       Plan 03 §4.6) or derived from editor plugin state? (Blocks F5.)
