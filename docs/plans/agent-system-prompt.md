@@ -122,7 +122,7 @@ the correct typed channel for it — `context`.
 Each step is one small, independently committable unit; each ends with checks green and lands its
 tests and `FILE.md` entry in the same commit.
 
-### Step 1 — System prompt calculation + wire it into options
+### Step 1 — System prompt calculation + wire it into options ✅
 
 Deliver the identity. No context yet.
 
@@ -178,4 +178,13 @@ Deliver the loaded-at-start context.
 
 ## Notes / handoff (fill in as steps land)
 
-- _(empty — nothing shipped yet)_
+- **Step 1 landed.** The prompt lives in
+  `src/main/adapters/agent/claude/logic/agent-system-prompt.ts` as the `AGENT_SYSTEM_PROMPT`
+  constant (custom-string form, not the `claude_code` preset). The identity says: writing assistant
+  inside Pluma ("editor for prose the way an IDE is an editor for code"), surface is the chat panel
+  beside the editor, manuscript access only through the run's tools, warm/direct/concrete tone that
+  respects the writer's voice, scope bounded to writing (explicitly not a coding assistant).
+  `ClaudeRunOptions` now picks `systemPrompt` and `buildOptions` sets it on every run. Copy was
+  drafted by the agent — flag for the human's voice pass in the PR (open question 1).
+- **Localization of replies (open question in step 1's scope): not implemented.** No `locale` was
+  added; deferred per "Out of scope" unless the human asks.

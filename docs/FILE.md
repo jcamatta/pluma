@@ -18,3 +18,8 @@ The index is populated incrementally as files are touched, so it starts mostly e
 ### src/main/application/file
 - `src/main/application/file/usecase/create-file.ts` — command use case that creates a markdown file at a validated path.
 -->
+
+### src/main/adapters/agent/claude
+
+- `src/main/adapters/agent/claude/logic/agent-system-prompt.ts` — pure constant exposing the custom system prompt for every Claude SDK run: the Pluma writing-assistant identity, surface (chat panel beside the editor), tone, and scope.
+- `src/main/adapters/agent/claude/logic/__tests__/agent-system-prompt.test.ts` — asserts the system prompt is non-empty and states the identity claims (Pluma, writing assistant, chat panel, not a coding assistant, tools-only manuscript access).

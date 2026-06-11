@@ -4,11 +4,13 @@
 // the renderer's frontend tools, registered through `mcpServers`. When such a server is present we also
 // register a no-op `PreToolUse` hook: the SDK requires one in streaming-input mode to hold the stream
 // open while a tool handler suspends (waiting on the renderer). A threadId, when present, resumes that
-// session. Model and effort come from the run state, falling back to the adapter defaults.
+// session. Model and effort come from the run state, falling back to the adapter defaults. Every run
+// carries the custom writing-assistant system prompt instead of the SDK's minimal default.
 
 import type { McpSdkServerConfigWithInstance } from '@anthropic-ai/claude-agent-sdk'
 import type { RunAgentState } from '../../../../application/agent/data/run-agent-state'
 import type { ClaudeRunOptions } from '../data/claude-run-options'
+import { AGENT_SYSTEM_PROMPT } from './agent-system-prompt'
 
 const DEFAULT_MODEL = 'claude-opus-4-8'
 const DEFAULT_EFFORT = 'medium'
@@ -38,6 +40,7 @@ const toolServerOptions = (
 const buildOptions = (input: BuildOptionsInput): ClaudeRunOptions => ({
   includePartialMessages: true,
   tools: [],
+  systemPrompt: AGENT_SYSTEM_PROMPT,
   model: input.state?.model ?? DEFAULT_MODEL,
   effort: input.state?.effort ?? DEFAULT_EFFORT,
   ...toolServerOptions(input.toolServer),
