@@ -18,3 +18,15 @@ The index is populated incrementally as files are touched, so it starts mostly e
 ### src/main/application/file
 - `src/main/application/file/usecase/create-file.ts` — command use case that creates a markdown file at a validated path.
 -->
+
+### src/main/application/agent — threads (read)
+
+- `src/main/application/agent/data/thread-summary.ts` — plain `ThreadSummary` record (id, title, updatedAt) for the threads list.
+- `src/main/application/agent/error/thread-read-failed.ts` — tagged error for a thread that is missing or unreadable.
+- `src/main/application/agent/port/thread-reader.port.ts` — reader port for listing threads and loading one thread's message history under a workspace cwd.
+- `src/main/application/agent/usecase/list-threads.ts` — query use case returning the workspace's thread summaries via the reader port.
+- `src/main/application/agent/usecase/get-thread-history.ts` — query use case returning one thread's post-compaction message chain via the reader port.
+- `src/main/application/agent/logic/derive-thread-title.ts` — pure calculation deriving a thread's default title from its first user message.
+- `src/main/application/agent/logic/__tests__/derive-thread-title.test.ts` — tests for the title-derivation calculation.
+- `src/main/application/agent/usecase/__tests__/list-threads.test.ts` — tests for the listThreads use case against an in-memory reader fake.
+- `src/main/application/agent/usecase/__tests__/get-thread-history.test.ts` — tests for the getThreadHistory use case against an in-memory reader fake.

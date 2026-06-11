@@ -177,6 +177,15 @@ naming convention, not a second id.
 
 ### Backend — read threads
 
+1–2. ✅ **DONE (read slice).** Landed `data/thread-summary.ts` (`ThreadSummary`: id/title/updatedAt),
+`error/thread-read-failed.ts` (tagged), `port/thread-reader.port.ts` (`ThreadReader` tag +
+`listThreads(cwd)` / `getThreadHistory(cwd, id)`), the `list-threads` + `get-thread-history` query
+use cases, and `logic/derive-thread-title.ts` (whitespace-collapse + truncate; empty → `''`, the
+renderer owns the localized fallback rather than the backend emitting prose). Use-case tests cover
+success + `ThreadReadFailed`; the title calc is unit-tested. **Title resolution (stored name wins)
+happens in the step-3 adapter** when it builds each summary. **Next: step 2b (writer port +
+rename/delete use cases).**
+
 1. **Data + error + reader port.** Add `application/agent/data/thread-summary.ts` (`ThreadSummary`:
    `id`, `title`, `updatedAt`) and `application/agent/error/thread-read-failed.ts` (tagged error).
    Add `application/agent/port/thread-reader.port.ts` (`ThreadReaderPort` with `listThreads(cwd)` →
