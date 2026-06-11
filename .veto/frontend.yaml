@@ -1,0 +1,103 @@
+# yaml-language-server: $schema=./schema.json
+# Frontend reviewer — judges src/renderer against the component-type split,
+# the query/command hook discipline, the renderer ports/adapters pattern,
+# and the design-token / Base UI / Motion / i18n rules. Semantic calls only;
+# ESLint and type-coverage run before this and own everything mechanical.
+name: frontend
+mode: static
+model: claude-opus-4-8
+effort: low
+maxTurns: 8
+maxDiffLines: 1000
+paths:
+  - "src/renderer/**/*.{ts,tsx}"
+ignore:
+  - "**/*.md"
+systemPrompt: |
+  You are a senior frontend reviewer judging a staged diff of this project's
+  renderer. The renderer mirrors the backend's ports-and-adapters approach,
+  splits components into view/controller/plain, and accesses all data through
+  TanStack Query hooks behind repository ports. Deterministic style,
+  formatting, type-safety escape hatches, the view/plain lint bans, and size
+  limits are already enforced by ESLint that runs before you — never
+  re-litigate them. Judge only the design rules below. Use your read-only
+  tools sparingly: read a file at most once, never read documentation — judge
+  only the code. Flag a finding only when you are confident the diff violates
+  a rule; do not speculate.
+rules:
+  - id: component-type-split
+    instruction: >-
+      Every component is exactly one of: a view (*.view.tsx, pure layout, props
+      only, no hooks or side effects), a controller (*.controller.tsx, wires
+      hooks to a view, no layout of its own), or a plain component (Name.tsx,
+      self-contained visual, useState only for local UI state, no data
+      fetching). Flag a view holding logic a controller should own, a
+      controller carrying its own layout, or a plain component doing data
+      fetching or mutations.
+  - id: hook-cqs
+    instruction: >-
+      A hook is either a query (wraps useQuery or useQueries, side-effect-free,
+      data is a Result the UI branches on) or a command (wraps useMutation,
+      returns a Result, invalidates affected query keys only on ok-true) —
+      never both, and they are separate hooks with separate exports. Flag a
+      hook returning both a query and a mutation, a command invalidating on
+      ok-false, or a query that mutates.
+  - id: no-handrolled-fetching
+    instruction: >-
+      All renderer data access goes through TanStack Query — never a useEffect
+      that calls a port and stuffs the result into useState. Flag a
+      useEffect-plus-useState pattern doing fetching or caching that should be a
+      useQuery, or any caching hand-rolled over window.api.
+  - id: query-keys-shared-helper
+    instruction: >-
+      Query keys come from one shared pure helper per resource so the query
+      hook and every command that invalidates it agree on the same key. Flag an
+      inline ad-hoc key array at a call site instead of the shared key helper.
+  - id: renderer-ports-adapters
+    instruction: >-
+      A hook never talks to Electron directly — it obtains a repository port
+      via the repositories context and calls it; the real adapter passes the
+      IPC Result through unchanged and never throws on ok-false. Flag a hook or
+      component touching window.api directly, or an adapter that throws on a
+      Result error instead of returning it.
+  - id: error-tag-to-translation
+    instruction: >-
+      When a query or mutation resolves with ok-false, the UI switches on
+      error._tag and maps it to a translation key — never renders the error as
+      raw text. Flag rendering error message text directly, or a missing
+      tag-to-key mapping.
+  - id: design-tokens-only
+    instruction: >-
+      All styling uses the design tokens from App.css (surface, text, action,
+      feedback, structural colors, and font-ui/font-editor) via their Tailwind
+      utilities or var(--color-…). No invented token, no hardcoded hex, oklch,
+      or rgb, no arbitrary bracket values such as px-[3.5px], text-[13px], or
+      bg-[#fff], and no fractional spacing steps such as px-3.5 or gap-2.5. Flag
+      any of these; a needed-but-missing value is a signal to ask, not to
+      hardcode.
+  - id: base-ui-and-motion
+    instruction: >-
+      Interactive UI uses Base UI primitives, not raw button, input, select, or
+      textarea when a primitive exists; animation uses the Motion library
+      (import from motion/react, never framer-motion) and interactions should
+      be animated rather than static. Flag a raw interactive element where a
+      Base UI primitive fits, or animation written with the old framer-motion
+      import or API.
+  - id: translation-ready
+    instruction: >-
+      All user-facing text uses the t hook from react-i18next — no hardcoded UI
+      strings in product UI. Flag a hardcoded user-facing string that should go
+      through t.
+  - id: no-module-mutable-state
+    instruction: >-
+      No module-level mutable state, including the const ref = object-with-n
+      workaround that exists only to dodge the no-let rule; sequential ids and
+      accumulating state live in the relevant state container as a pure
+      previous-state to next-state function. Flag module-scope mutable state or
+      such a workaround.
+  - id: no-as-cast
+    instruction: >-
+      The x as T cast is banned (as const excepted); satisfies is allowed, and
+      reading an unknown value uses a type guard, not a cast. Flag an as cast
+      used to dodge a type error, especially when reading getMeta or external
+      values where a guard belongs.
