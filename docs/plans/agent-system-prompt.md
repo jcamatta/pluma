@@ -152,7 +152,7 @@ Plumbing only — no prompt change yet, so it stays small.
 - `docs/FILE.md`: new/edited entries.
 - **Note when landed:** the exact path `context` travels.
 
-### Step 3 — Fold `context` into the opening prompt message (fresh runs only)
+### Step 3 — Fold `context` into the opening prompt message (fresh runs only) ✅
 
 Deliver the loaded-at-start context.
 
@@ -197,3 +197,12 @@ Deliver the loaded-at-start context.
   `input.context` → IPC `context`; `register.ts`/`run-agent-handler.ts`/`runAgent`/the port all hand
   `RunAgentInput` through unchanged (no per-field transform), so it reaches the adapter's `startRun`
   with no extra wiring. Not yet consumed — step 3 folds it into the opening message.
+- **Step 3 landed.** `src/main/adapters/agent/claude/logic/context-to-message.ts` is the pure fold:
+  it renders the entries as a single **user**-role `SDKUserMessage` wrapped in a `<context>` marker
+  (each entry = `description\nvalue`, entries blank-line separated), returning `undefined` when
+  empty. Note the SDK streaming-input channel only carries user/assistant roles — `MessageParam` has
+  no `system` role (that's owned by the `systemPrompt` option) — so the plan's "system-role message"
+  is delivered as the opening user message instead. The insertion point is `stream-input.ts`:
+  `streamInput` now takes the whole `RunAgentInput`, yields the context message first **only when
+  `threadId === undefined`**, then the conversation from `toSdkPrompt` (kept a pure messages-only
+  mapping). The adapter call site changed from `streamInput(input.messages)` to `streamInput(input)`.

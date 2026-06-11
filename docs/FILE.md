@@ -27,3 +27,7 @@ The index is populated incrementally as files are touched, so it starts mostly e
 
 - `src/main/adapters/agent/claude/logic/agent-system-prompt.ts` — pure constant exposing the custom system prompt for every Claude SDK run: the Pluma writing-assistant identity, surface (chat panel beside the editor), tone, and scope.
 - `src/main/adapters/agent/claude/logic/__tests__/agent-system-prompt.test.ts` — asserts the system prompt is non-empty and states the identity claims (Pluma, writing assistant, chat panel, not a coding assistant, tools-only manuscript access).
+- `src/main/adapters/agent/claude/logic/context-to-message.ts` — pure calculation folding the per-session AG-UI context entries into the single opening user message of a fresh run (each entry rendered as description + value inside a `<context>` marker); returns nothing when there is no context.
+- `src/main/adapters/agent/claude/logic/__tests__/context-to-message.test.ts` — covers the empty case (no message), the SDK envelope shape, and the rendered description/value content.
+- `src/main/adapters/agent/claude/runtime/stream-input.ts` — builds the SDK streaming-input prompt: yields the folded context message first on a fresh run (gated on `threadId === undefined`), then the conversation mapped by `toSdkPrompt`.
+- `src/main/adapters/agent/claude/runtime/__tests__/stream-input.test.ts` — asserts the context message is yielded first on a fresh run, not re-injected on a resume, and absent when there is no context.
