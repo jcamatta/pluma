@@ -5,22 +5,22 @@ msg="$(head -n 1 "$msg_file" | tr -d '\r')"
 # Conventional Branch (https://conventionalbranch.org). Every plan and every
 # change lives on its own branch.
 branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
-branch_pattern='^(feature|feat|bugfix|fix|hotfix|release|chore)/[a-z0-9]+(\.[a-z0-9]+)*(-[a-z0-9]+(\.[a-z0-9]+)*)*$'
+branch_pattern='^(feat|fix|hotfix|release|chore)/[a-z0-9]+(\.[a-z0-9]+)*(-[a-z0-9]+(\.[a-z0-9]+)*)*$'
 
 case "$branch" in
   main|master|develop|HEAD)
     echo "Refusing to commit on '$branch'."
     echo "Create a branch first — every change goes on its own branch."
-    echo "Use a Conventional Branch name: feature/<desc>, fix/<desc>, chore/<desc>, etc."
+    echo "Use a Conventional Branch name: feat/<desc>, fix/<desc>, chore/<desc>, etc."
     exit 1
     ;;
 esac
 
 if ! printf '%s' "$branch" | grep -Eq "$branch_pattern"; then
   echo "Branch '$branch' is not a valid Conventional Branch name."
-  echo "Expected: <type>/<description> — type one of feature|feat|bugfix|fix|hotfix|release|chore"
+  echo "Expected: <type>/<description> — type one of feat|fix|hotfix|release|chore"
   echo "Description: lowercase letters, digits, hyphen-separated (dots only for release versions)."
-  echo "Examples: feature/chat-panel, fix/null-response, release/1.2.0"
+  echo "Examples: feat/chat-panel, fix/null-response, release/1.2.0"
   exit 1
 fi
 
