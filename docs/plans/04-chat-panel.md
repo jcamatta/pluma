@@ -26,6 +26,14 @@ children.
 
 Pick up the next unchecked item in §3. What has landed so far:
 
+- **Multi-turn fix — DONE.** A second message used to error and drop the reply: the streaming input
+  replayed the whole conversation on every turn _while also_ resuming the SDK session, so history was
+  double-counted and the prior assistant reply was re-injected as malformed user input.
+  [to-sdk-prompt.ts](../../src/main/adapters/agent/claude/logic/to-sdk-prompt.ts) now sends only the
+  new user input (the user turns after the last assistant reply); `resume` carries the rest. The first
+  turn is unchanged (one user message, no resume); later turns send just the latest user message into
+  the resumed session. Unit-tested.
+
 - **F2 — DONE.** The thread/run model is the pure reducer in
   [activity-log.ts](../../src/renderer/src/rail/activity-log.ts) (folds the AG-UI stream into an
   `AgentActivity = { status, startedAt, log[], summary }`) plus its thin subscribing shell
@@ -81,11 +89,7 @@ until the rail feature is complete (it needs an agent e2e fixture; a live-SDK ru
   / rejecting handler → error result, never throws so the suspended run can't hang). Wired into
   [AgentProvider.tsx](../../src/renderer/src/agent/AgentProvider.tsx); unit-tested.
 
-**Next: B5 (the gate)** — the round-trip into a _live editor_ — and then **F5 (artifact chips)**, which
-B5 unblocks. The conversation/activity/composer/stop half of the rail (F2–F4, F6-en, F7) is now built
-and shipping; what remains is the artifact half (B5 → F5), the shared editor instance (Q3), `es.json`
-(F6), the design-fidelity pass, and the rail's e2e manifest entry + real-app spec (held until the
-feature is complete, since it needs an agent e2e fixture). Do not start F5 until B5 is green.
+**Next: B5 (the gate)** — see §1 for what remains.
 
 ---
 
@@ -110,42 +114,43 @@ feature is complete, since it needs an agent e2e fixture). Do not start F5 until
 
 ---
 
-## 1. The gap (verified 2026-06-09)
+## 1. What remains
 
-### Already built (do not rebuild)
+The conversation/activity/composer/stop half of the rail is built and shipping (see §Progress), and
+multi-turn chat is fixed. What is left:
 
-- **Renderer agent core:** `Agent` (AbstractAgent over IPC, in `agent/adapters/Agent.ts`),
-  `route-agent-event`, `to-run-input`, `AgentProvider` (injects the tools snapshot into each run),
-  `AgentContext`, `AgentToolsContext`/`AgentToolsProvider`, `useFrontendTool`, `useAgent` (returns
-  `{ agent }`, re-renders on `messages`/run-status changes).
-- **Frontend tools:** all five handlers + `tools/specs.ts` + `tools/types.ts` and their tests
-  (`get_current_document`, `get_current_selection`, `get_ranges`, `create_annotation`,
-  `propose_edit`).
-- **Backend agent run:** `agent:run` / `agent:abort` IPC + the Claude AG-UI runtime streaming
-  `agent:event` (`BaseEvent`). The shared agent wire contract carries `tools: readonly Tool[]`
-  already.
-- **Shell pieces:** `App.tsx` (explorer + editor column + right edge tab for the explorer only),
-  the editor, settings dialog, `EdgeTab` component, i18n `en.json`.
-
-### NOT built — this plan's work
-
-- **Proving the round-trip end to end (B5, the gate).** The round-trip machinery is now built on both
-  sides (see Progress below): the model is offered the renderer's tools, a call suspends in main and
-  reaches `useToolBridge`, and the result returns inside the run. What is **not** done is the proof
-  that it works against a _live editor_: there is no integration test driving a tool call into a real
-  headless editor, and `propose_edit` has not been seen to land an inline diff in `npm run dev`. This
-  needs the shared editor instance (Q3) first. Until this gate is green, **do not wire the rail's
-  artifact chips** — they have nothing real to show.
-- **The chat panel UI** — no `ConversationRail` (or any of its children) exists in the renderer.
-  `App.tsx` has no rail column, no right-side rail state.
-- **The thread/run model** — there is no renderer hook that reduces one run's AG-UI event stream
-  into the `{ prompt, status, log[], summary, working, artifacts }` shape the rail renders. This is
-  the heart of the **frontend** work.
-- **i18n for the rail** — the design's chat copy (`chats`, `newChat`, `composerPlaceholder`,
-  `worked`, `step`/`steps`, `stop`, `selectAll`/`deselectAll`, `inEditor`, `noChats`,
-  `newChatEmpty`, `openReview`, …) is **not** in `en.json`; `es.json` does not exist.
+- **B5 (the gate) — next.** Prove a `propose_edit` round-trips into a _live editor_. The machinery is
+  built on both sides (the model is offered the renderer's tools, a call suspends in main and reaches
+  `useToolBridge`, the result returns inside the run), but there is no integration test driving a tool
+  call into a real headless editor, and `propose_edit` has not been seen to land an inline diff in
+  `npm run dev`. Needs the shared editor instance (Q3) first. **Do not wire the rail's artifact chips
+  until this round-trips** — they have nothing real to show.
+- **F5 — artifact chips** wired to real editor decorations (chips render + toggle paint + locate).
+  Blocked by B5 and Q4.
+- **F6 — `es.json`.** No Spanish namespace exists for any feature yet; this is a whole-app concern,
+  deferred.
+- **Design-fidelity pass** — component-by-component against `app.jsx`.
+- **e2e** — the rail's manifest entry + real-app spec, held until the feature is complete.
 
 ---
+
+## Parallelization & collisions (read before starting)
+
+This plan runs **in its own worktree** (`feature/chat-panel-artifacts`) and opens **its own PR**.
+Three plans are in flight at once — this one, `agent-system-prompt.md`, and `thread-history.md`.
+
+- **This plan runs FULLY in parallel with the other two.** Its remaining work (B5 the gate, F5 the
+  artifact chips, Q3 the shared `EditorProvider`) lives in `src/renderer/src/rail/` and the editor
+  (`src/renderer/src/editor/` + its plugin state). It touches **none** of the agent run-input /
+  build-options / IPC-contract files the other two plans fight over, so no sequencing is needed.
+- **One thing to NOT touch:** leave [`build-options.ts`](../../src/main/adapters/agent/claude/logic/build-options.ts),
+  the two `RunAgentInput` interfaces, [`claude-run-options.ts`](../../src/main/adapters/agent/claude/data/claude-run-options.ts),
+  and [`to-sdk-prompt.ts`](../../src/main/adapters/agent/claude/logic/to-sdk-prompt.ts) alone — those
+  belong to `agent-system-prompt.md` and `thread-history.md`. B5's machinery already exists on both
+  sides (see §Progress); the gate is an _integration test_ into a real headless editor plus the
+  `EditorProvider` lift, not a change to the run options.
+- **`Agent.ts` is `thread-history.md`'s** (its step 7 extends it for thread seeding). This plan does
+  not edit it. Keep B5/F5 inside `rail/` and the editor to avoid colliding with that plan.
 
 ## 2. Split: backend vs. frontend
 
