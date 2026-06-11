@@ -1,6 +1,6 @@
 ---
 name: finish-plan
-description: Close out a completed plan — verify it's done, run the checks, remove the plan file, push the branch, and open a PR with a structured description for the user to review. Use when the user says a plan/feature is finished, asks to "finish the plan", "open the PR", "wrap up", or otherwise signals the branch is ready for review and approval.
+description: Close out a completed plan — verify it's done, run the checks, prove the change works (via the test-functionality skill), remove the plan file, push the branch, and open a PR with a structured description for the user to review. Use when the user says a plan/feature is finished, asks to "finish the plan", "open the PR", "wrap up", or otherwise signals the branch is ready for review and approval.
 ---
 
 # Finish a plan and open its PR
@@ -27,19 +27,26 @@ Run the definition-of-done checks and report each result:
 
 If any fails, **stop** — the plan is not finishable until they pass. Do not open a PR over red checks.
 
-## 2. Draft the PR description (from the plan, before deleting it)
+## 2. Prove the change works (test-functionality skill)
+
+Invoke the `test-functionality` skill (`.claude/skills/test-functionality/SKILL.md`). It exercises the actual change the cheapest faithful way — a throwaway script against the real use cases/`window.api`, a temp harness, or driving the built app with Playwright's Electron driver (screenshotting only for its own visual judgment) — and returns a **written** `## Proof it works` evidence report with real transcripts and a final `Evidence verdict` line. No images are committed or uploaded; the evidence that ships is the text.
+
+- If the verdict is **FAIL**, stop: the plan is not finishable. Report the failing behaviors to the user instead of opening the PR.
+- If the verdict is **PASS**, keep the report verbatim — it goes into the PR body in step 3.
+
+## 3. Draft the PR description (from the plan, before deleting it)
 
 The plan file is the raw material — read it now, while it still exists, plus the branch's commits (`git log main..HEAD --oneline`) and the diff stat (`git diff --stat main...HEAD`). Write a PR body with these sections:
 
 - **What was done** — the feature delivered, in product terms. Summarize from the plan's "done" definition and the per-step progress notes.
 - **Files** — the key files this change adds/changes and what each is for (mirror the functional descriptions; do not paste history). Group by area.
-- **How to validate manually** — concrete steps a human follows in the running app (`npm run dev`) to see it work: what to click/type and what they should observe. This is the most important section for the user's review.
+- **Proof it works** — the evidence report from step 2, verbatim: real commands, real captured output, per-behavior verdicts. This is proof you already exercised the change, not instructions for the user to follow.
 - **Tests** — what was tested and at which level (unit/use-case, hooks/views/controllers, e2e), and which manifest ids the e2e specs claim, if any.
 - **Notes / open questions** — decisions made, anything deferred to a future plan, anything the reviewer should weigh.
 
 Keep it factual and scannable. No attribution footers (the `commit-msg` hook bans them, and the same applies to PR bodies per project convention). Show the drafted title and body to the user before proceeding.
 
-## 3. Remove the plan (its own commit)
+## 4. Remove the plan (its own commit)
 
 Per the workflow, a completed plan is deleted — git keeps the history. Delete the plan file and commit it **alone**:
 
@@ -50,7 +57,7 @@ git commit -m "docs: remove plan <name>, complete"
 
 (Branch + commit-msg hooks still apply. `docs/` is weight 0, so the size hook is irrelevant.)
 
-## 4. Push the branch and open the PR
+## 5. Push the branch and open the PR
 
 Push:
 
@@ -66,6 +73,6 @@ gh pr create --base main --title "<conventional-commit-style title>" --body "<th
 
 **If `gh` is not authenticated** (`gh auth status` fails) or `gh pr create` errors: do **not** treat it as done. Tell the user to run `gh auth login`, and in the meantime **print the full PR title and body** so they can paste it into the GitHub "compare & pull request" page for the branch (the URL is printed by the push). Report the branch name and the compare URL.
 
-## 5. Report
+## 6. Report
 
 Tell the user: the branch name, the PR URL (or the paste-ready body if `gh` wasn't available), that the plan file was removed, and that the checks passed. Then **stop — the user reviews and gives final approval.** Do not merge the PR yourself.
