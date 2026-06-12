@@ -6,8 +6,10 @@
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { assembleRun } from './assemble-run'
+import { compareRun } from './compare-baseline'
 import { isScenarioResult } from './is-scenario-result'
 import { perfPaths } from './perf-paths'
+import { readHistory } from './read-history'
 import { renderReport } from './render-report'
 import { runContext } from './run-context'
 import { runFileName } from './run-filename'
@@ -29,9 +31,11 @@ const globalTeardown = async (): Promise<void> => {
   const scenarios = await readPending()
   if (scenarios.length === 0) return
   const run = assembleRun(runContext(), scenarios)
+  const fileName = runFileName(run.context)
   await mkdir(perfPaths.runs, { recursive: true })
-  await writeFile(join(perfPaths.runs, runFileName(run.context)), JSON.stringify(run, null, 2))
-  await writeFile(perfPaths.report, renderReport(run))
+  await writeFile(join(perfPaths.runs, fileName), JSON.stringify(run, null, 2))
+  const comparisons = compareRun(run, await readHistory(fileName))
+  await writeFile(perfPaths.report, renderReport(run, comparisons))
   await rm(perfPaths.pending, { recursive: true, force: true })
 }
 

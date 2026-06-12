@@ -3,10 +3,8 @@
 // this guard narrows `unknown` to the real shape so nothing downstream needs a cast, and lets the
 // teardown quietly drop anything that does not match.
 
+import { isObject } from './is-object'
 import type { PerfMetric, PerfUnit, ScenarioResult } from './scenario-result'
-
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isPerfUnit = (value: unknown): value is PerfUnit =>
   value === 'ms' || value === 'bytes' || value === 'count'
