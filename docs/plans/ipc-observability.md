@@ -31,7 +31,14 @@ package — **no new dependency**.
 
 ## Steps
 
-### 1. Observability foundation: runtime + reusable wrapper
+### 1. Observability foundation: runtime + reusable wrapper — DONE
+
+Landed: `src/main/runtime/observability-layer.ts` (Logger.json + Info min level), `main-runtime.ts`
+(ManagedRuntime), and `src/main/ipc/shared/` — split into `ipc-log.ts` (the `withIpcLog` wrapper, shared
+by both runners so one-export-per-file holds), `run-ipc.ts` (`runIpc`, folds Exit→Result via curried
+`foldExit`), and `run-ipc-ack.ts` (`runIpcAck` for the no-fail acks). Disposal wired in `index.ts` on
+`before-quit`. Tests in `shared/__tests__/` cover the fold (success/typed-failure/defect) and that
+started/succeeded/failed log lines carry the `channel` annotation (captured via a replaced Logger).
 
 The whole reusable pattern, self-contained and immediately exercised by its own tests.
 
@@ -69,7 +76,12 @@ the default no-op tracer, so no Tracer layer is required to compile or test.
 Decision: **JSON everywhere** (per the locked decision "we want json logs"). A pretty-in-dev toggle is
 recorded under Future ideas, not built now.
 
-### 2. Migrate file handlers
+### 2. Migrate file handlers — DONE
+
+All four file handlers now call `runIpc`, annotating `path` only (write-file omits content). Fallback
+tags preserved exactly (create→`FileWriteFailed`, delete→`FileDeleteFailed`, write→`FileWriteFailed`,
+read→`FileReadFailed`). Channel constants imported from the shared contract. The existing handler tests
+pass unchanged (Result shapes identical).
 
 Replace the hand-rolled body in each of the four file handlers with `runIpc`, preserving the exact
 `Result` projection and adapter wiring; annotate the safe `path` scalar (never file contents).
