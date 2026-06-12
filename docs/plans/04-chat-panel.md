@@ -22,9 +22,39 @@ children.
 
 ---
 
-## Progress (updated 2026-06-10)
+## Progress (updated 2026-06-11)
 
 Pick up the next unchecked item in §3. What has landed so far:
+
+- **Design-fidelity pass (conversation half) — DONE.** Compared each in-scope rail view against
+  `app.jsx` component-by-component: the header, scrollable body, pinned composer card (textarea +
+  `⌘↵` hint + animated Send), the collapsible `Activity` header (spinner/check/cross + label + step
+  count + chevron), `LogRow` (glyph in the timeline gutter + mono meta line), `UserMessage`,
+  `ThreadDot`, and `Empty` all match the prototype's anatomy and spacing. The custom glyph animations
+  in `App.css` (`spinner-ring` = accent ring + bright arc spinning, `agent-status-dot` = `pulse-dot`,
+  `rise-in`) replicate the design's. The only deviations are the two already documented and
+  intentional per the design-tokens exception: **Stop lives in the composer** (run-control, not a
+  per-message action) and the **user bubble uses the accent pairing** (`bg-action-primary` /
+  `text-on-accent`) in place of the design's `surface-inverse-*` tokens we don't carry. Artifact
+  chips and the chats-list/`ChatListRow` are out of scope here (F5 split out / Q5 deferred).
+
+- **e2e — DONE.** `feature:rail` + `agent.run`/`agent.event` were already covered by
+  [rail.e2e.ts](../../e2e/rail.e2e.ts); added **`agent.abort`** to the coverage manifest and a second
+  real-app spec that fills a long prompt, starts a run, and clicks the composer **Stop** while the run
+  is in flight, asserting the run settles (Stop → Send returns) — driving `agent:abort` over IPC with
+  nothing mocked but the native folder dialog. The fast Vitest audit is green.
+
+- **B5 (the gate) + Q3 — DONE.** The `propose_edit` round-trip is proven end to end into a real
+  headless editor: [tool-round-trip.integration.test.tsx](../../src/renderer/src/agent/__tests__/tool-round-trip.integration.test.tsx)
+  drives an `agent:tool-call` for `get_ranges` through `useToolBridge` into the real handlers and a
+  real TipTap editor, feeds its result into a `propose_edit` call, and asserts the proposal lands in
+  the editor's plugin state. **Q3 resolved without a new provider:** rather than lifting the editor
+  into an `EditorProvider`, the editor column registers its tools where the live `Editor` already
+  exists — [useEditorTools.ts](../../src/renderer/src/editor/useEditorTools.ts) binds all five
+  handlers to the mounted editor and contributes them via `useFrontendTool`, called from
+  [Editor.controller.tsx](../../src/renderer/src/editor/Editor.controller.tsx). Handlers return a
+  recoverable `{ ok: false }` ("No document is open") while no editor is mounted, so a call before the
+  manuscript loads never throws. Unit-tested (registration + live dispatch + the no-editor case).
 
 - **Multi-turn fix — DONE.** A second message used to error and drop the reply: the streaming input
   replayed the whole conversation on every turn _while also_ resuming the SDK session, so history was
@@ -105,11 +135,10 @@ until the rail feature is complete (it needs an agent e2e fixture; a live-SDK ru
    conversation** (one `LogRow` per tool call / thinking / text), derived from the AG-UI event
    stream — not a scripted timeline.
 3. When the model calls `propose_edit` / `create_annotation`, the tool **executes against the live
-   editor** (the D1 round-trip) and the produced artifacts appear as compact chips in the turn; the
-   chip checkbox toggles whether the decoration paints in the manuscript, and the chip locates
-   (scrolls to) its range.
-4. The reply text streams in as the turn's summary; the run lands as a row in the chats list with a
-   relative timestamp and artifact count.
+   editor** (the D1 round-trip). _(Surfacing those artifacts back in the rail — chips/cards, toggle
+   paint, locate — is split out to a follow-up PR; see §1 F5. This plan ends at the round-trip
+   working, not at the rail rendering the artifacts.)_
+4. The reply text streams in as the turn's summary.
 5. Abort works (the in-turn **Stop** button cancels the run).
 
 ---
@@ -119,18 +148,27 @@ until the rail feature is complete (it needs an agent e2e fixture; a live-SDK ru
 The conversation/activity/composer/stop half of the rail is built and shipping (see §Progress), and
 multi-turn chat is fixed. What is left:
 
-- **B5 (the gate) — next.** Prove a `propose_edit` round-trips into a _live editor_. The machinery is
-  built on both sides (the model is offered the renderer's tools, a call suspends in main and reaches
-  `useToolBridge`, the result returns inside the run), but there is no integration test driving a tool
-  call into a real headless editor, and `propose_edit` has not been seen to land an inline diff in
-  `npm run dev`. Needs the shared editor instance (Q3) first. **Do not wire the rail's artifact chips
-  until this round-trips** — they have nothing real to show.
-- **F5 — artifact chips** wired to real editor decorations (chips render + toggle paint + locate).
-  Blocked by B5 and Q4.
+- **F5 — artifact chips → editor decorations: SPLIT OUT to its own PR (not this plan).** Surfacing a
+  turn's produced annotations/proposals in the manuscript (and the chip's toggle-paint / locate)
+  requires reworking the editor's single-active decoration model into a set-based one (Q4) plus a
+  rail↔editor seam — a substantial, design-heavy change worth its own review. The direction is also
+  being reconsidered: artifacts are likely to surface as **cards on hover/click** rather than the
+  prototype's chip checkboxes. So this plan does **not** wire chips to decorations; that work, the
+  Q4 visibility-state decision, and the hover/click-card exploration all move to a follow-up PR. The
+  D1 round-trip itself (B5) is done and shipping — the model can already create annotations/proposals
+  against the live editor; only the rail-side _surfacing_ of them is deferred.
 - **F6 — `es.json`.** No Spanish namespace exists for any feature yet; this is a whole-app concern,
   deferred.
-- **Design-fidelity pass** — component-by-component against `app.jsx`.
-- **e2e** — the rail's manifest entry + real-app spec, held until the feature is complete.
+- ~~**Design-fidelity pass**~~ **DONE** (conversation half; see §Progress).
+- ~~**e2e**~~ **DONE** — `feature:rail` + `agent.run`/`agent.event`/`agent.abort` covered by
+  `rail.e2e.ts`; both specs pass against the real app (see §Progress).
+
+**This plan's PR ships the conversation half of the rail end to end** (composer → live agent run →
+activity timeline → streamed reply → Stop/abort) plus the frontend-tool round-trip (B5/Q3), with unit
+and real-app e2e coverage. The only follow-ups are the **F5 artifact-surfacing PR** (hover/click cards
+
+- Q4) and the whole-app **`es.json`**, both intentionally out of this plan's scope. Because those
+  remain, the plan file stays (per AGENTS' "a plan with deferred items is not done").
 
 ---
 
@@ -263,8 +301,9 @@ views.
 1. ~~**B1 + B4** — shared channels + preload typing.~~ **DONE.**
 2. ~~**B2 + B3** — generate SDK tools, suspend handler, pending map, abort cleanup.~~ **DONE.**
 3. ~~**F1** — `useToolBridge` in `AgentProvider`.~~ **DONE.**
-4. **B5 (GATE)** — prove a `propose_edit` round-trips into the live editor. _Do not proceed to chips
-   until green._ Blocked on Q3 (shared editor instance). **← next.**
+4. ~~**B5 (GATE)** — prove a `propose_edit` round-trips into the live editor.~~ **DONE** — gate test
+   (`tool-round-trip.integration.test.tsx`) + the editor column registers its tools via
+   `useEditorTools`/`useFrontendTool` (Q3 resolved without a separate `EditorProvider`).
 5. ~~**F2** — `useThreads`/activity reducer + tests.~~ **DONE** (`activity-log.ts` + `useAgentActivityLog`).
 6. ~~**F3** — leaf views + snapshot tests.~~ **DONE** for the conversation half (`ThreadDot`, `LogRow`,
    `ConversationTurn`); `TurnArtifacts`/`ChatListRow` deferred to F5/Q5.
@@ -273,13 +312,13 @@ views.
    not yet added (single turn fits; revisit when the chats list / long transcripts land).
 9. ~~**F7** — mount in `App.tsx` (rail column + right edge tab + providers).~~ **DONE.** Shared editor
    (Q3) still open — the editor registers no tools yet, so nothing depends on it.
-10. **F5** — artifact chips wired to real editor decorations (needs the gate + shared visibility
-    state).
+10. ~~**F5** — artifact chips wired to real editor decorations.~~ **SPLIT OUT** to a follow-up PR
+    (set-based decorations + Q4 + hover/click cards). Not part of this plan; see §1.
 11. **Design-fidelity pass** — component-by-component against `app.jsx` (light/dark, en/es, hover/
-    active/focus, empty states, the running spinner/`pulseDot` glyphs, the inline-diff transitions).
+    active/focus, empty states, the running spinner/`pulseDot` glyphs). Conversation half only; the
+    artifact chips are out of scope here.
 12. **e2e** — add `rail` + `agent.run`/`agent.abort`/`agent.event` to `e2e/coverage-manifest.ts` with a
-    real-app spec (needs an agent e2e fixture, since a live-SDK run is non-deterministic). Held until
-    the rail feature is complete so it lands as one coherent change.
+    real-app spec (needs an agent e2e fixture, since a live-SDK run is non-deterministic).
 
 ---
 
@@ -308,10 +347,13 @@ All of AGENTS' rules apply. The ones that bite here:
 - [ ] **Q2 — Activity-log copy (F2):** the prototype's step text is scripted. What real text do we
       show per AG-UI event (tool start / tool result / thinking / text / run finished/errored)?
       (Affects F2/F3.)
-- [ ] **Q3 — Shared editor instance (F7):** add an `EditorProvider` so the tool handlers and the
-      manuscript share one `Editor`? (Blocks F5/F7; coordinate with the editor column.)
-- [ ] **Q4 — Artifact-visibility state (F5):** the chip checkboxes toggle whether a decoration paints
-      in the manuscript. Where does that visibility state live — App-shell-owned (`activeKeys`, per
-      Plan 03 §4.6) or derived from editor plugin state? (Blocks F5.)
+- [x] **Q3 — Shared editor instance (F7): RESOLVED.** No `EditorProvider` was needed — the editor
+      column registers its tools where the live `Editor` already exists, via `useEditorTools` +
+      `useFrontendTool` in `Editor.controller`. Handlers close over the mounted editor and report a
+      recoverable "no document open" error before it mounts.
+- [ ] **Q4 — Artifact-visibility state: DEFERRED to the F5 follow-up PR.** Where decoration-visibility
+      state lives (App-shell `activeKeys` vs. editor plugin state) is decided there, alongside the
+      single-active → set-based decoration rework and the hover/click-card direction. Out of scope for
+      this plan.
 - [ ] **Q5 — Multiple threads:** is the chats list backed only by the in-session runs (lost on
       reload), or do we persist threads? Default for this plan: **in-session only** (YAGNI).
