@@ -1,6 +1,6 @@
 import type { Editor } from '@tiptap/core'
 import { assertWire } from '../../../shared/ipc/from-wire'
-import type { ToolEntry, ToolHandler } from '../agent/AgentToolsContext'
+import type { ToolEntry } from '../agent/AgentToolsContext'
 import type { AgentToolResult } from '../agent/tools/types'
 import { useFrontendTool } from '../agent/useFrontendTool'
 import {
@@ -35,22 +35,33 @@ interface EditorToolEntries {
   readonly proposal: ToolEntry
 }
 
-type EditorRun = (editor: Editor, args: unknown) => AgentToolResult
+interface ActiveTarget {
+  readonly editor: Editor
+  readonly path: string
+}
 
-function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
-  const activeEditor = (): Editor | null =>
-    deps.activePath === null ? null : deps.resolve(deps.activePath)
+const NO_DOCUMENT: AgentToolResult = { ok: false, error: 'No document is open in the editor.' }
 
-  const withLiveEditor =
-    (run: EditorRun): ToolHandler =>
-    (args) => {
-      const editor = activeEditor()
-      return editor ? run(editor, args) : { ok: false, error: 'No document is open in the editor.' }
-    }
+const noOpenEditor = (path: string): AgentToolResult => ({ ok: false, error: `no_open_editor:${path}` })
 
-  const atPath = (path: string, run: (editor: Editor) => AgentToolResult): AgentToolResult => {
+// The read tools — discover the open files and read the active document/selection. Reads default to the
+// active file (get_current_document also accepts an explicit path) and report the path they read, which
+// is how the agent learns the path it must then pass to the acting tools.
+function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'selection' | 'document'> {
+  const activeTarget = (): ActiveTarget | null => {
+    const path = deps.activePath
+    if (path === null) return null
     const editor = deps.resolve(path)
-    return editor ? run(editor) : { ok: false, error: `no_open_editor:${path}` }
+    return editor === null ? null : { editor, path }
+  }
+
+  const readDocument = (args: unknown): AgentToolResult => {
+    assertWire<{ readonly path?: string }>(args, getCurrentDocumentTool.name)
+    const path = args.path ?? deps.activePath
+    if (path === null) return NO_DOCUMENT
+    const editor = deps.resolve(path)
+    if (editor === null) return args.path === undefined ? NO_DOCUMENT : noOpenEditor(path)
+    return getCurrentDocument({ editor, path })
   }
 
   return {
@@ -60,12 +71,26 @@ function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
     },
     selection: {
       spec: getCurrentSelectionTool,
-      handler: withLiveEditor((live) => getCurrentSelection(live))
+      handler: () => {
+        const target = activeTarget()
+        return target ? getCurrentSelection(target) : NO_DOCUMENT
+      }
     },
-    document: {
-      spec: getCurrentDocumentTool,
-      handler: withLiveEditor((live) => getCurrentDocument(live))
-    },
+    document: { spec: getCurrentDocumentTool, handler: readDocument }
+  }
+}
+
+// The acting tools — resolve a tracked range, annotate it, or propose an edit. Each requires the file
+// `path`, resolved to its open editor; a path that is not open is a recoverable error.
+function actingEntries(
+  deps: EditorToolDeps
+): Pick<EditorToolEntries, 'ranges' | 'annotation' | 'proposal'> {
+  const atPath = (path: string, run: (editor: Editor) => AgentToolResult): AgentToolResult => {
+    const editor = deps.resolve(path)
+    return editor ? run(editor) : noOpenEditor(path)
+  }
+
+  return {
     ranges: {
       spec: getRangesTool,
       handler: (args) => {
@@ -97,6 +122,10 @@ function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
       }
     }
   }
+}
+
+function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
+  return { ...readEntries(deps), ...actingEntries(deps) }
 }
 
 function useEditorTools(deps: EditorToolDeps): void {

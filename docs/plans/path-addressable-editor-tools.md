@@ -68,7 +68,7 @@ the registry is the resolution table.
   → `[{ path, name, active }]`, names via the existing `editorFileName` logic) + registration in
   `useEditorTools`. Tests for the snapshot shape and the active flag. (renderer)
 
-- [ ] **Step 4 — read tools report their path.** `get_current_document` gains optional `path` (default
+- [x] **Step 4 — read tools report their path.** `get_current_document` gains optional `path` (default
   active) and returns `{ path, markdown }`; `get_current_selection` adds `path` to its result. Update
   their handlers + tests, and any consumer asserting the old result shape. (renderer)
 
