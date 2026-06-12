@@ -87,7 +87,7 @@ _Landed: dropped the planned `icon` data field — it would have duplicated `id`
 English search terms (the translated label isn't reachable from this layer); filter is case-insensitive
 substring over them._
 
-### 3. Apply-command action (+ tests)
+### 3. Apply-command action (+ tests) — DONE
 
 - `src/renderer/src/editor/slash/apply-slash-command.ts` — `applySlashCommand(editor, id, range)`: in one
   chain, deletes the trigger `range` (supplied by Suggestion) and runs the block command for that id
@@ -97,6 +97,10 @@ substring over them._
 - `src/renderer/src/editor/slash/__tests__/apply-slash-command.test.ts` — uses the existing `withEditor`
   headless harness to assert each id converts the block (e.g. `heading1` yields an `h1`, `divider` inserts
   an `hr`) and that the `/query` text is gone.
+
+_Landed: takes a single `{ editor, id, range }` input object (not three positional args) to respect
+`max-params: 2`, matching the `annotations.ts` command shape. Uses `setHeading`/`setParagraph` and the
+`toggle*` list/quote/code commands; the id→chain map is a `Record<SlashCommandId, …>`._
 
 ### 4. The reactive bridge + position calculation (+ tests)
 
