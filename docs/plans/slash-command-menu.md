@@ -176,7 +176,7 @@ class. Props carry already-translated `label`/`hint` + the `heading`/`emptyLabel
 hook); the icon is derived from `id` via `slash-command-icon.tsx`. i18n keys are `editor.slash.{heading,empty,
 <id>}`._
 
-### 7. Hook + controller wiring (+ tests)
+### 7. Hook + controller wiring (+ tests) — DONE
 
 - `src/renderer/src/editor/slash/useSlashMenu.ts` — `useSyncExternalStore(bridge.subscribe,
 bridge.getSnapshot)` over `getSlashBridge(editor)`; translates the catalog `labelKey`s, applies
@@ -188,6 +188,13 @@ bridge.getSnapshot)` over `getSlashBridge(editor)`; translates the catalog `labe
   the existing `EditorContext.Provider` so it shares the editor instance.
 - `src/renderer/src/editor/slash/__tests__/useSlashMenu.test.tsx` (+ a controller render test) — assert the
   hook exposes translated/filtered items from a driven bridge and that `onSelect` invokes the command.
+
+_Landed: hook returns `SlashMenuViewProps | null` (reuses the view's prop type — no separate state type).
+`onHover(index)` is `bridge.move(index - currentIndex)`, so the bridge needs no `setIndex`. Mounted
+`SlashMenuController` as a sibling of the surface inside `EditorContext.Provider`; `EditorManuscript.test`
+now wraps in `I18nextProvider` because it renders a translated child. The slash hook/controller tests
+unmount the React tree **before** `editor.destroy()` so Suggestion's async callback can't re-render against
+torn-down `editor.storage` (this surfaced as an uncaught teardown error before the ordering fix)._
 
 ### 8. Real-app e2e (+ manifest decision)
 

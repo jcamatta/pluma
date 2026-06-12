@@ -3,6 +3,8 @@
 import { createRef } from 'react'
 import { describe, expect, it } from 'vitest'
 import { render } from '@testing-library/react'
+import { I18nextProvider } from 'react-i18next'
+import { i18n } from '../../i18n'
 import { EditorManuscript } from '../EditorManuscript'
 import { withEditor } from '../extensions/__tests__/editor-test-harness'
 
@@ -12,7 +14,9 @@ describe('EditorManuscript', () => {
       const containerRef = createRef<HTMLDivElement>()
 
       const { container } = render(
-        <EditorManuscript editor={editor} zoom={1.25} containerRef={containerRef} />
+        <I18nextProvider i18n={i18n}>
+          <EditorManuscript editor={editor} zoom={1.25} containerRef={containerRef} />
+        </I18nextProvider>
       )
 
       const zoomContainer = container.querySelector('[style*="--editor-zoom"]')
