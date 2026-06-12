@@ -40,3 +40,12 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/main/application/agent/usecase/delete-thread.ts` — command use case removing a thread's session via the writer port.
 - `src/main/application/agent/usecase/__tests__/rename-thread.test.ts` — tests for the renameThread use case against an in-memory writer fake.
 - `src/main/application/agent/usecase/__tests__/delete-thread.test.ts` — tests for the deleteThread use case against an in-memory writer fake.
+
+### src/main/adapters/agent/claude — threads (read adapter)
+
+- `src/main/adapters/agent/claude/logic/session-info-to-summary.ts` — pure map from an SDK session row to a ThreadSummary (stored title wins over derived).
+- `src/main/adapters/agent/claude/logic/session-messages-to-history.ts` — pure map from the SDK session message chain to AG-UI Messages (text-only, system/empty turns dropped).
+- `src/main/adapters/agent/claude/runtime/claude-thread-reader.ts` — ThreadReader adapter over the SDK's listSessions/getSessionMessages, keyed by the workspace dir.
+- `src/main/adapters/agent/claude/logic/__tests__/session-info-to-summary.test.ts` — tests for the session-row → summary calculation.
+- `src/main/adapters/agent/claude/logic/__tests__/session-messages-to-history.test.ts` — tests for the message-chain → history calculation.
+- `src/main/adapters/agent/claude/runtime/__tests__/claude-thread-reader.test.ts` — seam tests for the reader adapter with the SDK module mocked.

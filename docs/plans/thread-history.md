@@ -217,7 +217,17 @@ and `.../usecase/delete-thread.ts`, each depending only on `ThreadWriterPort`. T
 in-memory fake writer: success (`ok: true`) and the `ThreadWriteFailed` path. Both take the workspace
 `cwd` (O1) so the write targets the same directory the list reads. Update `FILE.md`.
 
-3. **Claude thread-reader adapter.** Add
+3. ✅ **DONE.** Landed `claude-thread-reader.ts` implementing `ThreadReader` over the SDK's
+   `listSessions` / `getSessionMessages` (passing the workspace as `{ dir }`), with two pure calcs:
+   `logic/session-info-to-summary.ts` (SDK `SDKSessionInfo` → `ThreadSummary`, `customTitle` wins over
+   the prompt-derived title) and `logic/session-messages-to-history.ts` (SDK `SessionMessage[]` →
+   AG-UI `Message[]`; reads the `unknown` raw message via type-guards, drops system/text-less turns).
+   `listThreads` sorts most-recent first. **Decision on the adapter test:** rather than seed a real
+   `CLAUDE_CONFIG_DIR` (brittle JSONL format), the seam test `vi.mock`s the SDK module and asserts the
+   `dir` plumbing, mapping/sort, and error→`ThreadReadFailed`; the calcs are unit-tested directly; the
+   real session store is exercised end-to-end in step 10. **Next: step 3b (writer adapter).**
+
+4. **Claude thread-reader adapter.** Add
    `adapters/agent/claude/runtime/claude-thread-reader.ts` implementing `ThreadReaderPort` over the
    SDK's `listSessions` / `getSessionMessages` (+ `getSessionInfo` if needed for `mtime`), passing the
    explicit `cwd` (O1). Map SDK rows → `ThreadSummary` via the step-2 title calculation (this adapter is
