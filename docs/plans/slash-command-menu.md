@@ -102,7 +102,7 @@ _Landed: takes a single `{ editor, id, range }` input object (not three position
 `max-params: 2`, matching the `annotations.ts` command shape. Uses `setHeading`/`setParagraph` and the
 `toggle*` list/quote/code commands; the id→chain map is a `Record<SlashCommandId, …>`._
 
-### 4. The reactive bridge + position calculation (+ tests)
+### 4. The reactive bridge + position calculation (+ tests) — DONE
 
 - `src/renderer/src/editor/slash/slash-menu-bridge.ts` — `createSlashBridge()` returns an encapsulated
   external store instance (the `useSyncExternalStore` shape): `subscribe(cb)`, `getSnapshot()` returning the
@@ -119,6 +119,13 @@ _Landed: takes a single `{ editor, id, range }` input object (not three position
 
 Isolating the bridge keeps the trickiest new concept (the imperative→reactive adapter) in its own small,
 fully unit-tested commit, separate from the TipTap wiring.
+
+_Landed: final API is `open(input)` / `move(delta)` / `select(index?)` / `close()` (single `open` instead
+of the planned `openFrom`+`update` — they were identical, both reset to index 0). The snapshot is
+`{ active, items, index, caret }` — `query` and `command` are not exposed (items arrive already filtered by
+Suggestion; `command` is kept internal and run on `select`). The bridge is **DOM-free**: it takes a plain
+`CaretRect` (`{ left, bottom }`), so the extension extracts that from Suggestion's `DOMRect` (step 5),
+keeping this layer pure. `move` wraps modulo the item count; `select` runs the stored command then closes._
 
 ### 5. Slash-command extension (Suggestion config) + registration (+ tests)
 
