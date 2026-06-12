@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "test:e2e": "playwright test",
+    "test:perf": "playwright test --config playwright.perf.config.ts",
     "type-coverage": "type-coverage --strict --at-least 95",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:preload": "tsc --noEmit -p tsconfig.preload.json --composite false",
