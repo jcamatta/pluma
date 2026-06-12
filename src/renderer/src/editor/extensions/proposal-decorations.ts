@@ -10,7 +10,18 @@ type DiffAccumulator = {
   readonly decorations: readonly Decoration[]
 }
 
-function insertDecoration(from: number, value: string): Decoration {
+type InsertSpec = {
+  readonly from: number
+  readonly value: string
+  readonly key: string
+}
+
+// The key is what lets ProseMirror reuse the widget's DOM node across transactions instead of
+// destroying and recreating it on every state change — without it the node remounts each
+// transaction and replays its entry animation, which reads as a flicker. It is derived from the
+// proposal id and the insert's offset within the original text, both stable across edits (the
+// widget's mapped position is not, so it must not feed the key).
+function insertDecoration({ from, value, key }: InsertSpec): Decoration {
   return Decoration.widget(
     from,
     () => {
@@ -19,7 +30,7 @@ function insertDecoration(from: number, value: string): Decoration {
       element.textContent = value
       return element
     },
-    { side: 1 }
+    { side: 1, key }
   )
 }
 
@@ -40,7 +51,11 @@ function proposalDecorations(proposal: Proposal): Decoration[] {
             offset: acc.offset,
             decorations: [
               ...acc.decorations,
-              insertDecoration(proposal.from + acc.offset, part.value)
+              insertDecoration({
+                from: proposal.from + acc.offset,
+                value: part.value,
+                key: `${proposal.id}:${acc.offset}`
+              })
             ]
           }
         }
