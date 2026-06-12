@@ -8,6 +8,7 @@ import { Button } from '@base-ui/react'
 import { motion } from 'motion/react'
 import { SlashCommandIcon } from './slash-command-icon'
 import type { SlashCommandId } from './slash-command-catalog'
+import type { MenuPlacement } from './slash-menu-position-logic'
 import { Scrollable } from '../../components/Scrollable'
 import { cn } from '../../components/cn'
 
@@ -20,7 +21,7 @@ type SlashMenuItem = {
 type SlashMenuViewProps = {
   readonly items: readonly SlashMenuItem[]
   readonly activeIndex: number
-  readonly position: { readonly x: number; readonly y: number }
+  readonly placement: MenuPlacement
   readonly heading: string
   readonly emptyLabel: string
   readonly onSelect: (index: number) => void
@@ -30,7 +31,7 @@ type SlashMenuViewProps = {
 function SlashMenuView({
   items,
   activeIndex,
-  position,
+  placement,
   heading,
   emptyLabel,
   onSelect,
@@ -40,18 +41,23 @@ function SlashMenuView({
     <motion.div
       role="listbox"
       aria-label={heading}
-      className="fixed z-50 w-72 overflow-hidden rounded-lg border border-(--line2) bg-surface-2 shadow-lg"
-      style={{ left: position.x, top: position.y }}
+      className="fixed z-50 flex w-72 flex-col overflow-hidden rounded-lg border border-(--line2) bg-surface-2 shadow-lg"
+      style={{
+        left: placement.left,
+        top: placement.top ?? undefined,
+        bottom: placement.bottom ?? undefined,
+        maxHeight: placement.maxHeight
+      }}
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.12 }}
     >
-      <div className="px-3 py-2 text-xs font-medium text-text-muted">{heading}</div>
+      <div className="flex-none px-3 py-2 text-xs font-medium text-text-muted">{heading}</div>
       {items.length === 0 ? (
         <div className="px-3 py-2 text-sm text-text-muted">{emptyLabel}</div>
       ) : (
-        <Scrollable className="max-h-80" contentClassName="px-1 pb-1">
+        <Scrollable className="min-h-0 flex-1" contentClassName="px-1 pb-1">
           {items.map((item, index) => (
             <Button
               key={item.id}

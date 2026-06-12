@@ -35,7 +35,7 @@ const slashCommandPluginKey = new PluginKey('slashCommand')
 
 const caretFromProps = (props: SlashProps): CaretRect | null => {
   const rect = props.clientRect?.()
-  return rect ? { left: rect.left, bottom: rect.bottom } : null
+  return rect ? { top: rect.top, bottom: rect.bottom, left: rect.left } : null
 }
 
 const openBridge = (bridge: SlashBridge, props: SlashProps): void => {

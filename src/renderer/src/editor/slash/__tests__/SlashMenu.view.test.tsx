@@ -18,7 +18,7 @@ const renderMenu = (
   const props: React.ComponentProps<typeof SlashMenuView> = {
     items,
     activeIndex: 0,
-    position: { x: 10, y: 20 },
+    placement: { left: 10, top: 20, bottom: null, maxHeight: 320 },
     heading: 'Basic blocks',
     emptyLabel: 'No results',
     onSelect: vi.fn(),

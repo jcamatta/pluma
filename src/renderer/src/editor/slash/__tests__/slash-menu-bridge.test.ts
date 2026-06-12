@@ -15,7 +15,7 @@ const items: readonly SlashCommandItem[] = [
 const openInput = (command: SlashOpenInput['command']): SlashOpenInput => ({
   items,
   command,
-  caret: { left: 10, bottom: 20 }
+  caret: { top: 0, bottom: 20, left: 10 }
 })
 
 describe('createSlashBridge', () => {
@@ -31,7 +31,7 @@ describe('createSlashBridge', () => {
     expect(snapshot.active).toBe(true)
     expect(snapshot.index).toBe(0)
     expect(snapshot.items).toHaveLength(3)
-    expect(snapshot.caret).toEqual({ left: 10, bottom: 20 })
+    expect(snapshot.caret).toEqual({ top: 0, bottom: 20, left: 10 })
   })
 
   it('notifies subscribers on change and stops after unsubscribe', () => {

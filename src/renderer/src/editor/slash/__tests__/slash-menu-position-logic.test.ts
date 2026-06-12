@@ -1,14 +1,27 @@
-// Popup placement: just below the caret, in viewport coordinates.
+// Popup placement: below the caret by default, flipped above when there is more room there, with the height
+// capped to the available space so the menu is never clipped off the bottom of the screen.
 
 import { describe, expect, it } from 'vitest'
-import { slashMenuPosition } from '../slash-menu-position-logic'
+import { slashMenuPlacement } from '../slash-menu-position-logic'
 
-describe('slashMenuPosition', () => {
-  it('places the menu at the caret left and a small gap below its bottom', () => {
-    expect(slashMenuPosition({ left: 120, bottom: 48 })).toEqual({ x: 120, y: 52 })
+describe('slashMenuPlacement', () => {
+  it('opens below the caret when there is room, capped to the preferred height', () => {
+    const placement = slashMenuPlacement({ top: 100, bottom: 120, left: 50 }, 800)
+    expect(placement).toEqual({ left: 50, top: 124, bottom: null, maxHeight: 320 })
   })
 
-  it('handles the document origin', () => {
-    expect(slashMenuPosition({ left: 0, bottom: 0 })).toEqual({ x: 0, y: 4 })
+  it('flips above the caret when there is much more room above (near the bottom edge)', () => {
+    const placement = slashMenuPlacement({ top: 760, bottom: 780, left: 50 }, 800)
+    expect(placement.top).toBeNull()
+    expect(placement.bottom).toBe(800 - (760 - 4))
+    expect(placement.left).toBe(50)
+    expect(placement.maxHeight).toBe(320)
+  })
+
+  it('caps the height to the space below when it stays below but cannot fit the full menu', () => {
+    const placement = slashMenuPlacement({ top: 100, bottom: 480, left: 0 }, 660)
+    expect(placement.top).toBe(484)
+    expect(placement.bottom).toBeNull()
+    expect(placement.maxHeight).toBe(660 - 480 - 4 - 8)
   })
 })

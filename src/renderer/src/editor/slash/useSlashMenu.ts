@@ -7,7 +7,7 @@ import { useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Editor } from '@tiptap/core'
 import { getSlashBridge } from '../extensions/slash-command'
-import { slashMenuPosition } from './slash-menu-position-logic'
+import { slashMenuPlacement } from './slash-menu-position-logic'
 import type { SlashMenuViewProps } from './SlashMenu.view'
 
 function useSlashMenu(editor: Editor): SlashMenuViewProps | null {
@@ -24,7 +24,7 @@ function useSlashMenu(editor: Editor): SlashMenuViewProps | null {
       hint: item.hint
     })),
     activeIndex: snapshot.index,
-    position: slashMenuPosition(snapshot.caret),
+    placement: slashMenuPlacement(snapshot.caret, window.innerHeight),
     heading: t('editor.slash.heading'),
     emptyLabel: t('editor.slash.empty'),
     onSelect: (index) => bridge.select(index),
