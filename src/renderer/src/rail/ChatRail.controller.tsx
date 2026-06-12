@@ -8,16 +8,21 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAgent } from '../agent/useAgent'
 import { useAgentActivityLog } from './useAgentActivityLog'
+import { ConversationHistoryController } from './ConversationHistory.controller'
 import { ConversationRailView } from './ConversationRail.view'
 import { ConversationTurnView } from './ConversationTurn.view'
 
 interface ChatRailControllerProps {
+  readonly cwd: string
+  readonly selectedId: string | null
   readonly onShowThreads: () => void
   readonly onNewThread: () => void
   readonly onClose: () => void
 }
 
 export function ChatRailController({
+  cwd,
+  selectedId,
   onShowThreads,
   onNewThread,
   onClose
@@ -59,7 +64,7 @@ export function ChatRailController({
         stop: t('rail.stop')
       }}
       title={prompt ?? t('rail.newChat')}
-      hasTurn={prompt !== null}
+      hasTurn={prompt !== null || selectedId !== null}
       working={working}
       value={value}
       onChange={setValue}
@@ -74,6 +79,7 @@ export function ChatRailController({
       onShowThreads={onShowThreads}
       onClose={onClose}
     >
+      {selectedId !== null && <ConversationHistoryController cwd={cwd} threadId={selectedId} />}
       {prompt !== null && (
         <ConversationTurnView
           prompt={prompt}

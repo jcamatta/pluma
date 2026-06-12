@@ -32,6 +32,8 @@ export function ConversationRailController({
 
   return (
     <ChatRailController
+      cwd={cwd}
+      selectedId={session.selectedId}
       onShowThreads={session.showThreads}
       onNewThread={session.startNew}
       onClose={onClose}
