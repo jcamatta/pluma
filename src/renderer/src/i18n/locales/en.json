@@ -74,5 +74,21 @@
     "calling": "Calling {{tool}}…",
     "done": "{{tool}}",
     "runError": "Run failed: {{message}}"
+  },
+  "threads": {
+    "title": "Chats",
+    "open": "Show chats",
+    "newThread": "New chat",
+    "back": "Back to chat",
+    "untitled": "Untitled chat",
+    "empty": "No chats yet. Start one to see it here.",
+    "rename": "Rename chat",
+    "delete": "Delete chat",
+    "deleteTitle": "Delete chat?",
+    "deleteMessage": "“{{title}}” will be permanently deleted. This can't be undone.",
+    "deleteConfirm": "Delete",
+    "deleteCancel": "Cancel",
+    "historyLoading": "Loading this chat…",
+    "historyError": "This chat couldn't be loaded."
   }
 }

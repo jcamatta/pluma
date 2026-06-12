@@ -5,7 +5,7 @@
 // The turn body is a slot (`children`) the controller fills with the ConversationTurn once built (F3);
 // until then it shows the empty state.
 
-import { MessagesSquare, PanelRight, Plus, Sparkles } from 'lucide-react'
+import { History, PanelRight, Plus, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { IconButton } from '../components/IconButton'
 import { Scrollable } from '../components/Scrollable'
@@ -37,6 +37,7 @@ interface ConversationRailViewProps {
   readonly onSubmit: () => void
   readonly onStop: () => void
   readonly onNewChat: () => void
+  readonly onShowThreads: () => void
   readonly onClose: () => void
 }
 
@@ -51,6 +52,7 @@ export function ConversationRailView({
   onSubmit,
   onStop,
   onNewChat,
+  onShowThreads,
   onClose
 }: ConversationRailViewProps): React.JSX.Element {
   return (
@@ -60,12 +62,12 @@ export function ConversationRailView({
       data-testid="conversation-rail"
     >
       <div className="flex items-center gap-2 border-b border-(--line) py-4 pl-4 pr-3">
-        <span className="ml-1 flex flex-none text-action-primary">
-          <MessagesSquare size={17} />
-        </span>
-        <span className="flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
+        <span className="ml-1 flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
         <IconButton label={labels.newChat} onClick={onNewChat} className="rounded-lg">
           <Plus size={17} />
+        </IconButton>
+        <IconButton label={labels.chats} onClick={onShowThreads} className="rounded-lg">
+          <History size={17} />
         </IconButton>
         <IconButton label={labels.collapse} onClick={onClose} className="rounded-lg">
           <PanelRight size={17} />

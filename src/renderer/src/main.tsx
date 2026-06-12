@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { invariant } from '../../shared/invariant'
 import { App } from './App'
 import { RepositoriesProvider } from './explorer/RepositoriesProvider'
+import { ThreadsProvider } from './threads/ThreadsProvider'
 import { initSettings } from './settings/settings'
 
 // Apply the stored theme before the first paint so the app does not flash the default palette.
@@ -27,7 +28,9 @@ createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RepositoriesProvider>
-        <App />
+        <ThreadsProvider>
+          <App />
+        </ThreadsProvider>
       </RepositoriesProvider>
     </QueryClientProvider>
   </StrictMode>

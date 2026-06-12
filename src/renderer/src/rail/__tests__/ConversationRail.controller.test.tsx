@@ -1,15 +1,21 @@
-// ConversationRailController renders agent.messages as the conversation: settled turns stack as history
-// above the current turn, whose assistant side is the live activity. Submitting adds the user message and
-// starts a run. A fake AbstractAgent holds real messages (addMessage fires onNewMessage so the activity
-// resets per turn; setMessages clears) and lets the test drive AG-UI events and settle replies — no IPC.
+// ConversationRailController is the rail switch; in the chat view it renders agent.messages as the
+// conversation: settled turns stack as history above the current turn, whose assistant side is the live
+// activity. Submitting adds the user message and starts a run; new chat clears the conversation. A fake
+// AbstractAgent holds real messages (addMessage fires onNewMessage so the activity resets per turn;
+// setMessages clears) and lets the test drive AG-UI events and settle replies. The threads repository is
+// the in-memory fake and the thread controls are bound to the fake agent — no IPC.
 
 import { describe, expect, it } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AbstractAgent, type AgentSubscriber, type RunAgentInput } from '@ag-ui/client'
 import { EventType, type BaseEvent, type Message } from '@ag-ui/core'
 import { Observable } from 'rxjs'
 import { AgentContext } from '../../agent/AgentContext'
+import { ThreadControlsContext } from '../../agent/ThreadControlsContext'
+import { ThreadsContext } from '../../threads/ThreadsContext'
+import { createFakeThreadsRepository } from '../../threads/__tests__/fake-threads-repository'
 import { i18n } from '../../i18n'
 import { ConversationRailController } from '../ConversationRail.controller'
 
@@ -90,12 +96,24 @@ class FakeAgent extends AbstractAgent {
 }
 
 function renderRail(agent: FakeAgent = new FakeAgent()): { agent: FakeAgent } {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const controls = {
+    seedThread: (_id: string, messages: readonly Message[]) => agent.setMessages([...messages]),
+    newThread: () => agent.setMessages([]),
+    currentThreadId: (): string | undefined => undefined
+  }
   render(
-    <I18nextProvider i18n={i18n}>
-      <AgentContext.Provider value={agent}>
-        <ConversationRailController onClose={() => undefined} />
-      </AgentContext.Provider>
-    </I18nextProvider>
+    <QueryClientProvider client={queryClient}>
+      <I18nextProvider i18n={i18n}>
+        <ThreadsContext.Provider value={createFakeThreadsRepository({})}>
+          <AgentContext.Provider value={agent}>
+            <ThreadControlsContext.Provider value={controls}>
+              <ConversationRailController cwd="/work" onClose={() => undefined} />
+            </ThreadControlsContext.Provider>
+          </AgentContext.Provider>
+        </ThreadsContext.Provider>
+      </I18nextProvider>
+    </QueryClientProvider>
   )
   return { agent }
 }
