@@ -1,11 +1,13 @@
 // Tests for buildOptions: the calculation mapping our RunAgentState (plus threadId) and the per-run tool
 // server to the Claude SDK run options. Verifies partial messages are on, built-in tools are disabled
 // (`tools: []`), the default model/effort are applied when state is absent, the threadId becomes `resume`
-// when present, explicit effort/model from state override the defaults, and a provided tool server is
-// registered under `mcpServers` with the no-op PreToolUse hook that holds the stream open.
+// when present, explicit effort/model from state override the defaults, the custom writing-assistant
+// system prompt is always set, and a provided tool server is registered under `mcpServers` with the
+// no-op PreToolUse hook that holds the stream open.
 
 import { createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk'
 import { describe, expect, it } from 'vitest'
+import { AGENT_SYSTEM_PROMPT } from '../agent-system-prompt'
 import { buildOptions } from '../build-options'
 
 // A real (empty) SDK server config; buildOptions only forwards it by reference under mcpServers.
@@ -18,6 +20,7 @@ describe('buildOptions', () => {
     ).toStrictEqual({
       includePartialMessages: true,
       tools: [],
+      systemPrompt: AGENT_SYSTEM_PROMPT,
       model: 'claude-opus-4-8',
       effort: 'medium'
     })
@@ -34,6 +37,7 @@ describe('buildOptions', () => {
     ).toStrictEqual({
       includePartialMessages: true,
       tools: [],
+      systemPrompt: AGENT_SYSTEM_PROMPT,
       model: 'claude-opus-4-8',
       effort: 'medium',
       resume: 'thread-1'
@@ -57,6 +61,7 @@ describe('buildOptions', () => {
     ).toStrictEqual({
       includePartialMessages: true,
       tools: [],
+      systemPrompt: AGENT_SYSTEM_PROMPT,
       model: 'claude-opus-4-8',
       effort: 'high'
     })

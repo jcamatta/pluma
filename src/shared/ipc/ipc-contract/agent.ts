@@ -15,12 +15,18 @@ interface RunAgentState {
   readonly model?: Model
 }
 
+interface AgentContextEntry {
+  readonly description: string
+  readonly value: string
+}
+
 interface RunAgentInput {
   readonly messages: readonly Message[]
   readonly threadId?: string
   readonly cwd?: string
   readonly tools: readonly Tool[]
   readonly state?: RunAgentState
+  readonly context?: readonly AgentContextEntry[]
 }
 
 const AGENT_RUN_CHANNEL = 'agent:run'
@@ -148,6 +154,7 @@ export {
   AGENT_RENAME_THREAD_CHANNEL,
   AGENT_DELETE_THREAD_CHANNEL,
   type RunAgentState,
+  type AgentContextEntry,
   type RunAgentInput,
   type RunAgentError,
   type ThreadSummary,

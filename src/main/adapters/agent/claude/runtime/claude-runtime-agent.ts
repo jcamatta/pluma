@@ -53,7 +53,7 @@ const startRun = (
     const sdkQuery = yield* Effect.try({
       try: () =>
         query({
-          prompt: streamInput(input.messages),
+          prompt: streamInput(input),
           options: buildOptions({
             threadId: input.threadId,
             cwd: input.cwd,
