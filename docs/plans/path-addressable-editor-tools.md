@@ -72,7 +72,7 @@ the registry is the resolution table.
   active) and returns `{ path, markdown }`; `get_current_selection` adds `path` to its result. Update
   their handlers + tests, and any consumer asserting the old result shape. (renderer)
 
-- [ ] **Step 5 — system prompt.** Extend `agent-system-prompt.ts`: the open files and the active file can
+- [x] **Step 5 — system prompt.** Extend `agent-system-prompt.ts`: the open files and the active file can
   change between turns; use `list_open_files` to see them; pass the `path` of the file you intend to act
   on so a mid-turn switch cannot misdirect you; a `no_open_editor` error means the set changed — re-call
   `list_open_files` rather than guessing. Tighten/replace the interim paragraph shipped earlier. Assert in
