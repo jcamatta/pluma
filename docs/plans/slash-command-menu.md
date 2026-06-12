@@ -59,14 +59,18 @@ extension, the view, and the hook land with their own tests; a real-app `*.e2e.t
 Each step is one small, independently green commit. The feature lives under `src/renderer/src/editor/` —
 new pure/data/view files in a `slash/` subfolder, the extension alongside the other extensions.
 
-### 1. Add the `@tiptap/suggestion` dependency
+### 1. Add the `@tiptap/suggestion` dependency — DONE
 
 - `package.json` + `package-lock.json` — add `@tiptap/suggestion` pinned to the installed TipTap line
   (`^3.26.0`). Weight 0 (outside `src/`). No code uses it yet; lint/build/test stay green with an unused dep.
 
 Isolated so the new dependency is a single reviewable commit, separate from the code that consumes it.
 
-### 2. Command catalog (data) + filter (calculation) (+ tests)
+_Landed: pinned to `3.26.0` to match the installed `@tiptap/core@3.26.0` (the `3.26.1` line's exact peer
+on core would have conflicted). The shared `node_modules` lives in the parent repo (the worktree resolves
+up to it), so the install runs there while the manifest change is committed on this branch._
+
+### 2. Command catalog (data) + filter (calculation) (+ tests) — DONE
 
 - `src/renderer/src/editor/slash/slash-command-catalog.ts` — exports `slashCommands`, the ordered list of
   `SlashCommandItem` records (the co-located type). Each item is **plain Data**: `id`
@@ -77,6 +81,11 @@ Isolated so the new dependency is a single reviewable commit, separate from the 
   case-insensitive match of the query against label keywords; empty query returns all; preserves catalog
   order. This is the function Suggestion's `items` callback delegates to. No editor, no DOM.
 - `src/renderer/src/editor/slash/__tests__/filter-slash-commands.test.ts`.
+
+_Landed: dropped the planned `icon` data field — it would have duplicated `id` 1:1, so the view maps
+`id → lucide icon` directly (step 6). `SlashCommandItem` is `{ id, labelKey, hint, keywords }`. Keywords are
+English search terms (the translated label isn't reachable from this layer); filter is case-insensitive
+substring over them._
 
 ### 3. Apply-command action (+ tests)
 
@@ -112,13 +121,10 @@ fully unit-tested commit, separate from the TipTap wiring.
 - `src/renderer/src/editor/extensions/slash-command.ts` — an `Extension.create` that:
   - `addStorage()` → `{ bridge: createSlashBridge() }` (per-editor instance).
   - `addProseMirrorPlugins()` → `[Suggestion({ editor: this.editor, char: '/', allowSpaces: false, …,
-items, command, render })]`:
-    - `items: ({ query }) => filterSlashCommands(slashCommands, query)` (step 2).
-    - `command: ({ editor, range, props }) => applySlashCommand(editor, props.id, range)` (step 3).
-    - `render: () => ({ onStart, onUpdate, onKeyDown, onExit })` — each callback forwards to
-      `this.editor.storage.slashCommand.bridge` (`openFrom`/`update`; `onKeyDown` → `move`/`select`/`close`
-      returning `true` to swallow the key; `onExit` → `close`). No `tippy`/`ReactRenderer` — rendering is the
-      React layer's job (step 7).
+items, command, render })]`: - `items: ({ query }) => filterSlashCommands(slashCommands, query)` (step 2). - `command: ({ editor, range, props }) => applySlashCommand(editor, props.id, range)` (step 3). - `render: () => ({ onStart, onUpdate, onKeyDown, onExit })` — each callback forwards to
+    `this.editor.storage.slashCommand.bridge` (`openFrom`/`update`; `onKeyDown` → `move`/`select`/`close`
+    returning `true` to swallow the key; `onExit` → `close`). No `tippy`/`ReactRenderer` — rendering is the
+    React layer's job (step 7).
   - Exports `SlashCommandExtension` and a typed `getSlashBridge(editor)` accessor for the hook.
 - Register `SlashCommandExtension` in `src/renderer/src/editor/extensions/index.ts` (one line) so the
   headless harness and the app both load it.
