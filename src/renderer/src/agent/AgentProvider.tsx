@@ -5,15 +5,24 @@
 // sit inside an AgentToolsProvider (it reads the registry). Tests bypass this and supply a fake agent
 // via AgentContext directly.
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { AgentContext } from './AgentContext'
 import { useToolRegistry } from './AgentToolsContext'
 import { createApiAgent } from './adapters/create-api-agent'
 import { useToolBridge } from './useToolBridge'
 
-export function AgentProvider({ children }: { readonly children: ReactNode }): React.JSX.Element {
+interface AgentProviderProps {
+  readonly cwd: string
+  readonly children: ReactNode
+}
+
+export function AgentProvider({ cwd, children }: AgentProviderProps): React.JSX.Element {
   const registry = useToolRegistry()
   const [agent] = useState(() => createApiAgent(() => registry.snapshot()))
+
+  useEffect(() => {
+    agent.setCwd(cwd)
+  }, [agent, cwd])
 
   useToolBridge(registry)
 

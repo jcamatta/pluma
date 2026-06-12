@@ -11,6 +11,7 @@ export type ClaudeRunOptions = Pick<
   | 'includePartialMessages'
   | 'tools'
   | 'resume'
+  | 'cwd'
   | 'model'
   | 'effort'
   | 'mcpServers'

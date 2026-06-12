@@ -4,7 +4,15 @@
 // the preload bridge then see it automatically.
 
 import type { Result } from '../ipc-result'
-import type { AgentAbortContract, AgentRunContract, AgentToolResultContract } from './agent'
+import type {
+  AgentAbortContract,
+  AgentDeleteThreadContract,
+  AgentListThreadsContract,
+  AgentRenameThreadContract,
+  AgentRunContract,
+  AgentThreadHistoryContract,
+  AgentToolResultContract
+} from './agent'
 import type {
   FileCreateContract,
   FileDeleteContract,
@@ -32,6 +40,10 @@ type IpcContract =
   | AgentRunContract
   | AgentAbortContract
   | AgentToolResultContract
+  | AgentListThreadsContract
+  | AgentThreadHistoryContract
+  | AgentRenameThreadContract
+  | AgentDeleteThreadContract
 
 type IpcChannel = IpcContract['channel']
 

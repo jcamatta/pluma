@@ -20,6 +20,7 @@ const TOOL_SERVER_KEY = 'frontend'
 // and the per-run frontend-tool MCP server (absent when the run offers no tools).
 interface BuildOptionsInput {
   readonly threadId: string | undefined
+  readonly cwd: string | undefined
   readonly state: RunAgentState | undefined
   readonly toolServer: McpSdkServerConfigWithInstance | undefined
 }
@@ -44,7 +45,8 @@ const buildOptions = (input: BuildOptionsInput): ClaudeRunOptions => ({
   model: input.state?.model ?? DEFAULT_MODEL,
   effort: input.state?.effort ?? DEFAULT_EFFORT,
   ...toolServerOptions(input.toolServer),
-  ...(input.threadId === undefined ? {} : { resume: input.threadId })
+  ...(input.threadId === undefined ? {} : { resume: input.threadId }),
+  ...(input.cwd === undefined ? {} : { cwd: input.cwd })
 })
 
 export { buildOptions, TOOL_SERVER_KEY, type BuildOptionsInput }

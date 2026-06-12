@@ -34,4 +34,14 @@ describe('toRunInput', () => {
     const result = toRunInput({ ...base, threadId: 'thread-9' })
     expect(result.threadId).toBe('thread-9')
   })
+
+  it('lifts forwardedProps.cwd to a top-level cwd', () => {
+    const result = toRunInput({ ...base, forwardedProps: { cwd: '/work/space' } })
+    expect(result.cwd).toBe('/work/space')
+  })
+
+  it('omits cwd when forwardedProps has none', () => {
+    expect('cwd' in toRunInput(base)).toBe(false)
+    expect('cwd' in toRunInput({ ...base, forwardedProps: { cwd: '' } })).toBe(false)
+  })
 })

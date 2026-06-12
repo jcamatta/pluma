@@ -10,10 +10,18 @@ import type { BaseEvent } from '@ag-ui/core'
 import type * as Scope from 'effect/Scope'
 import {
   AGENT_ABORT_CHANNEL,
+  AGENT_DELETE_THREAD_CHANNEL,
+  AGENT_LIST_THREADS_CHANNEL,
+  AGENT_RENAME_THREAD_CHANNEL,
   AGENT_RUN_CHANNEL,
+  AGENT_THREAD_HISTORY_CHANNEL,
   AGENT_TOOL_RESULT_CHANNEL,
   type AgentToolResultMessage,
-  type RunAgentInput
+  type DeleteThreadRequest,
+  type ListThreadsInput,
+  type RenameThreadRequest,
+  type RunAgentInput,
+  type ThreadHistoryInput
 } from '../../shared/ipc/ipc-contract/agent'
 import {
   FILE_CREATE_CHANNEL,
@@ -38,8 +46,12 @@ import {
   type FolderChange
 } from '../../shared/ipc/ipc-event-contract/folder'
 import { handleAbortAgent } from './agent/abort-agent-handler'
+import { handleDeleteThread } from './agent/delete-thread-handler'
+import { handleListThreads } from './agent/list-threads-handler'
+import { handleRenameThread } from './agent/rename-thread-handler'
 import { handleRunAgent } from './agent/run-agent-handler'
 import { handleSubmitToolResult } from './agent/submit-tool-result-handler'
+import { handleThreadHistory } from './agent/thread-history-handler'
 import { handleCreateFile } from './file/create-file-handler'
 import { handleDeleteFile } from './file/delete-file-handler'
 import { handleWriteFile } from './file/write-file-handler'
@@ -49,6 +61,21 @@ import { handleDeleteFolder } from './folder/delete-folder-handler'
 import { handleListFolder } from './folder/list-folder-handler'
 import { handlePickFolder } from './folder/pick-folder-handler'
 import { handleWatchFolder } from './folder/watch-folder-handler'
+
+const registerThreadChannels = (): void => {
+  ipcMain.handle(AGENT_LIST_THREADS_CHANNEL, (_event, input: ListThreadsInput) =>
+    handleListThreads(input.cwd)
+  )
+  ipcMain.handle(AGENT_THREAD_HISTORY_CHANNEL, (_event, input: ThreadHistoryInput) =>
+    handleThreadHistory(input)
+  )
+  ipcMain.handle(AGENT_RENAME_THREAD_CHANNEL, (_event, request: RenameThreadRequest) =>
+    handleRenameThread(request)
+  )
+  ipcMain.handle(AGENT_DELETE_THREAD_CHANNEL, (_event, request: DeleteThreadRequest) =>
+    handleDeleteThread(request)
+  )
+}
 
 const registerIpc = (): void => {
   ipcMain.handle(FILE_CREATE_CHANNEL, (_event, path: string) => handleCreateFile(path))
@@ -65,6 +92,7 @@ const registerIpc = (): void => {
   ipcMain.handle(AGENT_TOOL_RESULT_CHANNEL, (_event, message: AgentToolResultMessage) =>
     handleSubmitToolResult(message)
   )
+  registerThreadChannels()
 }
 
 interface EventTarget {

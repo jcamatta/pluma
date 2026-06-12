@@ -30,6 +30,10 @@ interface RunState {
 export class Agent extends AbstractAgent {
   private readonly api: WindowApi
   private readonly tools: () => readonly Tool[]
+  // The open workspace folder, set by the provider as the folder changes and stamped into
+  // forwardedProps when a run starts so the backend keys the SDK session under it. Mutable like
+  // sessionId below — the provider pushes the latest value via setCwd; undefined before a folder opens.
+  private workspaceCwd: string | undefined = undefined
   // The Claude SDK session to resume on the next turn. AbstractAgent mints its own random threadId, but
   // the SDK only knows the session id it reports back via RUN_STARTED.threadId. We start with none (so
   // the first turn opens a fresh session) and adopt the reported id so later turns resume the same one —
@@ -40,6 +44,12 @@ export class Agent extends AbstractAgent {
     super()
     this.api = api
     this.tools = tools
+  }
+
+  // Push the open workspace folder in; the next run stamps it onto forwardedProps. Called by the
+  // provider as the picked folder changes.
+  setCwd(cwd: string | undefined): void {
+    this.workspaceCwd = cwd
   }
 
   override runAgent(
@@ -91,8 +101,15 @@ export class Agent extends AbstractAgent {
   protected startRun(input: RunAgentInput): Promise<StartRunResult> {
     // Send the SDK session id (when we have one) as the threadId, not AG-UI's random one — only a real
     // session can be resumed. The first turn has none, so toRunInput omits it and a fresh session opens.
+    // Stamp the workspace cwd onto forwardedProps so toRunInput lifts it onto the IPC input.
+    const cwd = this.workspaceCwd
+    const forwardedProps =
+      cwd === undefined ? input.forwardedProps : { ...input.forwardedProps, cwd }
     return this.api
-      .invoke(AGENT_RUN_CHANNEL, toRunInput({ ...input, threadId: this.resumeThreadId() }))
+      .invoke(
+        AGENT_RUN_CHANNEL,
+        toRunInput({ ...input, threadId: this.resumeThreadId(), forwardedProps })
+      )
       .then((result) =>
         result.ok
           ? { ok: true, runId: result.value.runId }
