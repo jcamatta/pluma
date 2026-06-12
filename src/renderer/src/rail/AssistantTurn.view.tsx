@@ -4,6 +4,7 @@
 import { Sparkles } from 'lucide-react'
 import type { AgentActivity } from './activity-log'
 import { ActivityView, type ActivityLabels } from './Activity.view'
+import { AssistantMarkdown } from './AssistantMarkdown.view'
 
 interface AssistantTurnViewProps {
   readonly activity: AgentActivity
@@ -37,7 +38,7 @@ export function AssistantTurnView({
             data-testid="assistant-reply"
             className="mt-3 text-sm leading-relaxed text-text-primary"
           >
-            {reply}
+            <AssistantMarkdown text={reply} />
           </div>
         )}
       </div>

@@ -37,4 +37,16 @@ describe('AssistantTurnView', () => {
     render(<AssistantTurnView {...base} activity={working} />)
     expect(screen.queryByText('partial…')).not.toBeInTheDocument()
   })
+
+  it('renders the reply markdown as marks, not raw asterisks', () => {
+    const reply: AgentActivity = {
+      status: 'done',
+      startedAt: 0,
+      log: [],
+      summary: 'a **bold** edit'
+    }
+    render(<AssistantTurnView {...base} activity={reply} />)
+
+    expect(screen.getByText('bold').tagName).toBe('STRONG')
+  })
 })

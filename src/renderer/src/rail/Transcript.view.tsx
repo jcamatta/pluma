@@ -4,6 +4,7 @@
 
 import { Sparkles } from 'lucide-react'
 import type { TranscriptItem } from './transcript-logic'
+import { AssistantMarkdown } from './AssistantMarkdown.view'
 import { UserMessage } from './UserMessage.view'
 
 function AssistantReply({ text }: { readonly text: string }): React.JSX.Element {
@@ -12,7 +13,9 @@ function AssistantReply({ text }: { readonly text: string }): React.JSX.Element 
       <span className="mt-px flex-none text-action-primary">
         <Sparkles size={16} />
       </span>
-      <div className="min-w-0 flex-1 text-sm leading-relaxed text-text-primary">{text}</div>
+      <div className="min-w-0 flex-1 text-sm leading-relaxed text-text-primary">
+        <AssistantMarkdown text={text} />
+      </div>
     </div>
   )
 }
