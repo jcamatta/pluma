@@ -61,5 +61,13 @@
     "calling": "Calling {{tool}}…",
     "done": "{{tool}}",
     "runError": "Run failed: {{message}}"
+  },
+  "threads": {
+    "title": "Chats",
+    "open": "Show chats",
+    "newThread": "New chat",
+    "back": "Back to chat",
+    "untitled": "Untitled chat",
+    "empty": "No chats yet. Start one to see it here."
   }
 }

@@ -82,6 +82,8 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/renderer/src/threads/__tests__/fake-threads-repository.ts` — in-memory fake of the threads repositories for hook/controller tests.
 - `src/renderer/src/threads/__tests__/useThreads.test.tsx` — tests for the useThreads query hook against the fake.
 - `src/renderer/src/threads/__tests__/useThreadHistory.test.tsx` — tests for the useThreadHistory query hook against the fake.
+- `src/renderer/src/threads/ThreadsPanel.view.tsx` — pure threads (chats) panel: header (title/back/new) over a scrollable list of thread rows (title + relative-time subtitle), active row highlighted; all data and callbacks via props.
+- `src/renderer/src/threads/__tests__/ThreadsPanel.view.test.tsx` — tests the panel view's empty state, row rendering, and onSelect/onNewThread/onBack callbacks.
 
 ### src/renderer/src/agent
 
