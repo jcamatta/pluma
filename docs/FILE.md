@@ -88,6 +88,10 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/renderer/src/threads/__tests__/ThreadsPanel.controller.test.tsx` — tests the panel controller lists threads against the fake repo, shows the untitled fallback, and bubbles onSelect with the row id.
 - `src/renderer/src/threads/format-relative-time.ts` — pure calculation rendering how long ago an instant was (localized via Intl.RelativeTimeFormat), used for each thread row's subtitle.
 - `src/renderer/src/threads/__tests__/format-relative-time.test.ts` — tests the relative-time calculation across seconds/minutes/hours/days for the English locale.
+- `src/renderer/src/threads/useRenameThread.ts` — command hook renaming a thread through the writer port and invalidating ['threads', cwd] on success.
+- `src/renderer/src/threads/__tests__/useRenameThread.test.tsx` — tests rename goes through the writer and refetches the listing on success but not on failure.
+- `src/renderer/src/threads/useDeleteThread.ts` — command hook deleting a thread through the writer port and invalidating ['threads', cwd] on success.
+- `src/renderer/src/threads/__tests__/useDeleteThread.test.tsx` — tests delete goes through the writer and refetches the listing on success but not on failure.
 
 ### src/renderer/src/rail
 
