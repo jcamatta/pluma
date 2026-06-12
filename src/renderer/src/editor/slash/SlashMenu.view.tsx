@@ -8,6 +8,7 @@ import { Button } from '@base-ui/react'
 import { motion } from 'motion/react'
 import { SlashCommandIcon } from './slash-command-icon'
 import type { SlashCommandId } from './slash-command-catalog'
+import { Scrollable } from '../../components/Scrollable'
 import { cn } from '../../components/cn'
 
 type SlashMenuItem = {
@@ -47,11 +48,11 @@ function SlashMenuView({
       transition={{ duration: 0.12 }}
     >
       <div className="px-3 py-2 text-xs font-medium text-text-muted">{heading}</div>
-      <div className="max-h-80 overflow-y-auto px-1 pb-1">
-        {items.length === 0 ? (
-          <div className="px-3 py-2 text-sm text-text-muted">{emptyLabel}</div>
-        ) : (
-          items.map((item, index) => (
+      {items.length === 0 ? (
+        <div className="px-3 py-2 text-sm text-text-muted">{emptyLabel}</div>
+      ) : (
+        <Scrollable className="max-h-80" contentClassName="px-1 pb-1">
+          {items.map((item, index) => (
             <Button
               key={item.id}
               type="button"
@@ -73,9 +74,9 @@ function SlashMenuView({
                 </motion.button>
               }
             />
-          ))
-        )}
-      </div>
+          ))}
+        </Scrollable>
+      )}
     </motion.div>
   )
 }
