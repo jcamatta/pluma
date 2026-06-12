@@ -235,6 +235,12 @@ in-memory fake writer: success (`ok: true`) and the `ThreadWriteFailed` path. Bo
    reads against a temp `CLAUDE_CONFIG_DIR` seeded with a session (or, if that's impractical, a thin
    seam test — decide in step 3). Update `FILE.md`.
 
+3b. ✅ **DONE.** Landed `claude-thread-writer.ts` implementing `ThreadWriter` over the SDK's
+`renameSession` / `deleteSession` (passing the workspace as `{ dir }`), mapping failures to
+`ThreadWriteFailed`. Seam test `vi.mock`s the SDK and asserts the id/title/dir plumbing and
+error mapping (same rationale as step 3 — real round-trip is covered in step 10). **Backend reads +
+writes now complete behind ports + adapters. Next: step 4 (read IPC channels + handlers).**
+
 3b. **Claude thread-writer adapter.** Add
 `adapters/agent/claude/runtime/claude-thread-writer.ts` implementing `ThreadWriterPort` over the
 SDK's `renameSession` / `deleteSession`, passing the explicit `cwd` (O1). Provide it as a `Layer`.

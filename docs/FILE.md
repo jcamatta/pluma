@@ -49,3 +49,8 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/main/adapters/agent/claude/logic/__tests__/session-info-to-summary.test.ts` — tests for the session-row → summary calculation.
 - `src/main/adapters/agent/claude/logic/__tests__/session-messages-to-history.test.ts` — tests for the message-chain → history calculation.
 - `src/main/adapters/agent/claude/runtime/__tests__/claude-thread-reader.test.ts` — seam tests for the reader adapter with the SDK module mocked.
+
+### src/main/adapters/agent/claude — threads (write adapter)
+
+- `src/main/adapters/agent/claude/runtime/claude-thread-writer.ts` — ThreadWriter adapter over the SDK's renameSession/deleteSession, keyed by the workspace dir.
+- `src/main/adapters/agent/claude/runtime/__tests__/claude-thread-writer.test.ts` — seam tests for the writer adapter with the SDK module mocked.
