@@ -68,3 +68,17 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/main/ipc/agent/delete-thread-handler.ts` — IPC endpoint serializing the deleteThread use case to an ack Result.
 - `src/main/ipc/agent/__tests__/rename-thread-handler.test.ts` — tests for the rename-thread handler with the SDK mocked.
 - `src/main/ipc/agent/__tests__/delete-thread-handler.test.ts` — tests for the delete-thread handler with the SDK mocked.
+
+### src/renderer/src/threads — ports, adapter, provider, query hooks
+
+- `src/renderer/src/threads/ports/threads-reader.port.ts` — renderer query port: list threads / load history, returning the IPC Result.
+- `src/renderer/src/threads/ports/threads-writer.port.ts` — renderer command port: rename / delete thread, returning the IPC Result.
+- `src/renderer/src/threads/adapters/threads-repository.ipc.ts` — real reader+writer adapter over window.api (the only threads module touching IPC).
+- `src/renderer/src/threads/ThreadsContext.ts` — React context + useThreadsRepo for the threads ports.
+- `src/renderer/src/threads/ThreadsProvider.tsx` — provides the real IPC-backed threads repositories to the subtree.
+- `src/renderer/src/threads/threadKeys.ts` — pure React Query key helpers (threadsKey, threadHistoryKey), keyed by workspace cwd.
+- `src/renderer/src/threads/useThreads.ts` — query hook listing the workspace's threads (data is a Result).
+- `src/renderer/src/threads/useThreadHistory.ts` — query hook loading one selected thread's history (enabled when a thread is selected).
+- `src/renderer/src/threads/__tests__/fake-threads-repository.ts` — in-memory fake of the threads repositories for hook/controller tests.
+- `src/renderer/src/threads/__tests__/useThreads.test.tsx` — tests for the useThreads query hook against the fake.
+- `src/renderer/src/threads/__tests__/useThreadHistory.test.tsx` — tests for the useThreadHistory query hook against the fake.

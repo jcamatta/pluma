@@ -283,6 +283,18 @@ Update `FILE.md`.
 
 ### Renderer — ports, hooks
 
+5–6. ✅ **DONE.** New `renderer/src/threads/` feature folder (decided: a dedicated feature folder, not
+`agent/`). Reader + writer ports (`ports/threads-reader.port.ts`, `ports/threads-writer.port.ts`;
+rename args bundled into `RenameThreadArgs` to stay within max-params 2), the IPC adapter
+(`adapters/threads-repository.ipc.ts`, the only window.api seam), `ThreadsContext`/`ThreadsProvider`
+mirroring the explorer's `RepositoriesProvider`/`useRepos`, the `threadKeys.ts` helpers
+(`threadsKey(cwd)` / `threadHistoryKey(cwd, id)`), and the two **query** hooks `useThreads(cwd)` /
+`useThreadHistory(cwd, id|null)` (history disabled until a thread is selected). In-memory
+`fake-threads-repository.ts` + hook tests. **cwd is passed in** (the panel controller threads App's
+`root` down, like `ExplorerController`), not read from a global. **Run-finished invalidation of
+`threadsKey` is deferred to the panel/agent wiring (steps 7–8).** **Next: step 7 (Agent seeding) and
+step 8 (ThreadList view/panel).**
+
 5. **Reader + writer ports + IPC adapters + provider.** Under `renderer/src/agent/` (or a new
    `threads/` feature folder — decide in step 5), add a `ThreadsReaderPort` (`listThreads(cwd)` /
    `getThreadHistory(cwd, id)`) **and** a `ThreadsWriterPort` (`renameThread(cwd, id, title)` /
