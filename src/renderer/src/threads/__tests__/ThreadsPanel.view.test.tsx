@@ -100,6 +100,16 @@ describe('ThreadsPanelView', () => {
     expect(onSelect).not.toHaveBeenCalled()
   })
 
+  it('hides the row actions while a row is being edited', () => {
+    const oneRow: readonly ThreadRow[] = [
+      { id: 's1', title: 'Draft review', subtitle: '2 hours ago', active: true }
+    ]
+    render(<ThreadsPanelView {...baseProps} rows={oneRow} editingId="s1" />)
+    expect(screen.getByDisplayValue('Draft review')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Rename' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+  })
+
   it('shows an inline title field and commits the new title on Enter', () => {
     const onCommitRename = vi.fn()
     render(

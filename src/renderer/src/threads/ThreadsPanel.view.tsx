@@ -56,6 +56,15 @@ interface ThreadsPanelViewProps {
   readonly onCancelDelete: () => void
 }
 
+// The row's border/background classes. While editing, the row drops its own border/highlight so only the
+// inline field's outline shows (otherwise the active-row border and the input border stack into a double
+// outline). Active rows keep the accent border; the rest are plain and clickable.
+function rowSurface(editing: boolean, active: boolean): string {
+  if (editing) return 'border-transparent'
+  if (active) return 'border-action-primary bg-surface-2 text-text-primary'
+  return 'cursor-pointer border-transparent text-text-secondary hover:bg-(--hover)'
+}
+
 function ThreadRowView({
   row,
   ctx
@@ -63,6 +72,9 @@ function ThreadRowView({
   readonly row: ThreadRow
   readonly ctx: RowContext
 }): React.JSX.Element {
+  const editing = ctx.editingId === row.id
+  const surface = rowSurface(editing, row.active)
+
   return (
     <motion.div
       data-row
@@ -70,13 +82,9 @@ function ThreadRowView({
       animate={{ opacity: 1, y: 0 }}
       onClick={() => ctx.onSelect(row.id)}
       data-testid={`thread-row:${row.id}`}
-      className={`flex w-full cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-left ${
-        row.active
-          ? 'border-action-primary bg-surface-2 text-text-primary'
-          : 'border-transparent text-text-secondary hover:bg-(--hover)'
-      }`}
+      className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left ${surface}`}
     >
-      {ctx.editingId === row.id ? (
+      {editing ? (
         <ThreadTitleInput
           initialValue={row.title}
           onCommit={(title) => ctx.onCommitRename(row.id, title)}
@@ -88,14 +96,20 @@ function ThreadRowView({
           <span className="text-xs text-text-muted">{row.subtitle}</span>
         </div>
       )}
-      <span className="row-actions ml-auto flex flex-none items-center gap-px">
-        <IconButton label={ctx.rename} onClick={() => ctx.onStartRename(row.id)} stopPropagation>
-          <Pencil size={15} />
-        </IconButton>
-        <IconButton label={ctx.delete} onClick={() => ctx.onRequestDelete(row.id)} stopPropagation>
-          <Trash2 size={15} />
-        </IconButton>
-      </span>
+      {!editing && (
+        <span className="row-actions ml-auto flex flex-none items-center gap-px">
+          <IconButton label={ctx.rename} onClick={() => ctx.onStartRename(row.id)} stopPropagation>
+            <Pencil size={15} />
+          </IconButton>
+          <IconButton
+            label={ctx.delete}
+            onClick={() => ctx.onRequestDelete(row.id)}
+            stopPropagation
+          >
+            <Trash2 size={15} />
+          </IconButton>
+        </span>
+      )}
     </motion.div>
   )
 }

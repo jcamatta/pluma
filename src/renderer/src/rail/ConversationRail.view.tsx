@@ -62,12 +62,12 @@ export function ConversationRailView({
       data-testid="conversation-rail"
     >
       <div className="flex items-center gap-2 border-b border-(--line) py-4 pl-4 pr-3">
-        <IconButton label={labels.chats} onClick={onShowThreads} className="ml-1 rounded-lg">
-          <History size={17} />
-        </IconButton>
-        <span className="flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
+        <span className="ml-1 flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
         <IconButton label={labels.newChat} onClick={onNewChat} className="rounded-lg">
           <Plus size={17} />
+        </IconButton>
+        <IconButton label={labels.chats} onClick={onShowThreads} className="rounded-lg">
+          <History size={17} />
         </IconButton>
         <IconButton label={labels.collapse} onClick={onClose} className="rounded-lg">
           <PanelRight size={17} />
