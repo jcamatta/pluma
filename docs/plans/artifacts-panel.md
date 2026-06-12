@@ -140,7 +140,13 @@ hook’s `artifacts` reflect them in document order and update when one is remov
 chip via `annotationSeverityClass` + the `.annotation-chip/divider/quote` CSS, quoted passage, note, and a
 Dismiss action; active card gets the accent ring mirroring the explorer's selected-row treatment;
 `data-testid="artifact-card:<id>"`). Tested in `__tests__/AnnotationCard.view.test.tsx` (renders content;
-body click selects; Dismiss fires without re-selecting). Checks green. **4b (ProposalCard) still to do.**
+body click selects; Dismiss fires without re-selecting). Checks green.
+
+**4b ✅ done.** Landed `artifacts/ProposalCard.view.tsx` (before/after diff via `--color-destructive` /
+`--color-success` tints, accent "Proposed rewrite" chip, active ring). `ready` → Reject + Accept(primary);
+`conflicted` → a warning badge and Reject only (a drifted proposal can't apply). Tested in
+`__tests__/ProposalCard.view.test.tsx` (renders diff + both actions; body click selects, Accept fires
+without re-selecting; conflicted hides Accept and shows the badge). Checks green.
 
 Two `*.view.tsx` files under `artifacts/`, **props-only, hook-free**, design tokens + the existing
 `.annotation-*` card CSS + Motion (`rise-in` on mount, `whileHover`/`whileTap`). Split into two commits:

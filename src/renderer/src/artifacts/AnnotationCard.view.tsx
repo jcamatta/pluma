@@ -39,7 +39,7 @@ function AnnotationCard({
         annotationSeverityClass[artifact.severity],
         'cursor-pointer rounded-xl border bg-surface-1 p-3 transition-colors',
         active
-          ? 'border-action-primary shadow-[0_0_0_2px_color-mix(in_srgb,var(--color-action-primary)_18%,transparent)]'
+          ? 'border-action-primary ring-2 ring-action-primary/50'
           : 'border-(--line) hover:bg-(--hover)'
       )}
     >
