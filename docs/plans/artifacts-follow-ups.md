@@ -14,14 +14,14 @@ branch (`feat/editor-per-file`) and the same PR, on top of the editor-per-file a
 
 ## Steps
 
-- [ ] **Step 1 (backend) — system-prompt: active document can change.** Add a short paragraph to
+- [x] **Step 1 (backend) — system-prompt: active document can change.** Add a short paragraph to
       `agent-system-prompt.ts` stating the tools act on the _currently active_ document, the active
       document can change between turns, so re-establish it with `get_current_document` /
       `get_current_selection` at the start of work, treat a `get_ranges` `not_found` as a signal the
       document may have changed (re-read before retrying), and never reuse a range id across turns. Assert
       the new guidance in `agent-system-prompt.test.ts`.
 
-- [ ] **Step 2 (renderer) — deactivate the artifact on the file you leave.** In
+- [x] **Step 2 (renderer) — deactivate the artifact on the file you leave.** In
       `ArtifactsPanel.controller.tsx`, when `activePath` changes, clear the active annotation and proposal
       on every open editor whose path is not the active one. Holds the invariant "only the visible file may
       hold an active artifact." Composes with cross-file select (we activate the target editor, then

@@ -9,8 +9,17 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useActiveEditor } from '../editor/ActiveEditorContext'
 import { useOpenFiles } from '../editor/OpenFilesContext'
-import { delAnnotation, setActiveAnnotation } from '../editor/extensions/annotations'
-import { acceptProposal, rejectProposal, setActiveProposal } from '../editor/extensions/proposals'
+import {
+  delAnnotation,
+  getActiveAnnotationId,
+  setActiveAnnotation
+} from '../editor/extensions/annotations'
+import {
+  acceptProposal,
+  getActiveProposalId,
+  rejectProposal,
+  setActiveProposal
+} from '../editor/extensions/proposals'
 import { useOpenArtifacts } from './useOpenArtifacts'
 import { artifactKey } from './artifact-key'
 import { scrollTargetOf } from './scroll-target'
@@ -46,12 +55,26 @@ function activate({
   }
 }
 
+// Clear any active artifact on an editor the user is no longer looking at — guarded so a file with
+// nothing active never dispatches a no-op transaction. Keeps the invariant that only the visible file
+// holds an active artifact, so returning to a file and clicking its card re-activates in one click.
+function deactivate(editor: Editor): void {
+  if (getActiveAnnotationId(editor) !== null) setActiveAnnotation({ editor, id: null })
+  if (getActiveProposalId(editor) !== null) setActiveProposal({ editor, id: null })
+}
+
 function ArtifactsPanelController(): React.JSX.Element {
   const { t } = useTranslation()
   const { editors } = useActiveEditor()
   const { activePath, open } = useOpenFiles()
   const { artifacts, activeKeys } = useOpenArtifacts()
   const pendingReveal = useRef<{ readonly path: string; readonly from: number } | null>(null)
+
+  useEffect(() => {
+    editors.forEach((editor, path) => {
+      if (path !== activePath) deactivate(editor)
+    })
+  }, [activePath, editors])
 
   useEffect(() => {
     const pending = pendingReveal.current

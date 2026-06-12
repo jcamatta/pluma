@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
+import { Button } from '@base-ui/react'
 import type { Editor } from '@tiptap/core'
 import { i18n } from '../../i18n'
 import { ActiveEditorProvider } from '../../editor/ActiveEditorProvider'
@@ -63,6 +64,9 @@ function Shell({
       <ActiveEditorProvider>
         <OpenFilesContext.Provider value={nav}>
           <RegisterEditors entries={entries} />
+          {entries.map(([path]) => (
+            <Button key={path} onClick={() => nav.open(path)}>{`open:${path}`}</Button>
+          ))}
           <ArtifactsPanelController />
         </OpenFilesContext.Provider>
       </ActiveEditorProvider>
@@ -199,6 +203,29 @@ describe('ArtifactsPanelController cross-file', () => {
     } finally {
       a.destroy()
       b.destroy()
+    }
+  })
+
+  it('deactivates a file’s artifact when the user leaves it, so one click re-activates', () => {
+    const [a, b] = ['/a.md', '/b.md'].map(() => createTestEditor(CONTENT))
+    try {
+      renderPanel([
+        ['/a.md', a],
+        ['/b.md', b]
+      ])
+      act(() => seed(a))
+      fireEvent.click(screen.getByText('Soften the threat.'))
+
+      // Leaving A for B clears A's active artifact; returning leaves it deactivated.
+      fireEvent.click(screen.getByRole('button', { name: 'open:/b.md' }))
+      expect(getActiveAnnotationId(a)).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'open:/a.md' }))
+
+      // So a single card click re-activates it (no stale-active double click).
+      fireEvent.click(screen.getByText('Soften the threat.'))
+      expect(getActiveAnnotationId(a)).toBe('a_1')
+    } finally {
+      ;[a, b].forEach((editor) => editor.destroy())
     }
   })
 })
