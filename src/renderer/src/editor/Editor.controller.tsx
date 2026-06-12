@@ -4,15 +4,14 @@
 // useAutoSave persists edits back to the open file (path) with a debounce. The top bar's file name is
 // derived from path; onOpenSettings comes from the app shell, which owns the settings modal's open state.
 // The editor is null until it finishes initializing on the client, so this renders nothing until it is
-// ready. useEditorTools contributes the editor's frontend tools to the agent registry for as long as
-// the editor column is mounted. It also registers the live editor into ActiveEditorContext so sibling
-// columns (the rail's artifacts panel) can read its annotations/proposals and drive its commands.
+// ready. It registers the live editor into ActiveEditorContext so sibling columns (the rail's artifacts
+// panel) can read its annotations/proposals and drive its commands. The editor's frontend tools are
+// contributed once at the shell (EditorToolsBridge), not here, so multiple open editors don't collide.
 
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useEditorZoom } from './useEditorZoom'
 import { useManuscriptEditor } from './useManuscriptEditor'
-import { useEditorTools } from './useEditorTools'
 import { useActiveEditor } from './ActiveEditorContext'
 import { useAutoSave } from './useAutoSave'
 import { EditorView } from './Editor.view'
@@ -33,7 +32,6 @@ export function EditorController({
   const editor = useManuscriptEditor(content)
   const { containerRef, zoom } = useEditorZoom()
   const { register } = useActiveEditor()
-  useEditorTools(editor)
   useAutoSave(editor, path)
 
   useEffect(() => {

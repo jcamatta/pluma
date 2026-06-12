@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditorController } from './editor/Editor.controller'
 import { ActiveEditorProvider } from './editor/ActiveEditorProvider'
+import { EditorToolsBridge } from './editor/EditorToolsBridge'
 import { ExplorerController } from './explorer/Explorer.controller'
 import { useFileContent } from './explorer/useFileContent'
 import { LauncherController } from './launcher/Launcher.controller'
@@ -37,6 +38,7 @@ export const App = (): React.JSX.Element => {
     <AgentToolsProvider>
       <AgentProvider cwd={root}>
         <ActiveEditorProvider>
+          <EditorToolsBridge />
           <main className="flex h-screen gap-3 bg-surface-1 p-4 font-ui text-text-primary">
             {explorerOpen && (
               <div className="flex-none" style={{ width: 'var(--explorer-w)' }}>
