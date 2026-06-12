@@ -74,6 +74,8 @@
     "deleteTitle": "Delete chat?",
     "deleteMessage": "“{{title}}” will be permanently deleted. This can't be undone.",
     "deleteConfirm": "Delete",
-    "deleteCancel": "Cancel"
+    "deleteCancel": "Cancel",
+    "historyLoading": "Loading this chat…",
+    "historyError": "This chat couldn't be loaded."
   }
 }

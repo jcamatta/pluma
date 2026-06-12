@@ -17,9 +17,11 @@ import { createFakeThreadsRepository } from './fake-threads-repository'
 
 interface Handlers {
   readonly activeId?: string | null
-  readonly onSelect?: ReturnType<typeof vi.fn>
-  readonly onNewThread?: ReturnType<typeof vi.fn>
+  readonly onSelect?: (id: string) => void
+  readonly onNewThread?: () => void
 }
+
+const noop = (): void => undefined
 
 function renderPanel(repos: ThreadsRepositories, handlers: Handlers = {}): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -34,9 +36,9 @@ function renderPanel(repos: ThreadsRepositories, handlers: Handlers = {}): void 
     <ThreadsPanelController
       cwd="/work"
       activeId={handlers.activeId ?? null}
-      onSelect={handlers.onSelect ?? vi.fn()}
-      onNewThread={handlers.onNewThread ?? vi.fn()}
-      onBack={vi.fn()}
+      onSelect={handlers.onSelect ?? noop}
+      onNewThread={handlers.onNewThread ?? noop}
+      onBack={noop}
     />,
     { wrapper }
   )
@@ -55,7 +57,7 @@ describe('ThreadsPanelController', () => {
   })
 
   it('bubbles onSelect with the row id when a thread is clicked', async () => {
-    const onSelect = vi.fn()
+    const onSelect = vi.fn<(id: string) => void>()
     renderPanel(createFakeThreadsRepository({ threads }), { onSelect })
     fireEvent.click(await screen.findByTestId('thread-row:s1'))
     await waitFor(() => expect(onSelect).toHaveBeenCalledWith('s1'))
@@ -80,7 +82,7 @@ describe('ThreadsPanelController', () => {
   it('deletes the active thread on confirm and bubbles onNewThread', async () => {
     const repos = createFakeThreadsRepository({ threads })
     const deleteSpy = vi.spyOn(repos.writer, 'deleteThread')
-    const onNewThread = vi.fn()
+    const onNewThread = vi.fn<() => void>()
     renderPanel(repos, { activeId: 's1', onNewThread })
 
     await screen.findByText('Draft review')

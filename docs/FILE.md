@@ -103,6 +103,10 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/renderer/src/rail/useThreadSession.ts` — owns the rail's thread-selection state (chat vs threads view, active thread) and seeds the agent to resume a selected thread or start a fresh one.
 - `src/renderer/src/rail/__tests__/useThreadSession.test.tsx` — tests select seeds the agent + tracks the active thread, new clears it, and the view toggles.
 - `src/renderer/src/rail/ChatRail.controller.tsx` — wires the chat half of the rail: composer value + current turn, runs a turn against the live agent, and folds its events into the rendered ConversationTurn.
+- `src/renderer/src/rail/message-text.ts` — pure calculation flattening an AG-UI message's content (string or text parts) to display text.
+- `src/renderer/src/rail/__tests__/message-text.test.ts` — tests messageText returns string content, joins text parts, and yields '' otherwise.
+- `src/renderer/src/rail/ConversationHistory.view.tsx` — pure transcript of a loaded thread (loading/error states; user bubbles + assistant blocks, non-text roles omitted).
+- `src/renderer/src/rail/__tests__/ConversationHistory.view.test.tsx` — tests the transcript view's loading/error states and rendering of user/assistant messages.
 
 ### src/renderer/src/agent
 
