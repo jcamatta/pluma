@@ -44,6 +44,11 @@ function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
       return editor ? run(editor, args) : { ok: false, error: 'No document is open in the editor.' }
     }
 
+  const atPath = (path: string, run: (editor: Editor) => AgentToolResult): AgentToolResult => {
+    const editor = deps.resolve(path)
+    return editor ? run(editor) : { ok: false, error: `no_open_editor:${path}` }
+  }
+
   return {
     selection: {
       spec: getCurrentSelectionTool,
@@ -55,32 +60,33 @@ function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
     },
     ranges: {
       spec: getRangesTool,
-      handler: withLiveEditor((live, args) => {
-        assertWire<{ readonly text: string }>(args, getRangesTool.name)
-        return getRanges(live, args)
-      })
+      handler: (args) => {
+        assertWire<{ readonly path: string; readonly text: string }>(args, getRangesTool.name)
+        return atPath(args.path, (live) => getRanges(live, args))
+      }
     },
     annotation: {
       spec: createAnnotationTool,
-      handler: withLiveEditor((live, args) => {
+      handler: (args) => {
         assertWire<{
+          readonly path: string
           readonly rangeId: string
           readonly label: string
           readonly description: string
           readonly severity?: AnnotationSeverity
         }>(args, createAnnotationTool.name)
-        return runCreateAnnotation(live, args)
-      })
+        return atPath(args.path, (live) => runCreateAnnotation(live, args))
+      }
     },
     proposal: {
       spec: proposeEditTool,
-      handler: withLiveEditor((live, args) => {
-        assertWire<{ readonly rangeId: string; readonly replacementText: string }>(
+      handler: (args) => {
+        assertWire<{ readonly path: string; readonly rangeId: string; readonly replacementText: string }>(
           args,
           proposeEditTool.name
         )
-        return proposeEdit(live, args)
-      })
+        return atPath(args.path, (live) => proposeEdit(live, args))
+      }
     }
   }
 }

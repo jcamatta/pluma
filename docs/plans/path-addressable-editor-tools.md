@@ -59,7 +59,7 @@ the registry is the resolution table.
   resolver from `useActiveEditor().editors` and reads the active path from `useOpenFiles()`. Update the
   `useEditorTools` / bridge tests. Behavior identical; the seam is in place. (renderer)
 
-- [ ] **Step 2 — required `path` on the three acting tools.** Add `path` to the `required` list of the
+- [x] **Step 2 — required `path` on the three acting tools.** Add `path` to the `required` list of the
   `get_ranges`, `create_annotation`, `propose_edit` specs; in `useEditorTools` resolve `args.path` and
   return `no_open_editor:<path>` when it is not open. Tests: resolves by explicit path, errors on an
   unknown/closed path. (renderer)

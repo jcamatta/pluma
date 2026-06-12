@@ -4,7 +4,12 @@ import type { ReactNode } from 'react'
 import type { Editor } from '@tiptap/core'
 import { AgentToolsProvider } from '../../agent/AgentToolsProvider'
 import { useToolRegistry, type ToolRegistry } from '../../agent/AgentToolsContext'
-import { agentToolSpecs, getRangesTool, proposeEditTool } from '../../agent/tools/specs'
+import {
+  agentToolSpecs,
+  getCurrentDocumentTool,
+  getRangesTool,
+  proposeEditTool
+} from '../../agent/tools/specs'
 import type { AgentToolResult } from '../../agent/tools/types'
 import { getProposals } from '../extensions/proposals'
 import { createTestEditor } from '../extensions/__tests__/editor-test-harness'
@@ -65,12 +70,14 @@ describe('useEditorTools', () => {
     try {
       const registry = renderRegistry(depsFor(editor))
 
-      const resolved = await registry.byName(getRangesTool.name)?.handler({ text: 'world' })
+      const resolved = await registry
+        .byName(getRangesTool.name)
+        ?.handler({ path: PATH, text: 'world' })
       const rangeId = rangeIdOf(resolved)
 
       const proposed = await registry
         .byName(proposeEditTool.name)
-        ?.handler({ rangeId, replacementText: 'earth' })
+        ?.handler({ path: PATH, rangeId, replacementText: 'earth' })
 
       expect(proposed?.ok).toBe(true)
       expect(getProposals(editor)).toHaveLength(1)
@@ -79,10 +86,25 @@ describe('useEditorTools', () => {
     }
   })
 
-  it('reports a recoverable error while no editor is mounted', async () => {
+  it('errors when the acting path is not an open editor', async () => {
+    const editor = createTestEditor('hello world')
+    try {
+      const registry = renderRegistry(depsFor(editor))
+
+      const result = await registry
+        .byName(getRangesTool.name)
+        ?.handler({ path: '/missing.md', text: 'world' })
+
+      expect(result).toEqual({ ok: false, error: 'no_open_editor:/missing.md' })
+    } finally {
+      editor.destroy()
+    }
+  })
+
+  it('reports a recoverable error on a read tool while no editor is mounted', async () => {
     const registry = renderRegistry(depsFor(null))
 
-    const result = await registry.byName(getRangesTool.name)?.handler({ text: 'anything' })
+    const result = await registry.byName(getCurrentDocumentTool.name)?.handler({})
 
     expect(result).toEqual({ ok: false, error: 'No document is open in the editor.' })
   })

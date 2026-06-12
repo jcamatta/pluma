@@ -43,13 +43,15 @@ describe('EditorToolsBridge', () => {
       )
 
       const before = await result.current.registry.byName(getRangesTool.name)?.handler({
+        path: PATH,
         text: 'world'
       })
-      expect(before).toEqual({ ok: false, error: 'No document is open in the editor.' })
+      expect(before).toEqual({ ok: false, error: `no_open_editor:${PATH}` })
 
       act(() => result.current.active.registerEditor(PATH, editor))
 
       const after = await result.current.registry.byName(getRangesTool.name)?.handler({
+        path: PATH,
         text: 'world'
       })
       expect(after?.ok).toBe(true)

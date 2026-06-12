@@ -8,6 +8,9 @@
 import type { Tool } from '@ag-ui/core'
 import { annotationSeverities } from '../../editor/extensions/annotations'
 
+const filePathDescription =
+  'Absolute path of the open file to act on, taken from list_open_files or a read-tool result.'
+
 const getCurrentSelectionTool: Tool = {
   name: 'get_current_selection',
   description: 'Return the current editor selection as text or Markdown.',
@@ -35,8 +38,9 @@ const getRangesTool: Tool = {
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['text'],
+    required: ['path', 'text'],
     properties: {
+      path: { type: 'string', description: filePathDescription },
       text: { type: 'string' }
     }
   }
@@ -49,8 +53,9 @@ const createAnnotationTool: Tool = {
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['rangeId', 'label', 'description'],
+    required: ['path', 'rangeId', 'label', 'description'],
     properties: {
+      path: { type: 'string', description: filePathDescription },
       rangeId: { type: 'string' },
       label: { type: 'string' },
       description: { type: 'string' },
@@ -71,8 +76,9 @@ const proposeEditTool: Tool = {
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['rangeId', 'replacementText'],
+    required: ['path', 'rangeId', 'replacementText'],
     properties: {
+      path: { type: 'string', description: filePathDescription },
       rangeId: { type: 'string' },
       replacementText: { type: 'string' }
     }
