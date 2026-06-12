@@ -1,6 +1,7 @@
 // ThreadsPanelController against an in-memory fake repository: it lists the workspace's threads, shows
-// the localized untitled fallback for a blank title, and bubbles onSelect with the row id when a thread
-// is clicked. The fake is the single seam — no window.api, no Electron.
+// the localized untitled fallback for a blank title, bubbles onSelect with the row id, and drives the
+// rename/delete commands through the writer port (deleting the active thread bubbles onNewThread). The
+// fake is the single seam — no window.api, no Electron.
 
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -14,10 +15,13 @@ import type { ThreadsRepositories } from '../ThreadsContext'
 import { ThreadsPanelController } from '../ThreadsPanel.controller'
 import { createFakeThreadsRepository } from './fake-threads-repository'
 
-function renderPanel(
-  repos: ThreadsRepositories,
-  onSelect: ReturnType<typeof vi.fn> = vi.fn()
-): { readonly onSelect: ReturnType<typeof vi.fn> } {
+interface Handlers {
+  readonly activeId?: string | null
+  readonly onSelect?: ReturnType<typeof vi.fn>
+  readonly onNewThread?: ReturnType<typeof vi.fn>
+}
+
+function renderPanel(repos: ThreadsRepositories, handlers: Handlers = {}): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrapper = ({ children }: { readonly children: ReactNode }): React.JSX.Element => (
     <QueryClientProvider client={queryClient}>
@@ -29,14 +33,13 @@ function renderPanel(
   render(
     <ThreadsPanelController
       cwd="/work"
-      activeId={null}
-      onSelect={onSelect}
-      onNewThread={vi.fn()}
+      activeId={handlers.activeId ?? null}
+      onSelect={handlers.onSelect ?? vi.fn()}
+      onNewThread={handlers.onNewThread ?? vi.fn()}
       onBack={vi.fn()}
     />,
     { wrapper }
   )
-  return { onSelect }
 }
 
 const threads: readonly ThreadSummary[] = [
@@ -52,8 +55,39 @@ describe('ThreadsPanelController', () => {
   })
 
   it('bubbles onSelect with the row id when a thread is clicked', async () => {
-    const { onSelect } = renderPanel(createFakeThreadsRepository({ threads }))
+    const onSelect = vi.fn()
+    renderPanel(createFakeThreadsRepository({ threads }), { onSelect })
     fireEvent.click(await screen.findByTestId('thread-row:s1'))
     await waitFor(() => expect(onSelect).toHaveBeenCalledWith('s1'))
+  })
+
+  it('renames a thread through the writer port', async () => {
+    const repos = createFakeThreadsRepository({ threads })
+    const renameSpy = vi.spyOn(repos.writer, 'renameThread')
+    renderPanel(repos)
+
+    await screen.findByText('Draft review')
+    fireEvent.click(screen.getAllByRole('button', { name: i18n.t('threads.rename') })[0])
+    const field = screen.getByDisplayValue('Draft review')
+    fireEvent.change(field, { target: { value: 'Renamed' } })
+    fireEvent.keyDown(field, { key: 'Enter' })
+
+    await waitFor(() =>
+      expect(renameSpy).toHaveBeenCalledWith({ cwd: '/work', id: 's1', title: 'Renamed' })
+    )
+  })
+
+  it('deletes the active thread on confirm and bubbles onNewThread', async () => {
+    const repos = createFakeThreadsRepository({ threads })
+    const deleteSpy = vi.spyOn(repos.writer, 'deleteThread')
+    const onNewThread = vi.fn()
+    renderPanel(repos, { activeId: 's1', onNewThread })
+
+    await screen.findByText('Draft review')
+    fireEvent.click(screen.getAllByRole('button', { name: i18n.t('threads.delete') })[0])
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('threads.deleteConfirm') }))
+
+    await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith('/work', 's1'))
+    expect(onNewThread).toHaveBeenCalledTimes(1)
   })
 })

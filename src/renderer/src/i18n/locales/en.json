@@ -68,6 +68,12 @@
     "newThread": "New chat",
     "back": "Back to chat",
     "untitled": "Untitled chat",
-    "empty": "No chats yet. Start one to see it here."
+    "empty": "No chats yet. Start one to see it here.",
+    "rename": "Rename chat",
+    "delete": "Delete chat",
+    "deleteTitle": "Delete chat?",
+    "deleteMessage": "“{{title}}” will be permanently deleted. This can't be undone.",
+    "deleteConfirm": "Delete",
+    "deleteCancel": "Cancel"
   }
 }

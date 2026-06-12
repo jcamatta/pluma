@@ -99,7 +99,17 @@ threads entry) to open this panel; "New thread" → `newThread()`. View tests re
 controller test with the fake provider asserts select invokes the seam. Add i18n keys to `en.json`
 (including the empty-title fallback). Update `FILE.md`.
 
-### 8b. Rename + delete command hooks, wired into the panel
+### 8b. Rename + delete command hooks, wired into the panel — DONE
+
+**Landed.** `useRenameThread` / `useDeleteThread` (useMutation over the writer port; invalidate
+`threadsKey(cwd)` on `ok:true` only). UI: each row reveals a rename (inline `ThreadTitleInput`, mirroring
+the explorer's `NameInput`) and delete affordance on hover; delete opens `ThreadDeleteDialog` (Base UI
+`AlertDialog` + Motion). `useThreadCommands` owns the inline-edit + confirm-dialog state and drives the
+command hooks; a blank rename is ignored, and deleting the **active** thread bubbles `onNewThread` so the
+rail starts fresh. Error `_tag`s map to `t()` delete/rename keys (one dialog message key with the title
+interpolated). Tested: hook tests (rename/delete go through the writer + invalidate on success, not on
+failure), leaf-component tests, view tests (rename/delete affordances, inline commit, dialog confirm), and
+controller tests (rename through writer; delete active → writer + onNewThread). i18n keys added.
 
 Add `useRenameThread.ts` and `useDeleteThread.ts` (each wraps `useMutation` over the `ThreadsWriterPort`,
 returns a `Result`, and on `ok:true` **invalidates `threadsKey(cwd)`** — never on `ok:false`). Wire into
