@@ -27,6 +27,7 @@ import { PlaceholderExtension } from './placeholder'
 import { RangesExtension } from './ranges'
 import { AnnotationsExtension } from './annotations'
 import { ProposalsExtension } from './proposals'
+import { SlashCommandExtension } from './slash-command'
 
 export const editorExtensions: AnyExtension[] = [
   Document,
@@ -56,6 +57,7 @@ export const editorExtensions: AnyExtension[] = [
   RangesExtension,
   AnnotationsExtension,
   ProposalsExtension,
+  SlashCommandExtension,
   PlaceholderExtension,
   Typography,
   Markdown

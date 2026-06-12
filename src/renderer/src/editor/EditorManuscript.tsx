@@ -5,6 +5,7 @@
 import { EditorContent, EditorContext, type Editor as TiptapEditor } from '@tiptap/react'
 import { type CSSProperties } from 'react'
 import { Scrollable } from '../components/Scrollable'
+import { SlashMenuController } from './slash/SlashMenu.controller'
 
 type EditorManuscriptProps = {
   readonly editor: TiptapEditor
@@ -32,6 +33,7 @@ export function EditorManuscript({
           <EditorContent className="flex min-h-full w-full min-w-0 flex-col" editor={editor} />
         </Scrollable>
       </div>
+      <SlashMenuController editor={editor} />
     </EditorContext.Provider>
   )
 }

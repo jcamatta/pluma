@@ -352,6 +352,8 @@ All interactive UI must use Base UI primitives directly.
 
 Do not use raw `<button>`, `<input>`, `<select>`, or `<textarea>` when a Base UI primitive exists.
 
+**Any scrollable region uses the shared `Scrollable` component** (`src/renderer/src/components/Scrollable.tsx`, built on the Base UI `ScrollArea` primitive) so the scrollbar matches our design. Never make content scroll with a native scrollbar — no `overflow-y-auto` / `overflow-auto` / `overflow-scroll` (or the inline `style` equivalent) on a div to get scrolling. This applies to every list, menu, or panel that can overflow (e.g. a dropdown's option list). `overflow-hidden` purely to clip is fine.
+
 Check Base UI documentation before creating new interactive components:
 
 `https://base-ui.com/llms.txt`

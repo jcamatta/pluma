@@ -83,6 +83,14 @@ rules:
       be animated rather than static. Flag a raw interactive element where a
       Base UI primitive fits, or animation written with the old framer-motion
       import or API.
+  - id: scroll-area-component
+    instruction: >-
+      Any scrollable region — a list, menu, or panel that can overflow — uses
+      the shared Scrollable component (built on the Base UI ScrollArea
+      primitive), never a native scrollbar. Flag a raw overflow-y-auto,
+      overflow-auto, or overflow-scroll class (or the inline style equivalent)
+      used to make content scroll on a div where Scrollable should wrap it;
+      overflow-hidden used purely to clip is fine.
   - id: translation-ready
     instruction: >-
       All user-facing text uses the t hook from react-i18next — no hardcoded UI
