@@ -135,6 +135,13 @@ hook’s `artifacts` reflect them in document order and update when one is remov
 
 ### 4. Card views (pure) — `AnnotationCard` then `ProposalCard`
 
+**4a ✅ done.** Landed `artifacts/ArtifactAction.tsx` (shared Base-UI+Motion text action button,
+`primary` variant for Accept, stops propagation) and `artifacts/AnnotationCard.view.tsx` (severity-tinted
+chip via `annotationSeverityClass` + the `.annotation-chip/divider/quote` CSS, quoted passage, note, and a
+Dismiss action; active card gets the accent ring mirroring the explorer's selected-row treatment;
+`data-testid="artifact-card:<id>"`). Tested in `__tests__/AnnotationCard.view.test.tsx` (renders content;
+body click selects; Dismiss fires without re-selecting). Checks green. **4b (ProposalCard) still to do.**
+
 Two `*.view.tsx` files under `artifacts/`, **props-only, hook-free**, design tokens + the existing
 `.annotation-*` card CSS + Motion (`rise-in` on mount, `whileHover`/`whileTap`). Split into two commits:
 
