@@ -40,6 +40,7 @@ function ProposalCard({
       data-testid={`artifact-card:${artifact.id}`}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
       onClick={onClick}
       className={cn(
         'cursor-pointer rounded-xl border bg-surface-1 p-3 transition-colors',

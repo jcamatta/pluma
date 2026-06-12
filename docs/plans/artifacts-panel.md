@@ -161,7 +161,21 @@ labels }`. `active` → accent ring/border (mirror the decoration’s active tre
 Each with a `__tests__` view test (renders content, fires the right callback, doesn’t call hooks). All
 strings via `labels` props (the controller passes `t(...)`).
 
-### 5. Artifacts list view + Review panel controller
+### 5. Artifacts list view + Review panel controller ✅ done
+
+Landed `artifacts/ArtifactsList.view.tsx` (pure: empty state via the rail's `Empty.view`; otherwise one
+card per artifact by kind, wrapped in `AnimatePresence` — cards gained an `exit` so they animate out on
+resolve) and `artifacts/ArtifactsPanel.controller.tsx` (reads `useEditorArtifacts` + the live editor;
+`select` activates the annotation/proposal and reveals it via `chain().setTextSelection(from)
+.scrollIntoView()`; Accept/Reject/Dismiss call the extension commands). Added the `artifacts` i18n block to
+`en.json` (empty/dismiss/proposedRewrite/conflicted/accept/reject). Tested in
+`__tests__/ArtifactsList.view.test.tsx` (empty + by-kind mapping + select-by-id) and
+`__tests__/ArtifactsPanel.controller.test.tsx` (empty; cards render; select activates `a_1`; Accept
+applies the rewrite text and clears the proposal; Dismiss removes the annotation) — driven through a real
+headless editor. Checks green (lint, tests, web typecheck). **Note:** the `artifacts` i18n landed here (the
+controller needs it) rather than waiting for step 6.
+
+> Original design notes:
 
 - `artifacts/ArtifactsList.view.tsx` — pure: maps `artifacts` to the matching card, threads `activeId`
   and the callbacks through, renders the rail’s shared empty state (reuse `rail/Empty.view.tsx`) when the

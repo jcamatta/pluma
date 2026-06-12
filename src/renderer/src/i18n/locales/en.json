@@ -56,6 +56,14 @@
     "noFolder": "No folder open. Pick one to start.",
     "pickFolder": "Open folder"
   },
+  "artifacts": {
+    "empty": "No artifacts yet. When the assistant annotates a passage or drafts a rewrite, it lands here — and underlines the spot in your manuscript.",
+    "dismiss": "Dismiss",
+    "proposedRewrite": "Proposed rewrite",
+    "conflicted": "Conflicted",
+    "accept": "Accept",
+    "reject": "Reject"
+  },
   "rail": {
     "chats": "Chats",
     "newChat": "New chat",
