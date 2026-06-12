@@ -7,6 +7,8 @@ import { motion } from 'motion/react'
 import { annotationSeverityClass } from '../editor/extensions/annotations'
 import { cn } from '../components/cn'
 import { ArtifactAction } from './ArtifactAction'
+import { ArtifactFileLabel } from './ArtifactFileLabel.view'
+import { artifactKey } from './artifact-key'
 import type { AnnotationArtifact } from './artifact'
 
 interface AnnotationCardLabels {
@@ -31,7 +33,7 @@ function AnnotationCard({
   return (
     <motion.div
       layout
-      data-testid={`artifact-card:${artifact.id}`}
+      data-testid={`artifact-card:${artifactKey(artifact)}`}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
@@ -49,6 +51,7 @@ function AnnotationCard({
           {artifact.label}
         </span>
         <span className="annotation-divider h-px flex-1" />
+        <ArtifactFileLabel path={artifact.path} />
       </div>
       <div className="annotation-quote mb-2 border-l-2 pl-3 font-editor text-sm italic leading-snug text-text-secondary">
         “{artifact.quote}”

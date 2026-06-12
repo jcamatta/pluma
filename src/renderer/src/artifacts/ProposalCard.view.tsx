@@ -6,6 +6,8 @@
 import { motion } from 'motion/react'
 import { cn } from '../components/cn'
 import { ArtifactAction } from './ArtifactAction'
+import { ArtifactFileLabel } from './ArtifactFileLabel.view'
+import { artifactKey } from './artifact-key'
 import type { ProposalArtifact } from './artifact'
 
 interface ProposalCardLabels {
@@ -37,7 +39,7 @@ function ProposalCard({
   return (
     <motion.div
       layout
-      data-testid={`artifact-card:${artifact.id}`}
+      data-testid={`artifact-card:${artifactKey(artifact)}`}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
@@ -59,6 +61,7 @@ function ProposalCard({
             {labels.conflicted}
           </span>
         )}
+        <ArtifactFileLabel path={artifact.path} />
       </div>
       <div className="font-editor text-sm leading-relaxed">
         <span className="text-feedback-error line-through">{artifact.originalText}</span>

@@ -1,6 +1,6 @@
 // useReviewTab owns the Chat/Review tab and reports the live artifact count for the Review badge. It
-// starts on the chat tab, switches on setTab, and reflects the active editor's annotations/proposals as
-// they are created. Driven through a real headless editor registered into ActiveEditorContext.
+// starts on the chat tab, switches on setTab, and reflects every open editor's annotations/proposals as
+// they are created. Driven through a real headless editor registered into ActiveEditorContext by path.
 
 import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
@@ -19,12 +19,10 @@ function wrapper({ children }: { readonly children: ReactNode }): React.JSX.Elem
 }
 
 function useHarness(): {
-  readonly register: (editor: ReturnType<typeof createTestEditor> | null) => void
+  readonly api: ReturnType<typeof useActiveEditor>
   readonly review: ReturnType<typeof useReviewTab>
 } {
-  const { register } = useActiveEditor()
-  const review = useReviewTab()
-  return { register, review }
+  return { api: useActiveEditor(), review: useReviewTab() }
 }
 
 describe('useReviewTab', () => {
@@ -42,7 +40,7 @@ describe('useReviewTab', () => {
       const { result } = renderHook(useHarness, { wrapper })
       expect(result.current.review.reviewCount).toBe(0)
 
-      act(() => result.current.register(editor))
+      act(() => result.current.api.registerEditor('/a.md', editor))
       act(() => {
         createProposal({
           editor,

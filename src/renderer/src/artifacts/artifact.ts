@@ -1,13 +1,14 @@
 // The plain Data the artifacts panel renders: one discriminated union over the two things the agent
-// produces, flattened out of the editor's annotation/proposal plugin state. It carries `from` (the
-// document position) so the panel can order cards to read like the manuscript, and `id` to drive the
-// editor commands (activate/accept/reject/dismiss). No behavior, no TipTap — just the facts a card needs.
+// produces, flattened out of the editors' annotation/proposal plugin state. `path` (the owning file) and
+// `id` (minted per editor) together identify it across files; `from` (the document position) orders cards
+// to read like the manuscript. No behavior, no TipTap — just the facts a card needs.
 
 import type { AnnotationSeverity } from '../editor/extensions/annotations'
 import type { ProposalStatus } from '../editor/extensions/proposals'
 
 interface AnnotationArtifact {
   readonly kind: 'annotation'
+  readonly path: string
   readonly id: string
   readonly from: number
   readonly label: string
@@ -18,6 +19,7 @@ interface AnnotationArtifact {
 
 interface ProposalArtifact {
   readonly kind: 'proposal'
+  readonly path: string
   readonly id: string
   readonly from: number
   readonly originalText: string
