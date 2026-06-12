@@ -5,7 +5,7 @@
 // The turn body is a slot (`children`) the controller fills with the ConversationTurn once built (F3);
 // until then it shows the empty state.
 
-import { MessagesSquare, PanelRight, Plus, Sparkles } from 'lucide-react'
+import { History, PanelRight, Plus, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { IconButton } from '../components/IconButton'
 import { Scrollable } from '../components/Scrollable'
@@ -63,7 +63,7 @@ export function ConversationRailView({
     >
       <div className="flex items-center gap-2 border-b border-(--line) py-4 pl-4 pr-3">
         <IconButton label={labels.chats} onClick={onShowThreads} className="ml-1 rounded-lg">
-          <MessagesSquare size={17} />
+          <History size={17} />
         </IconButton>
         <span className="flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
         <IconButton label={labels.newChat} onClick={onNewChat} className="rounded-lg">
