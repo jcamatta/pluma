@@ -73,7 +73,7 @@ function Header({
       <span className="min-w-0 flex-1 truncate text-left text-xs font-semibold text-text-secondary">
         {label}
       </span>
-      <span className="flex-none whitespace-nowrap text-xs text-text-muted">· {stepLabel}</span>
+      <span className="flex-none whitespace-nowrap text-xs text-text-muted">{stepLabel}</span>
       {!working && (
         <span
           className="flex flex-none text-text-muted transition-transform duration-200"

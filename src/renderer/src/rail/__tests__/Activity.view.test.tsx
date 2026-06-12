@@ -66,11 +66,12 @@ describe('ActivityView', () => {
     expect(screen.queryByText('Worked')).not.toBeInTheDocument()
   })
 
-  it('when done: shows "Worked" and the step count', () => {
+  it('when done: shows "Worked" and the step count without a leading dot', () => {
     renderActivity(done)
 
     expect(screen.getByText('Worked')).toBeInTheDocument()
-    expect(screen.getByText('· 1 step')).toBeInTheDocument()
+    expect(screen.getByText('1 step')).toBeInTheDocument()
+    expect(screen.queryByText('· 1 step')).not.toBeInTheDocument()
   })
 
   it('when errored: shows "Run failed", not "Worked"', () => {
