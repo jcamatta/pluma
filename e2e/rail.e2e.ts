@@ -77,6 +77,37 @@ test('sends a message and shows the assistant reply in the rail', async () => {
   })
 })
 
+test('changes the model and effort from the composer selectors', async () => {
+  await withTempFolder([{ name: 'chapter-1.md', content: '# Chapter One' }], async (folder) => {
+    const { app, window } = await launchApp()
+    try {
+      await stubFolderPicker(app, folder)
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+
+      const rail = window.getByTestId('conversation-rail')
+      await expect(rail).toBeVisible({ timeout: 30_000 })
+
+      // The composer footer carries the two run-control selectors at their defaults (Opus 4.8 / Medium).
+      const modelSelect = rail.getByLabel('Model')
+      const effortSelect = rail.getByLabel('Effort')
+      await expect(modelSelect).toContainText('Opus 4.8')
+      await expect(effortSelect).toContainText('Medium')
+
+      // Picking a different model updates the trigger — the choice rides the next run's state over IPC.
+      await modelSelect.click()
+      await window.getByRole('option', { name: 'Sonnet 4.6' }).click()
+      await expect(modelSelect).toContainText('Sonnet 4.6')
+
+      // Picking a different effort likewise updates its trigger.
+      await effortSelect.click()
+      await window.getByRole('option', { name: 'High' }).click()
+      await expect(effortSelect).toContainText('High')
+    } finally {
+      await app.close()
+    }
+  })
+})
+
 // A prompt whose answer is long enough that the run is still streaming when we hit Stop, so the abort
 // has something live to cancel rather than racing a reply that already finished.
 const LONG_PROMPT = 'Write a detailed 2000-word essay about the history of the written word.'
