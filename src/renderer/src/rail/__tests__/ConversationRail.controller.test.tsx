@@ -1,7 +1,7 @@
-// ConversationRailController owns the composer value and the current turn, and runs a turn against the
-// live agent: submitting adds the user message and starts a run, the run's events fold into the turn's
-// activity, and the user bubble + reply render. A fake AbstractAgent records addMessage/runAgent/abortRun
-// and lets the test drive AG-UI events through the subscriber — no IPC. i18n returns the real en strings.
+// ConversationRailController renders agent.messages as the conversation: settled turns stack as history
+// above the current turn, whose assistant side is the live activity. Submitting adds the user message and
+// starts a run. A fake AbstractAgent holds real messages (addMessage fires onNewMessage so the activity
+// resets per turn; setMessages clears) and lets the test drive AG-UI events and settle replies — no IPC.
 
 import { describe, expect, it } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
@@ -13,14 +13,22 @@ import { AgentContext } from '../../agent/AgentContext'
 import { i18n } from '../../i18n'
 import { ConversationRailController } from '../ConversationRail.controller'
 
+const BLANK_INPUT: RunAgentInput = {
+  threadId: '',
+  runId: '',
+  messages: [],
+  tools: [],
+  context: [],
+  forwardedProps: {},
+  state: {}
+}
+
 // Events arrive as full AGUIEvents at runtime; the test builds terse literals carrying only the fields
-// the reducer reads. BaseEvent is a passthrough object (open to extra fields), so these literals type
-// as BaseEvent directly — no cast. The base shape (a `type` field) always holds.
+// the reducer reads. BaseEvent is a passthrough object, so these literals type as BaseEvent — no cast.
 const event = (literal: BaseEvent): BaseEvent => literal
 
 class FakeAgent extends AbstractAgent {
-  private sub: AgentSubscriber | undefined
-  readonly added: Message[] = []
+  private subs: readonly AgentSubscriber[] = []
   runs = 0
   aborts = 0
 
@@ -30,12 +38,21 @@ class FakeAgent extends AbstractAgent {
   }
 
   override subscribe(sub: AgentSubscriber): { unsubscribe: () => void } {
-    this.sub = sub
-    return { unsubscribe: () => (this.sub = undefined) }
+    this.subs = [...this.subs, sub]
+    return { unsubscribe: () => (this.subs = this.subs.filter((s) => s !== sub)) }
   }
 
   override addMessage(message: Message): void {
-    this.added.push(message)
+    this.messages = [...this.messages, message]
+    for (const sub of this.subs) {
+      void sub.onNewMessage?.({ message, messages: this.messages, state: {}, agent: this })
+    }
+    this.notifyMessages()
+  }
+
+  override setMessages(messages: Message[]): void {
+    this.messages = messages
+    this.notifyMessages()
   }
 
   override runAgent(): ReturnType<AbstractAgent['runAgent']> {
@@ -47,22 +64,28 @@ class FakeAgent extends AbstractAgent {
     this.aborts += 1
   }
 
-  emit(event: BaseEvent): void {
-    void this.sub?.onEvent?.({
-      event,
-      messages: [],
-      state: {},
-      agent: this,
-      input: {
-        threadId: '',
-        runId: '',
-        messages: [],
-        tools: [],
-        context: [],
-        forwardedProps: {},
-        state: {}
-      }
-    })
+  // Simulate the run pipeline folding the streamed assistant reply into agent.messages.
+  settle(message: Message): void {
+    this.messages = [...this.messages, message]
+    this.notifyMessages()
+  }
+
+  emit(payload: BaseEvent): void {
+    for (const sub of this.subs) {
+      void sub.onEvent?.({
+        event: payload,
+        messages: this.messages,
+        state: {},
+        agent: this,
+        input: BLANK_INPUT
+      })
+    }
+  }
+
+  private notifyMessages(): void {
+    for (const sub of this.subs) {
+      void sub.onMessagesChanged?.({ messages: this.messages, state: {}, agent: this })
+    }
   }
 }
 
@@ -82,6 +105,16 @@ function send(text: string): void {
   fireEvent.click(screen.getByRole('button', { name: /send/i }))
 }
 
+// A full turn: open the run, stream the reply into the activity, settle it into agent.messages, finish.
+function runTurn(agent: FakeAgent, reply: string): void {
+  act(() => {
+    agent.emit(event({ type: EventType.RUN_STARTED }))
+    agent.emit(event({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: 'm', delta: reply }))
+    agent.settle({ id: `a-${agent.runs}`, role: 'assistant', content: reply })
+    agent.emit(event({ type: EventType.RUN_FINISHED }))
+  })
+}
+
 describe('ConversationRailController', () => {
   it('shows the empty state before the first message', () => {
     renderRail()
@@ -93,7 +126,9 @@ describe('ConversationRailController', () => {
 
     send('  fix my prose  ')
 
-    expect(agent.added).toEqual([{ id: expect.any(String), role: 'user', content: 'fix my prose' }])
+    expect(agent.messages).toEqual([
+      { id: expect.any(String), role: 'user', content: 'fix my prose' }
+    ])
     expect(agent.runs).toBe(1)
     // The prompt shows in both the chat header title and the turn's user bubble.
     expect(screen.getAllByText('fix my prose')).toHaveLength(2)
@@ -109,7 +144,22 @@ describe('ConversationRailController', () => {
     expect(agent.runs).toBe(0)
   })
 
-  it('folds the run events into the turn and aborts on Stop', () => {
+  it('keeps every prior turn visible across turns (no overwrite on the second send)', () => {
+    const { agent } = renderRail()
+
+    send('what is my name?')
+    runTurn(agent, 'Your name is Joel.')
+
+    send('another message')
+
+    // The first turn's question and answer survive the second send as history; the title stays the
+    // first message ('what is my name?' shows in its history bubble and in the header).
+    expect(screen.getByText('Your name is Joel.')).toBeInTheDocument()
+    expect(screen.getAllByText('what is my name?')).toHaveLength(2)
+    expect(screen.getByText('another message')).toBeInTheDocument()
+  })
+
+  it('folds the run events into the current turn and aborts on Stop', () => {
     const { agent } = renderRail()
     send('revise')
 
@@ -131,5 +181,16 @@ describe('ConversationRailController', () => {
 
     expect(screen.getByText('Done.')).toBeInTheDocument()
     expect(screen.getByText(i18n.t('rail.worked'))).toBeInTheDocument()
+  })
+
+  it('clears the conversation on new chat', () => {
+    const { agent } = renderRail()
+    send('hello')
+    expect(screen.getAllByText('hello').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('rail.newChat') }))
+
+    expect(agent.messages).toEqual([])
+    expect(screen.getByText(i18n.t('rail.newChatEmpty'))).toBeInTheDocument()
   })
 })
