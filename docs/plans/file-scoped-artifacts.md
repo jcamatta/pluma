@@ -67,10 +67,24 @@ future **tabs** feature needs (open-set + active tab + per-file editor), so none
    by path. Keep `useActiveEditor()` returning `editors.get(activePath)` so the agent tools and the
    current panel are untouched. Provider + hook tests.
 
+   **DONE** (additive, not a rewrite): kept the single-slot active `editor`/`register` (used by the
+   agent tools and the same-file panel) and **added** to `ActiveEditorContext` a path-keyed
+   `editors` map with `registerEditor`/`unregisterEditor`. Every file's `EditorController` now adds
+   itself to the map by path (the empty no-file editor is excluded — it has no artifacts). The active
+   slot stays the "focus" concern; the map is the "what's open" concern the panel will read. Context
+   test covers the map.
+
 3. **Path on the artifact (data) + aggregate read.** Add `path` to the `Artifact` union. Replace
    `useEditorArtifacts` with `useOpenArtifacts`, which folds **every** registered editor's
    annotation/proposal state into one list, tagging each artifact with its editor's path and
    subscribing to each editor's transactions. Pure merge + hook tests.
+
+   **Design finding (identity):** artifact ids (`a_1`, `p_1`) are minted **per editor**, so file A and
+   file B can each have an `a_1` — ids are not unique across files. The panel must therefore identify
+   an artifact by the **composite `(path, id)`** (a small `artifactKey(path, id)` pure helper) for its
+   React keys, its active-membership set, and the handler calls. This means steps 3–5 also thread
+   `path` (or the whole artifact) through `ArtifactsList`/cards/controller instead of a bare `id`, and
+   the controller resolves the target editor via `editors.get(path)`.
 
 4. **Card shows its file (#1).** Cards render a file label from `path` (basename via a pure helper,
    reusing `editor-file-name-logic`). View tests; translation-ready label.
