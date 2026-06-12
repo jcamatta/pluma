@@ -87,7 +87,15 @@ using the hook without the provider throws).
 > Decision: a context that _holds_ the instance (not lifting `useManuscriptEditor` to the shell) is the
 > least-invasive option and matches the existing provider pattern. The editor stays owned by its column.
 
-### 2. Artifact data model + merge calculation (pure)
+### 2. Artifact data model + merge calculation (pure) ✅ done
+
+Landed `artifacts/artifact.ts` (the `Artifact` discriminated union — `AnnotationArtifact` |
+`ProposalArtifact`, carrying `id`, `from`, and the per-kind card fields; `severity`/`status` reuse the
+extensions' type-only exports) and `artifacts/to-artifacts.ts` (`toArtifacts(annotations, proposals)` →
+ordered by `from`). Tested in `artifacts/__tests__/to-artifacts.test.ts` (empty, interleave-by-position,
+field mapping). Checks green (test, lint, web typecheck).
+
+> Original design notes:
 
 Create the feature folder `src/renderer/src/artifacts/`:
 
@@ -112,8 +120,7 @@ is _not_ required — keep it simple.
 
 Tests: build a headless editor with the existing harness
 (`editor/extensions/__tests__/editor-test-harness.ts`), create an annotation + a proposal, assert the
-hook’s `artifacts` reflect them in document order and update when one is removed/activated. Update
-`docs/FILE.md`.
+hook’s `artifacts` reflect them in document order and update when one is removed/activated.
 
 ### 4. Card views (pure) — `AnnotationCard` then `ProposalCard`
 
