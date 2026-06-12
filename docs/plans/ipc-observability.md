@@ -121,7 +121,13 @@ now (per-event stream logging is a Future idea, not this step).
 
 - `src/main/ipc/folder/watch-folder-handler.ts` + its test.
 
-### 5. Migrate agent thread handlers
+### 5. Migrate agent thread handlers — DONE
+
+All four now call `runIpc` (rename/delete map their void success to `null` via `Effect.as(null)`).
+Annotations: list→`{ cwd }`, history/rename/delete→`{ cwd, threadId }`; rename does NOT annotate the new
+title (user content). Fallback tags preserved (reads→`ThreadReadFailed`, writes→`ThreadWriteFailed`).
+Existing Result tests pass unchanged; a new logging test (SDK mocked) covers the list-threads channel
+on success and failure.
 
 The four standard-shape agent handlers; annotate `cwd` / `threadId` (safe scalars).
 
