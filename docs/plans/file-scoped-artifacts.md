@@ -1,0 +1,78 @@
+# Plan — File-scoped artifacts via one editor per file
+
+Status: **active.** Approved; in progress on branch `feat/editor-per-file`.
+
+## Why
+
+Artifacts (annotations + proposals) currently live in the plugin state of a **single, reused**
+editor instance. Switching files doesn't make a new editor — `useEditorContent` swaps the document
+via `setContent` ([useEditorContent.ts](../../src/renderer/src/editor/useEditorContent.ts)). That
+full-document replace maps every artifact position to garbage, so after leaving a file and coming
+back the cards still render but their highlights are gone and clicking them does nothing. Artifacts
+also leak across files because they have no file identity.
+
+We fix the **root cause** rather than work around it: give each open file its **own persistent
+editor instance**. An editor for file A keeps file A's document and artifacts for as long as the
+file is open — nothing ever swaps content underneath a live plugin. This is also the substrate the
+future **tabs** feature needs (open-set + active tab + per-file editor), so none of it is throwaway.
+
+## Decisions (confirmed)
+
+- **Artifact lifetime = file-open lifetime.** Artifacts are ephemeral agent output, not persisted to
+  disk. They live as long as the file's editor is mounted; closing a file (future tabs) discards
+  them. If we later want them to outlive a close, we add persistence then — not now.
+- **The panel aggregates across all open files**, each card labeled with its file. Clicking a card
+  for a non-active file **opens that file and scrolls to the range** (the chosen UX for cross-file
+  navigation, and the foundation for multi-file agent edits).
+- **No tab UI in this plan.** App keeps every visited file mounted and shows the active one. Explicit
+  close / eviction is deferred to the tabs plan; mounted-editor count is unbounded for now (accepted
+  pre-tabs).
+
+## Done looks like
+
+- Open file A, get an agent annotation/proposal, switch to file B and back to A — the highlight,
+  proposal diff, and annotations are all still there and clicking the card still reveals the range.
+- Each card shows which file it belongs to.
+- Clicking a card whose file is not the active one reopens that file and scrolls to the artifact.
+- Typing in file A no longer disturbs file B's artifacts (no cross-file leakage).
+- The proposal/annotation live-anchoring during edits still works (each editor maps its own ranges).
+
+## Steps (sliced to mini-commits, each green on its own)
+
+1. **Open-files model + editor-per-file mounting.** App tracks an ordered **open-paths** set and an
+   active path; it renders one `EditorController key={path}` per open path, keeping inactive ones
+   mounted but hidden. Each `EditorController` loads **its own** content (`useFileContent(path)`
+   moves into the column) and registers as the active editor only while active, so the existing
+   single-active panel keeps working. Pure `open-files-logic.ts` (open/activate over the set) with
+   unit tests. → **fixes #2** at the editor layer. _(Watch the budget — if over ~300 weighted lines,
+   split into 1a "open-set + mount per path" and 1b "move content-loading into the column".)_
+
+2. **Editor registry context.** Generalize the single-editor wiring into an `OpenEditorsContext`
+   holding `editors: Map<path, Editor>` + `activePath`. Each `EditorController` registers/unregisters
+   by path. Keep `useActiveEditor()` returning `editors.get(activePath)` so the agent tools and the
+   current panel are untouched. Provider + hook tests.
+
+3. **Path on the artifact (data) + aggregate read.** Add `path` to the `Artifact` union. Replace
+   `useEditorArtifacts` with `useOpenArtifacts`, which folds **every** registered editor's
+   annotation/proposal state into one list, tagging each artifact with its editor's path and
+   subscribing to each editor's transactions. Pure merge + hook tests.
+
+4. **Card shows its file (#1).** Cards render a file label from `path` (basename via a pure helper,
+   reusing `editor-file-name-logic`). View tests; translation-ready label.
+
+5. **Cross-file select (#3).** The panel controller resolves the artifact's editor by `path`. Same
+   file → activate decoration + reveal as today. Different file → request `onOpen(path)` (App makes
+   it the active/visible file), then activate + reveal in that editor once it's shown. Controller
+   tests with two fake editors covering both branches.
+
+6. **e2e + manifest.** Real-app spec: agent creates an artifact in file A, switch to file B, assert
+   A's card still shows (labeled A), click it, assert A reopens and scrolls to the range with the
+   decoration intact. Update `e2e/coverage-manifest.ts` feature coverage. (Artifacts are
+   renderer-only — no new IPC channel/operation expected.)
+
+## Open questions
+
+- **Hidden mounted editors:** a ProseMirror view inside a `hidden`/`display:none` container — confirm
+  re-showing then revealing scrolls correctly (reveal runs after the file is shown, so it should).
+- **Memory pre-tabs:** unbounded mounted editors is accepted for now; revisit with the tabs plan's
+  close/eviction.
