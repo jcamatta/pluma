@@ -16,7 +16,9 @@ There is **no toolbar "insert image" button** in this plan — slash-command ins
 
 ## Steps
 
-### Step 1 — register the Image node
+### Step 1 — register the Image node ✅ done
+
+_Landed: `@tiptap/extension-image` pinned to exact `3.26.0` (the `^` range resolves to `3.26.1`, which pins `@tiptap/core@3.26.1` and conflicts with the project's locked core `3.26.0`). Registered with `allowBase64: true` so data-URI sources render; round-trip test green._
 
 - **Dep:** add `@tiptap/extension-image` (needs approval — see Constraints).
 - `src/renderer/src/editor/extensions/index.ts` — register `Image` in `editorExtensions`, configured with `allowBase64: true` so data-URI sources render. Place it among the node extensions (before `Markdown`).
