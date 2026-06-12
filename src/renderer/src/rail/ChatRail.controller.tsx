@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAgent } from '../agent/useAgent'
 import { useAgentActivityLog } from './useAgentActivityLog'
+import { useThreadsRefresh } from './useThreadsRefresh'
 import { ConversationHistoryController } from './ConversationHistory.controller'
 import { ConversationRailView } from './ConversationRail.view'
 import { ConversationTurnView } from './ConversationTurn.view'
@@ -40,6 +41,8 @@ export function ChatRailController({
   })
 
   const working = activity.status === 'working'
+
+  useThreadsRefresh(agent, cwd)
 
   const submit = (): void => {
     const text = value.trim()

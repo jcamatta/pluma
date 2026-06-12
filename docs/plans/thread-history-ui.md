@@ -119,7 +119,20 @@ call `newThread()`. Map `error._tag` → a `t()` key per failure. Hook tests via
 `QueryClientProvider` + fake writer asserting mutation + invalidation; extend the controller test for
 rename/delete. Add i18n keys. Update `FILE.md`.
 
-### 9. Load + render history in the turn view
+### 9. Load + render history in the turn view — DONE
+
+**Landed.** O5 resolved toward a **scrollable transcript**: the selected thread's history renders above
+the live turn inside the rail's scroll area. `ConversationHistory.view` (pure: loading/error states; user
+bubbles + assistant blocks via `message-text`, non-text roles omitted) driven by
+`ConversationHistory.controller` (loads `useThreadHistory(cwd, threadId)`, maps loading/`ok:false` →
+`t()` keys). Wired into `ChatRail` (now takes `cwd` + `selectedId`; renders the history controller when a
+thread is selected and treats a selection as `hasTurn` so the panel shows the transcript even before the
+first new message). **No agent message-seeding needed for display:** the transcript comes from the query,
+and resume already works via the session id (`seedThread(id, [])`); the backend's `toSdkPrompt` only sends
+new user turns after the last assistant, so nothing is re-sent. Run-finished invalidation via
+`useThreadsRefresh(agent, cwd)` (subscribes to `onRunFinalized`, invalidates `threadsKey(cwd)`). Tests:
+message-text calc, transcript view (loading/error/messages), history controller (loaded + error),
+refresh hook. **Note (O4):** very old turns may render as a post-compaction summary — acceptable for v1.
 
 When a thread is selected, render its loaded history above the live turn (reuse/extend
 `ConversationTurn.view` or add a `ConversationHistory.view`). Source the history from

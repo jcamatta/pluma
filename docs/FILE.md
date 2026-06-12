@@ -109,6 +109,8 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/renderer/src/rail/__tests__/ConversationHistory.view.test.tsx` — tests the transcript view's loading/error states and rendering of user/assistant messages.
 - `src/renderer/src/rail/ConversationHistory.controller.tsx` — loads the selected thread's history (useThreadHistory) and renders the transcript view with loading/error labels.
 - `src/renderer/src/rail/__tests__/ConversationHistory.controller.test.tsx` — tests the history controller renders the loaded transcript and the error state against the fake repo.
+- `src/renderer/src/rail/useThreadsRefresh.ts` — subscribes to the agent's run-finalized signal and invalidates ['threads', cwd] so a new thread appears in the list.
+- `src/renderer/src/rail/__tests__/useThreadsRefresh.test.tsx` — tests a finalized run invalidates the threads query for the workspace.
 
 ### src/renderer/src/agent
 
