@@ -63,6 +63,8 @@ test('lists, renames, resumes and deletes a past thread', async () => {
       await expect(rail.getByText('Reply with exactly', { exact: false }).first()).toBeVisible({
         timeout: 30_000
       })
+      // The header names the thread by its renamed title, not the first message.
+      await expect(rail.getByText(NEW_TITLE)).toBeVisible({ timeout: 30_000 })
 
       // Send a follow-up; resuming the session yields another sentinel reply.
       await composer.click()

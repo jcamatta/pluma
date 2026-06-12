@@ -24,7 +24,8 @@ export function AgentProvider({ cwd, children }: AgentProviderProps): React.JSX.
   // the `this` that the Agent methods rely on. Held in state so the context value stays stable.
   const [controls] = useState<ThreadControls>(() => ({
     seedThread: (id, messages) => agent.seedThread(id, messages),
-    newThread: () => agent.newThread()
+    newThread: () => agent.newThread(),
+    currentThreadId: () => agent.currentThreadId()
   }))
 
   useEffect(() => {

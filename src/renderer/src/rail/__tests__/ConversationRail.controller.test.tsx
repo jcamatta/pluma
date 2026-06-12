@@ -99,7 +99,8 @@ function renderRail(agent: FakeAgent = new FakeAgent()): { agent: FakeAgent } {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const controls = {
     seedThread: (_id: string, messages: readonly Message[]) => agent.setMessages([...messages]),
-    newThread: () => agent.setMessages([])
+    newThread: () => agent.setMessages([]),
+    currentThreadId: (): string | undefined => undefined
   }
   render(
     <QueryClientProvider client={queryClient}>

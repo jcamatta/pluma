@@ -65,6 +65,12 @@ export class Agent extends AbstractAgent {
     this.setMessages([])
   }
 
+  // The thread the conversation currently belongs to: the SDK session id, set on select or adopted from
+  // the first run. The rail reads it to show the thread's stored name in the header (vs the first message).
+  currentThreadId(): string | undefined {
+    return this.sessionId
+  }
+
   override runAgent(
     parameters?: RunAgentParameters,
     subscriber?: AgentSubscriber

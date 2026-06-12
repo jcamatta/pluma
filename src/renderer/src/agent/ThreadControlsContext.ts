@@ -10,11 +10,13 @@ import type { Message } from '@ag-ui/core'
 interface ThreadControls {
   readonly seedThread: (id: string, messages: readonly Message[]) => void
   readonly newThread: () => void
+  readonly currentThreadId: () => string | undefined
 }
 
 const ThreadControlsContext = createContext<ThreadControls>({
   seedThread: () => undefined,
-  newThread: () => undefined
+  newThread: () => undefined,
+  currentThreadId: () => undefined
 })
 
 export { ThreadControlsContext }

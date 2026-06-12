@@ -21,7 +21,10 @@ const history: readonly Message[] = [
 ]
 
 function renderSession(controls: ThreadControls): ReturnType<typeof renderHook<Session, void>> {
-  const repos = createFakeThreadsRepository({ history })
+  const repos = createFakeThreadsRepository({
+    threads: [{ id: 's1', title: 'First chat', updatedAt: 1 }],
+    history
+  })
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrapper = ({ children }: { readonly children: ReactNode }): React.JSX.Element => (
     <QueryClientProvider client={queryClient}>
@@ -35,7 +38,11 @@ function renderSession(controls: ThreadControls): ReturnType<typeof renderHook<S
 
 describe('useThreadSession', () => {
   it('seeds the agent with the selected thread history and tracks it as active', async () => {
-    const controls: ThreadControls = { seedThread: vi.fn(), newThread: vi.fn() }
+    const controls: ThreadControls = {
+      seedThread: vi.fn(),
+      newThread: vi.fn(),
+      currentThreadId: () => undefined
+    }
     const { result } = renderSession(controls)
 
     act(() => result.current.showThreads())
@@ -45,10 +52,16 @@ describe('useThreadSession', () => {
     expect(result.current.selectedId).toBe('s1')
     expect(result.current.view).toBe('chat')
     await waitFor(() => expect(controls.seedThread).toHaveBeenCalledWith('s1', history))
+    // The header reads the active thread's stored (renameable) name, not the first message.
+    await waitFor(() => expect(result.current.selectedTitle).toBe('First chat'))
   })
 
   it('clears the selection and resets the agent on a new thread', () => {
-    const controls: ThreadControls = { seedThread: vi.fn(), newThread: vi.fn() }
+    const controls: ThreadControls = {
+      seedThread: vi.fn(),
+      newThread: vi.fn(),
+      currentThreadId: () => undefined
+    }
     const { result } = renderSession(controls)
 
     act(() => result.current.select('s1'))

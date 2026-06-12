@@ -18,13 +18,21 @@ import { splitConversation } from './transcript-logic'
 
 interface ChatRailControllerProps {
   readonly cwd: string
+  // The active thread's stored (renameable) name, shown in the header; null falls back to the first message.
+  readonly threadTitle: string | null
   readonly onShowThreads: () => void
   readonly onNewThread: () => void
   readonly onClose: () => void
 }
 
+// Prefer the thread's stored name so a rename shows in the header; fall back to the first message.
+function resolveTitle(threadTitle: string | null, messageTitle: string | null): string | null {
+  return threadTitle !== null && threadTitle.length > 0 ? threadTitle : messageTitle
+}
+
 export function ChatRailController({
   cwd,
+  threadTitle,
   onShowThreads,
   onNewThread,
   onClose
@@ -44,7 +52,8 @@ export function ChatRailController({
 
   const working = activity.status === 'working'
   const { history, currentPrompt } = splitConversation(agent.messages, activity.status !== 'idle')
-  const title = history.find((item) => item.role === 'user')?.text ?? currentPrompt
+  const messageTitle = history.find((item) => item.role === 'user')?.text ?? currentPrompt
+  const title = resolveTitle(threadTitle, messageTitle)
 
   const submit = (): void => {
     const text = value.trim()
