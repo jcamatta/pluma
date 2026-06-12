@@ -6,6 +6,7 @@
 import { describe, expect, it } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AbstractAgent, type AgentSubscriber, type RunAgentInput } from '@ag-ui/client'
 import { EventType, type BaseEvent, type Message } from '@ag-ui/core'
 import { Observable } from 'rxjs'
@@ -19,7 +20,7 @@ import { ConversationRailController } from '../ConversationRail.controller'
 const event = (literal: BaseEvent): BaseEvent => literal
 
 class FakeAgent extends AbstractAgent {
-  private sub: AgentSubscriber | undefined
+  private readonly subs = new Set<AgentSubscriber>()
   readonly added: Message[] = []
   runs = 0
   aborts = 0
@@ -30,8 +31,8 @@ class FakeAgent extends AbstractAgent {
   }
 
   override subscribe(sub: AgentSubscriber): { unsubscribe: () => void } {
-    this.sub = sub
-    return { unsubscribe: () => (this.sub = undefined) }
+    this.subs.add(sub)
+    return { unsubscribe: () => this.subs.delete(sub) }
   }
 
   override addMessage(message: Message): void {
@@ -48,31 +49,36 @@ class FakeAgent extends AbstractAgent {
   }
 
   emit(event: BaseEvent): void {
-    void this.sub?.onEvent?.({
-      event,
-      messages: [],
-      state: {},
-      agent: this,
-      input: {
-        threadId: '',
-        runId: '',
+    this.subs.forEach((sub) => {
+      void sub.onEvent?.({
+        event,
         messages: [],
-        tools: [],
-        context: [],
-        forwardedProps: {},
-        state: {}
-      }
+        state: {},
+        agent: this,
+        input: {
+          threadId: '',
+          runId: '',
+          messages: [],
+          tools: [],
+          context: [],
+          forwardedProps: {},
+          state: {}
+        }
+      })
     })
   }
 }
 
 function renderRail(agent: FakeAgent = new FakeAgent()): { agent: FakeAgent } {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
-    <I18nextProvider i18n={i18n}>
-      <AgentContext.Provider value={agent}>
-        <ConversationRailController cwd="/work" onClose={() => undefined} />
-      </AgentContext.Provider>
-    </I18nextProvider>
+    <QueryClientProvider client={queryClient}>
+      <I18nextProvider i18n={i18n}>
+        <AgentContext.Provider value={agent}>
+          <ConversationRailController cwd="/work" onClose={() => undefined} />
+        </AgentContext.Provider>
+      </I18nextProvider>
+    </QueryClientProvider>
   )
   return { agent }
 }
