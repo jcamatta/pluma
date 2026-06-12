@@ -109,7 +109,18 @@ Artifact[]` that maps the two editor lists into one list **ordered by document p
 
 No editor import here — it takes plain arrays, so it is trivially testable.
 
-### 3. Live artifacts hook (subscription)
+### 3. Live artifacts hook (subscription) ✅ done
+
+Landed `artifacts/useEditorArtifacts.ts` returning `{ artifacts, activeIds }` (`activeIds` is the set of
+the active annotation + active proposal ids, ≤2). Implemented with **`useSyncExternalStore`** rather than
+an effect+setState: the editor is the external store, `editor.on('transaction', …)` the change stream,
+and the snapshot is cached against `editor.state` identity (a fresh ProseMirror state per transaction) so
+reads are referentially stable — this is what satisfies `react-hooks/set-state-in-effect` honestly. Tested
+in `artifacts/__tests__/useEditorArtifacts.test.tsx` (empty without an editor; reflects created
+annotation+proposal in document order; tracks the active id; drops a removed annotation), driving a real
+headless editor registered into the provider. Checks green (lint, test, web typecheck).
+
+> Original design notes:
 
 `src/renderer/src/artifacts/useEditorArtifacts.ts` — subscribes to the active editor's `transaction`
 event, reads `getAnnotations` / `getProposals` / `getActiveAnnotationId` / `getActiveProposalId`, and
