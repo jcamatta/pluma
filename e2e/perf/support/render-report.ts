@@ -53,7 +53,9 @@ const provenance = (run: RunRecord): readonly string[] => [
 
 const renderReport = (run: RunRecord, comparisons: readonly MetricComparison[]): string => {
   const lookup: Lookup = new Map(comparisons.map((c) => [comparisonKey(c.scenario, c.metric), c]))
-  return `${[...provenance(run), '', ...run.scenarios.map((s) => section(s, lookup))].join('\n')}\n`
+  const head = provenance(run).join('\n')
+  const body = run.scenarios.map((scenario) => section(scenario, lookup)).join('\n\n')
+  return `${head}\n\n${body}\n`
 }
 
 export { renderReport }

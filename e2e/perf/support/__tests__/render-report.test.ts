@@ -32,6 +32,11 @@ const comparison: MetricComparison = {
 }
 
 describe('renderReport', () => {
+  it('separates each scenario section with a blank line', () => {
+    const md = renderReport(run, [])
+    expect(md).toContain('\n\n## cold-start')
+  })
+
   it('renders provenance from the run context', () => {
     const md = renderReport(run, [])
     expect(md).toContain('# Performance report')
