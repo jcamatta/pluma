@@ -1,13 +1,14 @@
 // Playwright globalTeardown for the perf suite: after every scenario has dropped its pending piece, this
-// collects them, stamps the run with its context, writes one consolidated run file under runs/, and
-// clears the pending area. With no valid pending pieces (e.g. all scenarios failed before measuring) it
-// writes nothing. Rendering the human-readable report is layered on next.
+// collects them, stamps the run with its context, writes one consolidated run file under runs/, renders
+// the human-readable report.md, and clears the pending area. With no valid pending pieces (e.g. all
+// scenarios failed before measuring) it writes nothing.
 
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { assembleRun } from './assemble-run'
 import { isScenarioResult } from './is-scenario-result'
 import { perfPaths } from './perf-paths'
+import { renderReport } from './render-report'
 import { runContext } from './run-context'
 import { runFileName } from './run-filename'
 import type { ScenarioResult } from './scenario-result'
@@ -30,6 +31,7 @@ const globalTeardown = async (): Promise<void> => {
   const run = assembleRun(runContext(), scenarios)
   await mkdir(perfPaths.runs, { recursive: true })
   await writeFile(join(perfPaths.runs, runFileName(run.context)), JSON.stringify(run, null, 2))
+  await writeFile(perfPaths.report, renderReport(run))
   await rm(perfPaths.pending, { recursive: true, force: true })
 }
 
