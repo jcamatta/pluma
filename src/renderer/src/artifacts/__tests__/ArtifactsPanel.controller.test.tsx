@@ -15,7 +15,11 @@ import {
   getActiveAnnotationId,
   getAnnotations
 } from '../../editor/extensions/annotations'
-import { createProposal, getProposals } from '../../editor/extensions/proposals'
+import {
+  createProposal,
+  getActiveProposalId,
+  getProposals
+} from '../../editor/extensions/proposals'
 import { createTestEditor } from '../../editor/extensions/__tests__/editor-test-harness'
 import { ArtifactsPanelController } from '../ArtifactsPanel.controller'
 
@@ -82,6 +86,44 @@ describe('ArtifactsPanelController', () => {
 
       fireEvent.click(screen.getByText('Soften the threat.'))
       expect(getActiveAnnotationId(editor)).toBe('a_1')
+    } finally {
+      editor.destroy()
+    }
+  })
+
+  it('keeps only one artifact active across kinds', () => {
+    const editor = createTestEditor(CONTENT)
+    try {
+      renderPanel(editor)
+      act(() => seed(editor))
+
+      fireEvent.click(screen.getByText('Soften the threat.'))
+      expect(getActiveAnnotationId(editor)).toBe('a_1')
+      expect(getActiveProposalId(editor)).toBeNull()
+
+      // Selecting the proposal clears the active annotation — never two active at once.
+      fireEvent.click(screen.getByText('ZZZ'))
+      expect(getActiveProposalId(editor)).toBe('p_1')
+      expect(getActiveAnnotationId(editor)).toBeNull()
+    } finally {
+      editor.destroy()
+    }
+  })
+
+  it('toggles the active card off when it is reclicked', () => {
+    const editor = createTestEditor(CONTENT)
+    try {
+      renderPanel(editor)
+      act(() => seed(editor))
+
+      // Target the card by id: once active, the proposal also renders its replacement as an editor
+      // decoration, so the card text alone is ambiguous.
+      const card = screen.getByTestId('artifact-card:p_1')
+      fireEvent.click(card)
+      expect(getActiveProposalId(editor)).toBe('p_1')
+
+      fireEvent.click(card)
+      expect(getActiveProposalId(editor)).toBeNull()
     } finally {
       editor.destroy()
     }
