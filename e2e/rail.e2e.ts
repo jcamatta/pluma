@@ -29,8 +29,10 @@ test('sends a message and shows the assistant reply in the rail', async () => {
       await stubFolderPicker(app, folder)
       await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
 
+      // Reaching the shell runs a real folder pick → list-folder → OS watcher, which on a cold launch
+      // can take longer than Playwright's 5s default; wait generously for the rail to mount.
       const rail = window.getByTestId('conversation-rail')
-      await expect(rail).toBeVisible()
+      await expect(rail).toBeVisible({ timeout: 30_000 })
 
       // Type the prompt and send it (the composer submits on the Send button).
       const composer = rail.locator('textarea[data-rail-composer]')
@@ -67,8 +69,9 @@ test('stops an in-flight run with the composer Stop button', async () => {
       await stubFolderPicker(app, folder)
       await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
 
+      // Same cold-launch transition as the reply test — wait generously for the shell to mount.
       const rail = window.getByTestId('conversation-rail')
-      await expect(rail).toBeVisible()
+      await expect(rail).toBeVisible({ timeout: 30_000 })
 
       const composer = rail.locator('textarea[data-rail-composer]')
       await composer.click()
