@@ -76,6 +76,17 @@
     "send": "Send",
     "toSend": "to send",
     "stop": "Stop",
+    "model": {
+      "label": "Model",
+      "opus": "Opus 4.8",
+      "sonnet": "Sonnet 4.6"
+    },
+    "effort": {
+      "label": "Effort",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
     "thinking": "Thinking…",
     "worked": "Worked",
     "runFailed": "Run failed",

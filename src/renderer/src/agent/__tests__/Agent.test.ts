@@ -2,7 +2,7 @@
 // the agent shows its stored history; newThread clears both so the next run opens a fresh session. The
 // resume id is read through a probe subclass exposing the protected resumeThreadId(); window.api is a
 // stub since these methods touch neither IPC nor the network. The probe also exposes startRun so the run
-// state stamped onto the IPC payload by setRunState can be asserted.
+// state riding forwardedProps (model/effort) can be asserted on the IPC payload.
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Message } from '@ag-ui/core'
@@ -60,7 +60,7 @@ describe('Agent thread seeding', () => {
 })
 
 describe('Agent run state', () => {
-  it('stamps the chosen model and effort into the startRun payload', async () => {
+  it('preserves the run state passed via forwardedProps in the startRun payload', async () => {
     const sent: IpcRunAgentInput[] = []
     const invoke = vi.fn((_channel: string, payload: IpcRunAgentInput) => {
       sent.push(payload)
@@ -69,13 +69,15 @@ describe('Agent run state', () => {
     vi.stubGlobal('api', { invoke, on: vi.fn(() => () => undefined) })
 
     const agent = new ProbeAgent()
-    agent.setRunState({ model: 'claude-sonnet-4-6', effort: 'high' })
-    await agent.start(baseInput)
+    await agent.start({
+      ...baseInput,
+      forwardedProps: { state: { model: 'claude-sonnet-4-6', effort: 'high' } }
+    })
 
     expect(sent[0]?.state).toEqual({ model: 'claude-sonnet-4-6', effort: 'high' })
   })
 
-  it('omits state from the payload when none was set', async () => {
+  it('omits state from the payload when forwardedProps carries none', async () => {
     const sent: IpcRunAgentInput[] = []
     const invoke = vi.fn((_channel: string, payload: IpcRunAgentInput) => {
       sent.push(payload)

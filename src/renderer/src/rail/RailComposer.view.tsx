@@ -8,6 +8,7 @@ import { ArrowUp, Square } from 'lucide-react'
 import { Button } from '@base-ui/react'
 import { motion } from 'motion/react'
 import { ComposerField } from './ComposerField'
+import { RunControlSelect, type RunControlSelectProps } from './RunControlSelect.view'
 
 interface RailComposerProps {
   readonly placeholder: string
@@ -16,6 +17,8 @@ interface RailComposerProps {
   readonly stop: string
   readonly working: boolean
   readonly value: string
+  readonly model: RunControlSelectProps
+  readonly effort: RunControlSelectProps
   readonly onChange: (value: string) => void
   readonly onSubmit: () => void
   readonly onStop: () => void
@@ -28,6 +31,8 @@ export function RailComposer({
   stop,
   working,
   value,
+  model,
+  effort,
   onChange,
   onSubmit,
   onStop
@@ -49,7 +54,9 @@ export function RailComposer({
           }}
         />
         <div className="flex items-center gap-2 px-3 pb-2 pt-1">
-          <span className="flex items-center gap-2 text-xs text-text-muted">
+          <RunControlSelect {...model} />
+          <RunControlSelect {...effort} />
+          <span className="ml-auto flex items-center gap-2 text-xs text-text-muted">
             <kbd className="rounded-md border border-(--line2) bg-surface-3 px-2 py-1 font-ui text-xs">
               ⌘ ↵
             </kbd>
@@ -60,7 +67,7 @@ export function RailComposer({
               type="button"
               onClick={onStop}
               aria-label={stop}
-              className="ml-auto flex size-8 items-center justify-center rounded-xl border border-(--line2) text-text-secondary"
+              className="flex size-8 items-center justify-center rounded-xl border border-(--line2) text-text-secondary"
               render={
                 <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
                   <Square size={13} />
@@ -73,7 +80,7 @@ export function RailComposer({
               onClick={onSubmit}
               disabled={!canSend}
               aria-label={send}
-              className="ml-auto flex size-8 items-center justify-center rounded-xl bg-action-primary text-text-on-accent disabled:bg-(--line2) disabled:text-text-muted"
+              className="flex size-8 items-center justify-center rounded-xl bg-action-primary text-text-on-accent disabled:bg-(--line2) disabled:text-text-muted"
               render={
                 <motion.button
                   whileHover={canSend ? { scale: 1.08 } : undefined}

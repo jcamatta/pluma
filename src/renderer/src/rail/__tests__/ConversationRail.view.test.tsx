@@ -20,12 +20,35 @@ const labels: RailLabels = {
 
 const noop = (): void => undefined
 
+const model = {
+  ariaLabel: 'Model',
+  value: 'claude-opus-4-8',
+  options: [
+    { value: 'claude-opus-4-8', label: 'Opus 4.8' },
+    { value: 'claude-sonnet-4-6', label: 'Sonnet 4.6' }
+  ],
+  onValueChange: noop
+}
+
+const effort = {
+  ariaLabel: 'Effort',
+  value: 'medium',
+  options: [
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' }
+  ],
+  onValueChange: noop
+}
+
 const baseProps = {
   labels,
   title: 'New chat',
   hasTurn: false,
   working: false,
   value: '',
+  model,
+  effort,
   onChange: noop,
   onSubmit: noop,
   onStop: noop,
@@ -121,6 +144,16 @@ describe('ConversationRailView', () => {
     expect(onShowThreads).toHaveBeenCalledOnce()
     expect(onNewChat).toHaveBeenCalledOnce()
     expect(onClose).toHaveBeenCalledOnce()
+  })
+})
+
+describe('ConversationRailView · run controls', () => {
+  it('shows the model and effort selectors with their current values', () => {
+    render(<ConversationRailView {...baseProps} />)
+    expect(screen.getByLabelText('Model')).toBeInTheDocument()
+    expect(screen.getByLabelText('Effort')).toBeInTheDocument()
+    expect(screen.getByText('Opus 4.8')).toBeInTheDocument()
+    expect(screen.getByText('Medium')).toBeInTheDocument()
   })
 })
 
