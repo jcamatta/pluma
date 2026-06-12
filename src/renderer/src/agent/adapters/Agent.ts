@@ -14,7 +14,11 @@ import {
 import type { AgentSubscriber } from '@ag-ui/client'
 import { EventType, type BaseEvent, type Message, type Tool } from '@ag-ui/core'
 import { Observable, type Subscriber } from 'rxjs'
-import { AGENT_ABORT_CHANNEL, AGENT_RUN_CHANNEL } from '../../../../shared/ipc/ipc-contract/agent'
+import {
+  AGENT_ABORT_CHANNEL,
+  AGENT_RUN_CHANNEL,
+  type RunAgentState
+} from '../../../../shared/ipc/ipc-contract/agent'
 import { AGENT_EVENT_CHANNEL } from '../../../../shared/ipc/ipc-event-contract/agent'
 import type { WindowApi } from '../../../../shared/ipc/window-api'
 import { routeAgentEvent } from '../route-agent-event'
@@ -34,6 +38,10 @@ export class Agent extends AbstractAgent {
   // forwardedProps when a run starts so the backend keys the SDK session under it. Mutable like
   // sessionId below — the provider pushes the latest value via setCwd; undefined before a folder opens.
   private workspaceCwd: string | undefined = undefined
+  // The model/effort the next run should use, set from the composer via setRunState and stamped into
+  // forwardedProps when a run starts. Mutable like the fields above; undefined until the UI picks values,
+  // in which case the backend applies its own defaults.
+  private runState: RunAgentState | undefined = undefined
   // The Claude SDK session to resume on the next turn. AbstractAgent mints its own random threadId, but
   // the SDK only knows the session id it reports back via RUN_STARTED.threadId. We start with none (so
   // the first turn opens a fresh session) and adopt the reported id so later turns resume the same one —
@@ -50,6 +58,12 @@ export class Agent extends AbstractAgent {
   // provider as the picked folder changes.
   setCwd(cwd: string | undefined): void {
     this.workspaceCwd = cwd
+  }
+
+  // Push the chosen model/effort in; the next run stamps it onto forwardedProps. Called by the chat
+  // controller as the composer's selectors change.
+  setRunState(state: RunAgentState): void {
+    this.runState = state
   }
 
   // Adopt a selected thread: resume its SDK session on the next run and show its stored history
@@ -120,10 +134,13 @@ export class Agent extends AbstractAgent {
   protected startRun(input: RunAgentInput): Promise<StartRunResult> {
     // Send the SDK session id (when we have one) as the threadId, not AG-UI's random one — only a real
     // session can be resumed. The first turn has none, so toRunInput omits it and a fresh session opens.
-    // Stamp the workspace cwd onto forwardedProps so toRunInput lifts it onto the IPC input.
-    const cwd = this.workspaceCwd
-    const forwardedProps =
-      cwd === undefined ? input.forwardedProps : { ...input.forwardedProps, cwd }
+    // Stamp the workspace cwd and the chosen run state onto forwardedProps so toRunInput lifts them onto
+    // the IPC input.
+    const forwardedProps = {
+      ...input.forwardedProps,
+      ...(this.workspaceCwd === undefined ? {} : { cwd: this.workspaceCwd }),
+      ...(this.runState === undefined ? {} : { state: this.runState })
+    }
     return this.api
       .invoke(
         AGENT_RUN_CHANNEL,

@@ -44,4 +44,19 @@ describe('toRunInput', () => {
     expect('cwd' in toRunInput(base)).toBe(false)
     expect('cwd' in toRunInput({ ...base, forwardedProps: { cwd: '' } })).toBe(false)
   })
+
+  it('lifts forwardedProps.state (model/effort) to a top-level state', () => {
+    const result = toRunInput({
+      ...base,
+      forwardedProps: { state: { model: 'claude-sonnet-4-6', effort: 'high' } }
+    })
+    expect(result.state).toEqual({ model: 'claude-sonnet-4-6', effort: 'high' })
+  })
+
+  it('omits state when forwardedProps has none or it is all invalid', () => {
+    expect('state' in toRunInput(base)).toBe(false)
+    expect('state' in toRunInput({ ...base, forwardedProps: { state: { model: 'nope' } } })).toBe(
+      false
+    )
+  })
 })
