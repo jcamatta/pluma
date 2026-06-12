@@ -91,7 +91,13 @@ Replace the hand-rolled body in each of the four file handlers with `runIpc`, pr
 - Update the four sibling tests in `src/main/ipc/file/__tests__/` (behavior identical — they should
   pass with at most assertion-noise adjustments for emitted logs).
 
-### 3. Migrate folder query/command handlers
+### 3. Migrate folder query/command handlers — DONE
+
+The four non-streaming folder handlers now call `runIpc`. list/create/delete annotate `path` and project
+`{ _tag, path }`; pick projects `{ _tag }` only (no path) and annotates nothing. Fallback tags preserved
+(list→`FolderReadFailed`, create→`FolderCreationFailed`, delete→`FolderDeleteFailed`,
+pick→`FolderSelectionFailed`). Existing Result tests pass unchanged; a new logging test covers the
+create/list channel wiring (pick is skipped there — its Electron picker adapter can't run headless).
 
 The four non-streaming folder handlers, same mechanical swap; annotate `path` where present.
 

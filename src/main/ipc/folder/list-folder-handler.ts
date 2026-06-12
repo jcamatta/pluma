@@ -1,33 +1,26 @@
 // IPC endpoint for listing a folder's immediate children. Runs the listFolder use case with the live
-// filesystem adapter, then serializes the Effect outcome into a plain Result. Never throws across IPC.
+// filesystem adapter through the shared runIpc wrapper, which logs the call and serializes the Effect
+// outcome into a plain Result. Never throws across IPC.
 
 import * as NodeContext from '@effect/platform-node/NodeContext'
-import * as Cause from 'effect/Cause'
 import * as Effect from 'effect/Effect'
-import * as Exit from 'effect/Exit'
+import { FOLDER_LIST_CHANNEL } from '../../../shared/ipc/ipc-contract/folder'
 import type { FolderEntry, FolderListError } from '../../../shared/ipc/ipc-contract/folder'
 import type { Result } from '../../../shared/ipc/ipc-result'
 import { listFolder } from '../../application/folder/usecase/list-folder'
 import { FsFolderReaderLive } from '../../adapters/folder/fs-folder-reader'
+import { runIpc } from '../shared/run-ipc'
 
 export const handleListFolder = (
   path: string
-): Promise<Result<ReadonlyArray<FolderEntry>, FolderListError>> => {
-  const program = listFolder(path).pipe(
-    Effect.provide(FsFolderReaderLive),
-    Effect.provide(NodeContext.layer)
-  )
-
-  return Effect.runPromiseExit(program).then(
-    (exit): Result<ReadonlyArray<FolderEntry>, FolderListError> =>
-      Exit.match(exit, {
-        onSuccess: (value) => ({ ok: true, value }),
-        onFailure: (cause) => {
-          const error = Cause.failureOption(cause)
-          return error._tag === 'Some'
-            ? { ok: false, error: { _tag: error.value._tag, path: error.value.path } }
-            : { ok: false, error: { _tag: 'FolderReadFailed', path } }
-        }
-      })
-  )
-}
+): Promise<Result<ReadonlyArray<FolderEntry>, FolderListError>> =>
+  runIpc({
+    channel: FOLDER_LIST_CHANNEL,
+    annotations: { path },
+    effect: listFolder(path).pipe(
+      Effect.provide(FsFolderReaderLive),
+      Effect.provide(NodeContext.layer)
+    ),
+    onError: (error) => ({ _tag: error._tag, path: error.path }),
+    onDefect: () => ({ _tag: 'FolderReadFailed', path })
+  })
