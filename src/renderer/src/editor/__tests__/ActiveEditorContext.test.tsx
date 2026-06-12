@@ -30,6 +30,26 @@ describe('ActiveEditorContext', () => {
     }
   })
 
+  it('tracks open-file editors by path and drops one on unregister', () => {
+    const a = createTestEditor()
+    const b = createTestEditor()
+    try {
+      const { result } = renderHook(useActiveEditor, { wrapper })
+      act(() => {
+        result.current.registerEditor('/a.md', a)
+        result.current.registerEditor('/b.md', b)
+      })
+      expect([...result.current.editors.keys()]).toEqual(['/a.md', '/b.md'])
+      expect(result.current.editors.get('/a.md')).toBe(a)
+
+      act(() => result.current.unregisterEditor('/a.md'))
+      expect([...result.current.editors.keys()]).toEqual(['/b.md'])
+    } finally {
+      a.destroy()
+      b.destroy()
+    }
+  })
+
   it('throws when used outside an ActiveEditorProvider', () => {
     expect(() => renderHook(useActiveEditor)).toThrow()
   })

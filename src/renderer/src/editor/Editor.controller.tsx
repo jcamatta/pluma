@@ -8,7 +8,8 @@
 // initializing on the client, so this renders nothing until it is ready. It registers the live editor
 // into ActiveEditorContext as the active editor only while active (isActive), so the rail's artifacts
 // panel reads whichever file the user is editing without several mounted editors clobbering the slot.
-// The editor's frontend tools are contributed once at the shell (EditorToolsBridge), not here.
+// It also adds itself (by path) to the open-editors map so the panel can read every open file's
+// artifacts. The editor's frontend tools are contributed once at the shell (EditorToolsBridge), not here.
 
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -36,7 +37,7 @@ export function EditorController({
   const content = fileContent && fileContent.ok ? fileContent.value : null
   const editor = useManuscriptEditor(content)
   const { containerRef, zoom } = useEditorZoom()
-  const { register } = useActiveEditor()
+  const { register, registerEditor, unregisterEditor } = useActiveEditor()
   useAutoSave(editor, path)
 
   useEffect(() => {
@@ -44,6 +45,12 @@ export function EditorController({
     register(editor)
     return () => register(null)
   }, [editor, isActive, register])
+
+  useEffect(() => {
+    if (!editor || path === null) return
+    registerEditor(path, editor)
+    return () => unregisterEditor(path)
+  }, [editor, path, registerEditor, unregisterEditor])
 
   if (!editor) return null
 

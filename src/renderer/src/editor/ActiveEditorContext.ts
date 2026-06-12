@@ -1,7 +1,9 @@
-// Context carrying the currently-mounted manuscript editor so sibling columns (notably the rail) can
-// read its artifact state and drive its commands. The editor lives inside EditorController; it registers
-// itself here when ready and clears on unmount. Consumers read `editor` (null until a document is open);
-// EditorController calls `register`. The single seam between the editor column and the rest of the shell.
+// Context carrying the editor state sibling columns (notably the rail) read and drive. Two concerns:
+// `editor` is the currently-active editor (focus) — what the agent tools and same-file panel commands
+// act on; the active EditorController sets it via `register`. `editors` is the map of every open file's
+// editor keyed by path — what the artifacts panel reads across files so a card can show its file and
+// reveal in it; each file's EditorController adds itself via `registerEditor` and removes itself on
+// unmount. The single seam between the editor column and the rest of the shell.
 
 import { createContext, useContext } from 'react'
 import type { Editor } from '@tiptap/core'
@@ -10,6 +12,9 @@ import { invariant } from '../../../shared/invariant'
 interface ActiveEditor {
   readonly editor: Editor | null
   readonly register: (editor: Editor | null) => void
+  readonly editors: ReadonlyMap<string, Editor>
+  readonly registerEditor: (path: string, editor: Editor) => void
+  readonly unregisterEditor: (path: string) => void
 }
 
 const ActiveEditorContext = createContext<ActiveEditor | undefined>(undefined)
