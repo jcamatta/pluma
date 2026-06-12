@@ -7,7 +7,7 @@
       "heading": "Heading {{level}}",
       "quote": "Quote",
       "code": "Code",
-      "default": "You can address me as… The Fool."
+      "default": "Start writing, or type ‘/’ for commands…"
     },
     "slash": {
       "heading": "Basic blocks",
