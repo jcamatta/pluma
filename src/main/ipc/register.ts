@@ -32,9 +32,11 @@ import {
 import {
   FOLDER_CREATE_CHANNEL,
   FOLDER_DELETE_CHANNEL,
+  FOLDER_RENAME_CHANNEL,
   FOLDER_LIST_CHANNEL,
   FOLDER_PICK_CHANNEL,
-  FOLDER_WATCH_CHANNEL
+  FOLDER_WATCH_CHANNEL,
+  type FolderRenameRequest
 } from '../../shared/ipc/ipc-contract/folder'
 import {
   AGENT_EVENT_CHANNEL,
@@ -58,6 +60,7 @@ import { handleWriteFile } from './file/write-file-handler'
 import { handleReadFile } from './file/read-file-handler'
 import { handleCreateFolder } from './folder/create-folder-handler'
 import { handleDeleteFolder } from './folder/delete-folder-handler'
+import { handleRenameFolder } from './folder/rename-folder-handler'
 import { handleListFolder } from './folder/list-folder-handler'
 import { handlePickFolder } from './folder/pick-folder-handler'
 import { handleWatchFolder } from './folder/watch-folder-handler'
@@ -86,6 +89,9 @@ const registerIpc = (): void => {
   ipcMain.handle(FILE_READ_CHANNEL, (_event, path: string) => handleReadFile(path))
   ipcMain.handle(FOLDER_CREATE_CHANNEL, (_event, path: string) => handleCreateFolder(path))
   ipcMain.handle(FOLDER_DELETE_CHANNEL, (_event, path: string) => handleDeleteFolder(path))
+  ipcMain.handle(FOLDER_RENAME_CHANNEL, (_event, request: FolderRenameRequest) =>
+    handleRenameFolder(request)
+  )
   ipcMain.handle(FOLDER_LIST_CHANNEL, (_event, path: string) => handleListFolder(path))
   ipcMain.handle(FOLDER_PICK_CHANNEL, () => handlePickFolder())
   ipcMain.handle(AGENT_ABORT_CHANNEL, (_event, runId: string) => handleAbortAgent(runId))

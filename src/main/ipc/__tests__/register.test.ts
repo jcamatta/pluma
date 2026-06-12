@@ -16,6 +16,7 @@ const STATELESS_CHANNELS = [
   'file:read',
   'folder:create',
   'folder:delete',
+  'folder:rename',
   'folder:list',
   'folder:pick',
   'agent:list-threads',
