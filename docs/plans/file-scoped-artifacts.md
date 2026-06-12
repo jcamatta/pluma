@@ -132,6 +132,15 @@ future **tabs** feature needs (open-set + active tab + per-file editor), so none
    decoration intact. Update `e2e/coverage-manifest.ts` feature coverage. (Artifacts are
    renderer-only — no new IPC channel/operation expected.)
 
+   **DONE.** Extended the existing real-agent `artifacts.e2e.ts` rather than paying for a second agent
+   run: after it produces both artifacts and accepts the proposal, the spec now seeds a second file,
+   opens it (A's editor goes hidden but stays mounted), asserts the annotation card survives in the
+   panel labeled `chapter` (A's basename), then clicks the card and asserts the now-visible editor shows
+   A's rewritten text again with the annotation highlight (`[class*="annotation-"]`) re-activated —
+   exercising the #2/#3 fixes end to end. Visible-editor assertions use `.ProseMirror:visible` since
+   inactive editors stay in the DOM under `hidden`. Added `artifacts-cross-file` to the manifest
+   `FEATURES`, claimed by this spec's second `@e2e` tag; the audit passes.
+
 ## Open questions
 
 - **Hidden mounted editors:** a ProseMirror view inside a `hidden`/`display:none` container — confirm

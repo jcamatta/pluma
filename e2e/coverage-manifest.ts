@@ -16,7 +16,8 @@ const FEATURES = [
   'settings',
   'rail',
   'thread-history',
-  'artifacts'
+  'artifacts',
+  'artifacts-cross-file'
 ] as const
 
 // A shipped user-facing operation, one per real IPC channel the UI exercises end to end.
