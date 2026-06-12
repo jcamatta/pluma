@@ -135,7 +135,13 @@ The four standard-shape agent handlers; annotate `cwd` / `threadId` (safe scalar
   `delete-thread-handler.ts`.
 - Update the existing tests under `src/main/ipc/agent/__tests__/`.
 
-### 6. Migrate agent ack + run handlers
+### 6. Migrate agent ack + run handlers — DONE
+
+`abort` and `submit-tool-result` now use `runIpcAck` (abort annotates `runId`; tool-result annotates
+`runId`+`toolCallId`). `run-agent` uses `runIpc`: the run-start ack maps the minted runId to `{ runId }`
+via `Effect.map`, annotates `threadId` when present, and keeps the forked event-forwarding stream
+unchanged (not per-event logged). A new abort handler test (SDK mocked) confirms the ok ack and the
+agent:abort log lifecycle.
 
 - `abort-agent-handler.ts`, `submit-tool-result-handler.ts` → `runIpcAck` (both are `Result<null, never>`).
 - `run-agent-handler.ts` → wrap the **ack effect** (mint runId + fork the event stream) with `runIpc`
