@@ -75,4 +75,17 @@ gh pr create --base main --title "<conventional-commit-style title>" --body "<th
 
 ## 6. Report
 
-Tell the user: the branch name, the PR URL (or the paste-ready body if `gh` wasn't available), that the plan file was removed, and that the checks passed. Then **stop — the user reviews and gives final approval.** Do not merge the PR yourself.
+Tell the user: the branch name, the PR URL (or the paste-ready body if `gh` wasn't available), that the plan file was removed, and that the checks passed.
+
+Then hand the user **two things to review the change themselves**, not just the PR:
+
+- **The PR** to read the diff and approve on GitHub.
+- **A ready-to-run command to try the change live**, so they can exercise it by hand in the running app. Give the exact command for _this_ worktree/cwd — a one-liner they can paste that changes into the working directory and launches the app. Use the session's actual working-directory path and the project's real start script (it's the Electron preview, `npm start` — never run it yourself inside a hook or the skill, it does not exit). For example:
+
+  ```sh
+  cd "<absolute path of this worktree/cwd>" && npm start
+  ```
+
+  Fill in the real absolute path (the current working directory). If the change is reachable only through specific steps in the app, add a short "then: …" line telling the user what to click/open to see it.
+
+Then **stop — the user reviews and gives final approval.** Do not merge the PR yourself.
