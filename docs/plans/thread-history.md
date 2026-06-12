@@ -249,7 +249,16 @@ new name; delete then list omits it. Update `FILE.md`.
 
 ### IPC
 
-4. **Two query channels.** In `shared/ipc/ipc-contract/agent.ts` add `AGENT_LIST_THREADS_CHANNEL`
+4. ✅ **DONE.** Added `AGENT_LIST_THREADS_CHANNEL` (`{ cwd }` → `readonly ThreadSummary[]`) and
+   `AGENT_THREAD_HISTORY_CHANNEL` (`{ cwd, threadId }` → `readonly Message[]`), both with the
+   `ThreadReadError` (`_tag: 'ThreadReadFailed'`) and a wire `ThreadSummary`, in the contract + registry
+   (`ipc-contract/index.ts`). Handlers `list-threads-handler.ts` / `thread-history-handler.ts` run the
+   use cases under `ClaudeThreadReaderLive` and serialize to `Result`; registered in `register.ts`.
+   Handler tests assert ok/ok:false with the SDK mocked; register tests cover both channel names. (Also
+   fixed a latent type-only slip in the step-3b writer seam test's `run` helper — used the tag as a
+   type.) **Next: step 4b (write channels + handlers).**
+
+5. **Two query channels.** In `shared/ipc/ipc-contract/agent.ts` add `AGENT_LIST_THREADS_CHANNEL`
    (`{ cwd }` → `readonly ThreadSummary[]`) and `AGENT_THREAD_HISTORY_CHANNEL` (`{ cwd, threadId }` →
    `readonly Message[]`), each with a `ThreadReadError` (`_tag`). The `cwd` rides each request so reads
    match the workspace. Wire handlers in `ipc/agent/` that run the use cases and serialize to `Result`.

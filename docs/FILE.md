@@ -54,3 +54,10 @@ The index is populated incrementally as files are touched, so it starts mostly e
 
 - `src/main/adapters/agent/claude/runtime/claude-thread-writer.ts` — ThreadWriter adapter over the SDK's renameSession/deleteSession, keyed by the workspace dir.
 - `src/main/adapters/agent/claude/runtime/__tests__/claude-thread-writer.test.ts` — seam tests for the writer adapter with the SDK module mocked.
+
+### src/main/ipc/agent — threads (read endpoints)
+
+- `src/main/ipc/agent/list-threads-handler.ts` — IPC endpoint serializing the listThreads use case to a Result.
+- `src/main/ipc/agent/thread-history-handler.ts` — IPC endpoint serializing the getThreadHistory use case to a Result.
+- `src/main/ipc/agent/__tests__/list-threads-handler.test.ts` — tests for the list-threads handler with the SDK mocked.
+- `src/main/ipc/agent/__tests__/thread-history-handler.test.ts` — tests for the thread-history handler with the SDK mocked.

@@ -12,13 +12,18 @@ vi.mock('@anthropic-ai/claude-agent-sdk', () => ({
 }))
 
 import { deleteSession, renameSession } from '@anthropic-ai/claude-agent-sdk'
-import { ThreadWriter } from '../../../../../application/agent/port/thread-writer.port'
+import {
+  ThreadWriter,
+  type ThreadWriterPort
+} from '../../../../../application/agent/port/thread-writer.port'
 import { ClaudeThreadWriterLive } from '../claude-thread-writer'
 
 const renameSessionMock = vi.mocked(renameSession)
 const deleteSessionMock = vi.mocked(deleteSession)
 
-const run = (eff: Effect.Effect<void, unknown, ThreadWriter>): Promise<Exit.Exit<void, unknown>> =>
+const run = (
+  eff: Effect.Effect<void, unknown, ThreadWriterPort>
+): Promise<Exit.Exit<void, unknown>> =>
   Effect.runPromiseExit(Effect.provide(eff, ClaudeThreadWriterLive))
 
 beforeEach(() => {

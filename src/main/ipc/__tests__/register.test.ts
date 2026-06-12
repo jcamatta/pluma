@@ -65,6 +65,20 @@ describe('registerIpc', () => {
     expect(handle).toHaveBeenCalledWith('folder:pick', expect.any(Function))
   })
 
+  it('registers the agent:list-threads channel', async () => {
+    const { registerIpc } = await import('../register')
+    registerIpc()
+
+    expect(handle).toHaveBeenCalledWith('agent:list-threads', expect.any(Function))
+  })
+
+  it('registers the agent:thread-history channel', async () => {
+    const { registerIpc } = await import('../register')
+    registerIpc()
+
+    expect(handle).toHaveBeenCalledWith('agent:thread-history', expect.any(Function))
+  })
+
   it('registers the folder:watch channel for the window', async () => {
     const { registerWatch } = await import('../register')
     const scope = Effect.runSync(Scope.make())

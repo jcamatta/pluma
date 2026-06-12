@@ -26,9 +26,35 @@ interface RunAgentInput {
 const AGENT_RUN_CHANNEL = 'agent:run'
 const AGENT_ABORT_CHANNEL = 'agent:abort'
 const AGENT_TOOL_RESULT_CHANNEL = 'agent:tool-result'
+const AGENT_LIST_THREADS_CHANNEL = 'agent:list-threads'
+const AGENT_THREAD_HISTORY_CHANNEL = 'agent:thread-history'
 
 interface RunAgentError {
   readonly _tag: 'RunAgentFailed'
+}
+
+// The wire shape of one past thread in the list: the SDK session id, its (stored or derived) title, and
+// its last-modified time in epoch milliseconds. Declared here so the renderer reads it without importing
+// the application layer's own ThreadSummary.
+interface ThreadSummary {
+  readonly id: string
+  readonly title: string
+  readonly updatedAt: number
+}
+
+// Both thread reads fail the same way: the session is missing or unreadable. The renderer maps the tag
+// to a translated message.
+interface ThreadReadError {
+  readonly _tag: 'ThreadReadFailed'
+}
+
+interface ListThreadsInput {
+  readonly cwd: string
+}
+
+interface ThreadHistoryInput {
+  readonly cwd: string
+  readonly threadId: string
 }
 
 // The renderer → main half of the frontend-tool round-trip: the output a tool handler produced for an
@@ -59,6 +85,20 @@ type AgentRunContract = IpcContractDefinition<
 
 type AgentAbortContract = IpcContractDefinition<typeof AGENT_ABORT_CHANNEL, string, null, never>
 
+type AgentListThreadsContract = IpcContractDefinition<
+  typeof AGENT_LIST_THREADS_CHANNEL,
+  ListThreadsInput,
+  readonly ThreadSummary[],
+  ThreadReadError
+>
+
+type AgentThreadHistoryContract = IpcContractDefinition<
+  typeof AGENT_THREAD_HISTORY_CHANNEL,
+  ThreadHistoryInput,
+  readonly Message[],
+  ThreadReadError
+>
+
 type AgentToolResultContract = IpcContractDefinition<
   typeof AGENT_TOOL_RESULT_CHANNEL,
   AgentToolResultMessage,
@@ -70,13 +110,21 @@ export {
   AGENT_RUN_CHANNEL,
   AGENT_ABORT_CHANNEL,
   AGENT_TOOL_RESULT_CHANNEL,
+  AGENT_LIST_THREADS_CHANNEL,
+  AGENT_THREAD_HISTORY_CHANNEL,
   type RunAgentState,
   type RunAgentInput,
   type RunAgentError,
+  type ThreadSummary,
+  type ThreadReadError,
+  type ListThreadsInput,
+  type ThreadHistoryInput,
   type AgentToolOutput,
   type AgentToolResult,
   type AgentToolResultMessage,
   type AgentRunContract,
   type AgentAbortContract,
-  type AgentToolResultContract
+  type AgentToolResultContract,
+  type AgentListThreadsContract,
+  type AgentThreadHistoryContract
 }

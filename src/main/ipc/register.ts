@@ -10,10 +10,14 @@ import type { BaseEvent } from '@ag-ui/core'
 import type * as Scope from 'effect/Scope'
 import {
   AGENT_ABORT_CHANNEL,
+  AGENT_LIST_THREADS_CHANNEL,
   AGENT_RUN_CHANNEL,
+  AGENT_THREAD_HISTORY_CHANNEL,
   AGENT_TOOL_RESULT_CHANNEL,
   type AgentToolResultMessage,
-  type RunAgentInput
+  type ListThreadsInput,
+  type RunAgentInput,
+  type ThreadHistoryInput
 } from '../../shared/ipc/ipc-contract/agent'
 import {
   FILE_CREATE_CHANNEL,
@@ -38,8 +42,10 @@ import {
   type FolderChange
 } from '../../shared/ipc/ipc-event-contract/folder'
 import { handleAbortAgent } from './agent/abort-agent-handler'
+import { handleListThreads } from './agent/list-threads-handler'
 import { handleRunAgent } from './agent/run-agent-handler'
 import { handleSubmitToolResult } from './agent/submit-tool-result-handler'
+import { handleThreadHistory } from './agent/thread-history-handler'
 import { handleCreateFile } from './file/create-file-handler'
 import { handleDeleteFile } from './file/delete-file-handler'
 import { handleWriteFile } from './file/write-file-handler'
@@ -64,6 +70,12 @@ const registerIpc = (): void => {
   ipcMain.handle(AGENT_ABORT_CHANNEL, (_event, runId: string) => handleAbortAgent(runId))
   ipcMain.handle(AGENT_TOOL_RESULT_CHANNEL, (_event, message: AgentToolResultMessage) =>
     handleSubmitToolResult(message)
+  )
+  ipcMain.handle(AGENT_LIST_THREADS_CHANNEL, (_event, input: ListThreadsInput) =>
+    handleListThreads(input.cwd)
+  )
+  ipcMain.handle(AGENT_THREAD_HISTORY_CHANNEL, (_event, input: ThreadHistoryInput) =>
+    handleThreadHistory(input)
   )
 }
 
