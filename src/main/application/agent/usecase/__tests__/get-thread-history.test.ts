@@ -33,7 +33,7 @@ describe('getThreadHistory', () => {
   })
 
   it('surfaces a ThreadReadFailed from the reader', () => {
-    const failed = new ThreadReadFailed({ reason: 'missing' })
+    const failed = new ThreadReadFailed({ cwd: '/work' })
     const exit = Effect.runSyncExit(
       Effect.provide(getThreadHistory('/work', 's1'), readerReturning(Effect.fail(failed)))
     )

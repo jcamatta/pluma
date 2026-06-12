@@ -17,7 +17,7 @@ import { sessionMessagesToHistory } from '../logic/session-messages-to-history'
 const listThreads = (cwd: string): Effect.Effect<readonly ThreadSummary[], ThreadReadFailed> =>
   Effect.tryPromise({
     try: () => listSessions({ dir: cwd }),
-    catch: (cause) => new ThreadReadFailed({ reason: String(cause) })
+    catch: () => new ThreadReadFailed({ cwd })
   }).pipe(
     Effect.map((sessions) =>
       sessions.map(sessionInfoToSummary).sort((a, b) => b.updatedAt - a.updatedAt)
@@ -30,7 +30,7 @@ const getThreadHistory = (
 ): Effect.Effect<readonly Message[], ThreadReadFailed> =>
   Effect.tryPromise({
     try: () => getSessionMessages(id, { dir: cwd }),
-    catch: (cause) => new ThreadReadFailed({ reason: String(cause) })
+    catch: () => new ThreadReadFailed({ cwd })
   }).pipe(Effect.map(sessionMessagesToHistory))
 
 export const ClaudeThreadReaderLive = Layer.succeed(

@@ -36,7 +36,7 @@ describe('listThreads', () => {
   })
 
   it('surfaces a ThreadReadFailed from the reader', () => {
-    const failed = new ThreadReadFailed({ reason: 'boom' })
+    const failed = new ThreadReadFailed({ cwd: '/work' })
     const exit = Effect.runSyncExit(
       Effect.provide(listThreads('/work'), readerReturning(Effect.fail(failed)))
     )

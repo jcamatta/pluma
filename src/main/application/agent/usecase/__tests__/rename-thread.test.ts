@@ -39,7 +39,7 @@ describe('renameThread', () => {
   })
 
   it('surfaces a ThreadWriteFailed from the writer', () => {
-    const failed = new ThreadWriteFailed({ reason: 'missing' })
+    const failed = new ThreadWriteFailed({ cwd: '/work' })
     const exit = Effect.runSyncExit(
       Effect.provide(renameThread(input), writerFake([], Effect.fail(failed)))
     )
