@@ -52,6 +52,21 @@ test('sends a message and shows the assistant reply in the rail', async () => {
       const reply = rail.getByTestId('assistant-reply')
       await expect(reply).toBeVisible({ timeout: 60_000 })
       await expect(reply).toContainText(SENTINEL, { ignoreCase: true })
+
+      // Multi-turn: a second message must NOT erase the first turn (the reported bug). Send a follow-up;
+      // the first turn's reply settles into history above the new turn, so both user bubbles stay on
+      // screen. (No need to wait for the second reply — the first bubble persists the instant we send.)
+      const SECOND = 'Reply with exactly the single word RAIL and nothing else.'
+      await composer.click()
+      await composer.fill(SECOND)
+      await rail.getByRole('button', { name: 'Send', exact: true }).click()
+
+      const secondBubble = rail.locator('.bg-action-primary.text-text-on-accent', {
+        hasText: SECOND
+      })
+      await expect(secondBubble).toBeVisible()
+      await expect(bubble).toBeVisible()
+      await expect(rail.getByText(SENTINEL, { exact: false }).first()).toBeVisible()
     } finally {
       await app.close()
     }

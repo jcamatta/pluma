@@ -1,7 +1,7 @@
 // The rail's top-level switch: chooses between the chat half (ChatRail) and the threads list
 // (ThreadsPanel), driven by useThreadSession. Showing the list swaps in the panel; selecting a thread
-// resumes its session (seeding the agent) and returns to chat, where the chat half remounts fresh;
-// starting a new thread does the same with no active thread. Closing the rail is lifted to the app shell.
+// resumes its session and seeds the agent with its history (so the chat half renders the transcript),
+// then returns to chat; starting a new thread clears the agent. Closing the rail is lifted to the shell.
 
 import { ThreadsPanelController } from '../threads/ThreadsPanel.controller'
 import { ChatRailController } from './ChatRail.controller'
@@ -16,7 +16,7 @@ export function ConversationRailController({
   cwd,
   onClose
 }: ConversationRailControllerProps): React.JSX.Element {
-  const session = useThreadSession()
+  const session = useThreadSession(cwd)
 
   if (session.view === 'threads') {
     return (
@@ -33,7 +33,6 @@ export function ConversationRailController({
   return (
     <ChatRailController
       cwd={cwd}
-      selectedId={session.selectedId}
       onShowThreads={session.showThreads}
       onNewThread={session.startNew}
       onClose={onClose}

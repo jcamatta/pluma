@@ -57,12 +57,12 @@ test('lists, renames, resumes and deletes a past thread', async () => {
       await titleField.press('Enter')
       await expect(panel.getByText(NEW_TITLE)).toBeVisible({ timeout: 30_000 })
 
-      // Select it: the panel closes back to chat and its transcript loads with the original exchange.
+      // Select it: the panel closes back to chat and the thread's history is seeded into the transcript.
       await panel.locator('[data-testid^="thread-row:"]', { hasText: NEW_TITLE }).click()
       await expect(rail).toBeVisible({ timeout: 30_000 })
-      const transcript = rail.getByTestId('thread-transcript')
-      await expect(transcript).toBeVisible({ timeout: 30_000 })
-      await expect(transcript).toContainText('Reply with exactly')
+      await expect(rail.getByText('Reply with exactly', { exact: false }).first()).toBeVisible({
+        timeout: 30_000
+      })
 
       // Send a follow-up; resuming the session yields another sentinel reply.
       await composer.click()

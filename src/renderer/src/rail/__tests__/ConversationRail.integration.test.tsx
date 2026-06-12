@@ -1,8 +1,8 @@
 // Integration of the rail switch with the real agent providers and the threads data layer: opening the
-// threads list, selecting a thread switches back to the chat view and renders the loaded transcript.
-// Renders through the real AgentToolsProvider + AgentProvider (over a stubbed window.api) so the actual
-// ThreadControls binding is exercised — destructuring seedThread must not lose the Agent's `this`. The
-// threads repository is the in-memory fake. Reproduces the select → resume → transcript path.
+// threads list, selecting a thread switches back to the chat view and seeds the agent with the thread's
+// history so the chat half renders it as a transcript. Renders through the real AgentToolsProvider +
+// AgentProvider (over a stubbed window.api) so the actual ThreadControls binding is exercised —
+// destructuring seedThread must not lose the Agent's `this`. The threads repository is the in-memory fake.
 
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -46,14 +46,15 @@ function renderRail(): void {
 }
 
 describe('ConversationRailController thread selection', () => {
-  it('selecting a thread returns to chat and shows its transcript', async () => {
+  it('selecting a thread returns to chat and renders its seeded transcript', async () => {
     renderRail()
 
     fireEvent.click(screen.getByRole('button', { name: i18n.t('threads.open') }))
     fireEvent.click(await screen.findByTestId('thread-row:s1'))
 
     await waitFor(() => expect(screen.getByTestId('conversation-rail')).toBeInTheDocument())
-    expect(await screen.findByTestId('thread-transcript')).toBeInTheDocument()
-    expect(screen.getByText('Review my intro')).toBeInTheDocument()
+    // The assistant reply appears only in the transcript; the user prompt also shows as the header title.
+    expect(await screen.findByText('Here is a tighter draft.')).toBeInTheDocument()
+    expect(screen.getAllByText('Review my intro').length).toBeGreaterThan(0)
   })
 })

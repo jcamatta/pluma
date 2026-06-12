@@ -45,9 +45,18 @@ export function useAgentActivityLog(agent: AbstractAgent, labels: ActivityLabels
       current.current = reduce(current.current, event)
       setActivity(current.current)
     }
+    // A new user message opens a new turn: clear the previous turn's settled activity so it stops being
+    // shown (and mis-attributed) while the new run is still pending its RUN_STARTED. Assistant/tool
+    // messages added mid-run must not reset — only a user message starts a turn.
+    const reset = (role: string): void => {
+      if (role !== 'user') return
+      current.current = initialActivity
+      setActivity(initialActivity)
+    }
     // The reducer reads only the few fields each branch needs; the lifecycle callbacks don't carry the
     // run's threadId/runId, so the synthetic events stub them. ids are irrelevant to the fold.
     const { unsubscribe } = agent.subscribe({
+      onNewMessage: ({ message }) => reset(message.role),
       onRunInitialized: () => fold({ type: EventType.RUN_STARTED, threadId: '', runId: '' }),
       onEvent: ({ event }) => {
         asAguiEvent(event)

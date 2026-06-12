@@ -1,21 +1,23 @@
-// Wires the chat half of the rail: owns the composer's local value and the current turn's prompt, and
-// runs a turn against the live agent. Submitting adds the user message and starts a run; the run's
-// AG-UI event stream is folded into an AgentActivity by useAgentActivityLog, which the ConversationTurn
-// renders (user bubble → live activity timeline → streamed reply). Stop aborts the run. Opening the
-// threads list, starting a new thread, and closing the rail are lifted to the parent rail controller.
+// Wires the chat half of the rail: resolves i18n labels, owns the composer's local value, and runs a
+// turn against the live agent. The conversation is agent.messages (the AbstractAgent transcript):
+// splitConversation peels the current turn (the last user message onward) from the settled history, which
+// renders above as plain bubbles (TranscriptView). The current turn renders as a ConversationTurn whose
+// assistant side is the live AgentActivity. Submitting adds the user message and starts a run; Stop aborts
+// it. Opening the threads list and starting a new thread are lifted to the parent rail switch; a finished
+// run refreshes the thread list. Before the first message the rail shows its empty state.
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAgent } from '../agent/useAgent'
 import { useAgentActivityLog } from './useAgentActivityLog'
 import { useThreadsRefresh } from './useThreadsRefresh'
-import { ConversationHistoryController } from './ConversationHistory.controller'
 import { ConversationRailView } from './ConversationRail.view'
+import { TranscriptView } from './Transcript.view'
 import { ConversationTurnView } from './ConversationTurn.view'
+import { splitConversation } from './transcript-logic'
 
 interface ChatRailControllerProps {
   readonly cwd: string
-  readonly selectedId: string | null
   readonly onShowThreads: () => void
   readonly onNewThread: () => void
   readonly onClose: () => void
@@ -23,7 +25,6 @@ interface ChatRailControllerProps {
 
 export function ChatRailController({
   cwd,
-  selectedId,
   onShowThreads,
   onNewThread,
   onClose
@@ -31,7 +32,6 @@ export function ChatRailController({
   const { t } = useTranslation()
   const { agent } = useAgent()
   const [value, setValue] = useState('')
-  const [prompt, setPrompt] = useState<string | null>(null)
   const [expandOverride, setExpandOverride] = useState<boolean | null>(null)
 
   const activity = useAgentActivityLog(agent, {
@@ -40,14 +40,15 @@ export function ChatRailController({
     runError: (message) => t('rail.runError', { message })
   })
 
-  const working = activity.status === 'working'
-
   useThreadsRefresh(agent, cwd)
+
+  const working = activity.status === 'working'
+  const { history, currentPrompt } = splitConversation(agent.messages, activity.status !== 'idle')
+  const title = history.find((item) => item.role === 'user')?.text ?? currentPrompt
 
   const submit = (): void => {
     const text = value.trim()
-    if (text.length === 0 || activity.status === 'working') return
-    setPrompt(text)
+    if (text.length === 0 || working) return
     setValue('')
     setExpandOverride(null)
     agent.addMessage({ id: crypto.randomUUID(), role: 'user', content: text })
@@ -66,8 +67,8 @@ export function ChatRailController({
         toSend: t('rail.toSend'),
         stop: t('rail.stop')
       }}
-      title={prompt ?? t('rail.newChat')}
-      hasTurn={prompt !== null || selectedId !== null}
+      title={title ?? t('rail.newChat')}
+      hasTurn={history.length > 0 || currentPrompt !== null}
       working={working}
       value={value}
       onChange={setValue}
@@ -75,17 +76,16 @@ export function ChatRailController({
       onStop={() => agent.abortRun()}
       onNewChat={() => {
         setValue('')
-        setPrompt(null)
         setExpandOverride(null)
         onNewThread()
       }}
       onShowThreads={onShowThreads}
       onClose={onClose}
     >
-      {selectedId !== null && <ConversationHistoryController cwd={cwd} threadId={selectedId} />}
-      {prompt !== null && (
+      <TranscriptView items={history} />
+      {currentPrompt !== null && (
         <ConversationTurnView
-          prompt={prompt}
+          prompt={currentPrompt}
           activity={activity}
           labels={{
             thinking: t('rail.thinking'),
