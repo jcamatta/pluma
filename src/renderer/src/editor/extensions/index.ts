@@ -22,6 +22,7 @@ import Underline from '@tiptap/extension-underline'
 import { Markdown } from '@tiptap/markdown'
 import { UndoRedo } from '@tiptap/extensions'
 import type { AnyExtension } from '@tiptap/core'
+import { FileHandlerExtension } from './file-handler'
 import { PlaceholderExtension } from './placeholder'
 import { RangesExtension } from './ranges'
 import { AnnotationsExtension } from './annotations'
@@ -50,6 +51,7 @@ export const editorExtensions: AnyExtension[] = [
   CodeBlock.configure(),
   Dropcursor.configure(),
   Gapcursor,
+  FileHandlerExtension,
   UndoRedo,
   RangesExtension,
   AnnotationsExtension,

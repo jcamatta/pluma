@@ -36,7 +36,9 @@ _Landed: `image-source-logic.ts` exports `ALLOWED_IMAGE_MIME_TYPES`, `filterImag
 - `src/renderer/src/editor/extensions/__tests__/image-source-logic.test.ts` — covers the image-type filter, the `htmlContent` extraction, and the GIF-prefer-url branch.
 - **Delivers:** the testable decision layer the callback will use. No editor wiring yet.
 
-### Step 3 — wire FileHandler (paste + drop)
+### Step 3 — wire FileHandler (paste + drop) ✅ done
+
+_Landed: `@tiptap/extension-file-handler` pinned to exact `3.26.0`. `file-handler.ts` wires `onDrop`/`onPaste`; `file-to-data-url.ts` holds the `FileReader` action (resolves null on failure → a failed paste is a no-op, not an unhandled rejection). Insertion is split into a synchronous `insertImageAt` (testable via `withEditor`) and the async `insertImageSource` glue. The FileHandler callbacks need 3 args (`pos` / `pasteContent`) which `max-params: 2` rejects, so `handleDrop`/`handlePaste` are typed rest-tuple functions (one param each, fully type-checked — no rule change, no disable). 5 tests green._
 
 - **Dep:** add `@tiptap/extension-file-handler` (needs approval).
 - `src/renderer/src/editor/extensions/file-handler.ts` — configure the extension's `onPaste` / `onDrop`: run the Step-2 logic to choose a source, encode a chosen `File` to a data URI (the thin async action — `FileReader`), and insert an image node at the drop position / selection via editor commands. `allowedMimeTypes` set to the image types.
