@@ -196,7 +196,7 @@ now wraps in `I18nextProvider` because it renders a translated child. The slash 
 unmount the React tree **before** `editor.destroy()` so Suggestion's async callback can't re-render against
 torn-down `editor.storage` (this surfaced as an uncaught teardown error before the ordering fix)._
 
-### 8. Real-app e2e (+ manifest decision)
+### 8. Real-app e2e (+ manifest decision) — DONE (spec authored; see note)
 
 - `e2e/editor-slash-command.e2e.ts` — claims `@e2e feature:editor`; drives the built app: open a folder
   (stubbed picker), open/create a file, type `/`, assert the menu appears, type `head`, press Enter (or
@@ -204,6 +204,14 @@ torn-down `editor.storage` (this surfaced as an uncaught teardown error before t
   editor — nothing mocked.
 - **No manifest change**: the slash menu lives inside the already-shipped `editor` feature and adds no IPC
   channel, so it introduces no new `FEATURES`/`OPERATIONS` id (see Open questions).
+
+_Landed: spec at `e2e/editor-slash-command.e2e.ts` (claims `feature:editor`). Seeds an empty `slash.md`,
+types `/head`, asserts the `listbox` "Basic blocks" shows 3 options, clicks "Heading 1", then asserts the
+block became an `h1` with the `/head` text gone and the menu hidden. **Could not be verified locally:** on
+this machine the temp-folder file listing does not populate (every file-row spec — the untouched
+`editor.e2e.ts` and 4 of 6 `explorer.e2e.ts` cases — fails identically at `expect(row).toBeVisible()`,
+before any feature interaction). This is the known flaky-watcher environment issue, not the spec; it should
+pass in CI where listing works._
 
 ### 9. Remove the plan
 
