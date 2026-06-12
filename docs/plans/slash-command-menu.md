@@ -127,7 +127,7 @@ Suggestion; `command` is kept internal and run on `select`). The bridge is **DOM
 `CaretRect` (`{ left, bottom }`), so the extension extracts that from Suggestion's `DOMRect` (step 5),
 keeping this layer pure. `move` wraps modulo the item count; `select` runs the stored command then closes._
 
-### 5. Slash-command extension (Suggestion config) + registration (+ tests)
+### 5. Slash-command extension (Suggestion config) + registration (+ tests) — DONE
 
 - `src/renderer/src/editor/extensions/slash-command.ts` — an `Extension.create` that:
   - `addStorage()` → `{ bridge: createSlashBridge() }` (per-editor instance).
@@ -145,6 +145,14 @@ items, command, render })]`: - `items: ({ query }) => filterSlashCommands(slashC
 
 `@tiptap/suggestion` removes the hand-written trigger/query/range/IME code, so this step stays comfortably
 inside the commit budget.
+
+_Landed: the bridge is typed cleanly across the app boundary by augmenting TipTap's empty `Storage`
+interface (`declare module '@tiptap/core'`), so `getSlashBridge(editor)` reads `editor.storage.slashCommand.bridge`
+with no cast or guard. `render` forwards onStart/onUpdate → `bridge.open`, onKeyDown → `move`/`select`/`close`
+(swallowing the key), onExit → `close`. **Note:** Suggestion's `update` is async (`await items()`), so
+`onStart` fires a microtask after typing — the headless test awaits a tick and uses a local async editor
+helper so the editor isn't torn down mid-await. Trigger config: `char: '/'`, `allowSpaces: false`, default
+word-boundary prefix (so `and/or` doesn't fire)._
 
 ### 6. Popup view + icons + i18n (+ tests)
 
