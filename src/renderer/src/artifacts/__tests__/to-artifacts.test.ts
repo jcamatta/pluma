@@ -1,5 +1,5 @@
-// toArtifacts flattens the editor's annotation + proposal lists into one artifact list ordered by
-// document position, carrying through the fields each card needs.
+// toArtifacts flattens one file's annotation + proposal lists into one artifact list ordered by document
+// position, stamping the owning file's path and carrying through the fields each card needs.
 
 import { describe, expect, it } from 'vitest'
 import type { Annotation } from '../../editor/extensions/annotations'
@@ -31,11 +31,15 @@ function proposal(id: string, from: number): Proposal {
 
 describe('toArtifacts', () => {
   it('returns nothing when both lists are empty', () => {
-    expect(toArtifacts([], [])).toEqual([])
+    expect(toArtifacts({ path: '/a.md', annotations: [], proposals: [] })).toEqual([])
   })
 
   it('interleaves annotations and proposals by document position', () => {
-    const result = toArtifacts([annotation('a_1', 30), annotation('a_2', 5)], [proposal('p_1', 15)])
+    const result = toArtifacts({
+      path: '/a.md',
+      annotations: [annotation('a_1', 30), annotation('a_2', 5)],
+      proposals: [proposal('p_1', 15)]
+    })
 
     expect(result.map((artifact) => artifact.id)).toEqual(['a_2', 'p_1', 'a_1'])
     expect(result.map((artifact) => artifact.kind)).toEqual([
@@ -45,14 +49,16 @@ describe('toArtifacts', () => {
     ])
   })
 
-  it('maps each kind to the fields its card needs', () => {
-    const [annotationArtifact, proposalArtifact] = toArtifacts(
-      [annotation('a_1', 0)],
-      [proposal('p_1', 10)]
-    )
+  it('stamps the path and maps each kind to the fields its card needs', () => {
+    const [annotationArtifact, proposalArtifact] = toArtifacts({
+      path: '/chapter.md',
+      annotations: [annotation('a_1', 0)],
+      proposals: [proposal('p_1', 10)]
+    })
 
     expect(annotationArtifact).toEqual({
       kind: 'annotation',
+      path: '/chapter.md',
       id: 'a_1',
       from: 0,
       label: 'label-a_1',
@@ -62,6 +68,7 @@ describe('toArtifacts', () => {
     })
     expect(proposalArtifact).toEqual({
       kind: 'proposal',
+      path: '/chapter.md',
       id: 'p_1',
       from: 10,
       originalText: 'before-p_1',

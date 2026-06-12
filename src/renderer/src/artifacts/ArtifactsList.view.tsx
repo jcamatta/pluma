@@ -1,13 +1,15 @@
-// The list of artifact cards the agent produced, in document order — annotations and proposals rendered
-// by their card, the active one highlighted. Cards animate in/out via AnimatePresence as the agent adds
-// them or the user resolves them. Empty before the first run. Pure props: every interaction is a callback
-// keyed by artifact id, which the controller maps to the editor commands.
+// The list of artifact cards the agent produced, grouped by file and in document order — annotations and
+// proposals rendered by their card, the active one highlighted. Cards animate in/out via AnimatePresence
+// as the agent adds them or the user resolves them. Empty before the first run. Pure props: every
+// interaction passes the whole artifact back, which the controller maps to its editor's commands; identity
+// is the composite `path::id` key, since ids are only unique within one file's editor.
 
 import { StickyNote } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { Empty } from '../rail/Empty.view'
 import { AnnotationCard } from './AnnotationCard.view'
 import { ProposalCard } from './ProposalCard.view'
+import { artifactKey } from './artifact-key'
 import type { Artifact } from './artifact'
 
 interface ArtifactsListLabels {
@@ -21,17 +23,17 @@ interface ArtifactsListLabels {
 
 interface ArtifactsListProps {
   readonly artifacts: readonly Artifact[]
-  readonly activeIds: ReadonlySet<string>
-  readonly onSelect: (id: string) => void
-  readonly onAccept: (id: string) => void
-  readonly onReject: (id: string) => void
-  readonly onDismiss: (id: string) => void
+  readonly activeKeys: ReadonlySet<string>
+  readonly onSelect: (artifact: Artifact) => void
+  readonly onAccept: (artifact: Artifact) => void
+  readonly onReject: (artifact: Artifact) => void
+  readonly onDismiss: (artifact: Artifact) => void
   readonly labels: ArtifactsListLabels
 }
 
 function ArtifactsList({
   artifacts,
-  activeIds,
+  activeKeys,
   onSelect,
   onAccept,
   onReject,
@@ -48,21 +50,21 @@ function ArtifactsList({
         {artifacts.map((artifact) =>
           artifact.kind === 'annotation' ? (
             <AnnotationCard
-              key={artifact.id}
+              key={artifactKey(artifact)}
               artifact={artifact}
-              active={activeIds.has(artifact.id)}
-              onClick={() => onSelect(artifact.id)}
-              onDismiss={() => onDismiss(artifact.id)}
+              active={activeKeys.has(artifactKey(artifact))}
+              onClick={() => onSelect(artifact)}
+              onDismiss={() => onDismiss(artifact)}
               labels={{ dismiss: labels.dismiss }}
             />
           ) : (
             <ProposalCard
-              key={artifact.id}
+              key={artifactKey(artifact)}
               artifact={artifact}
-              active={activeIds.has(artifact.id)}
-              onClick={() => onSelect(artifact.id)}
-              onAccept={() => onAccept(artifact.id)}
-              onReject={() => onReject(artifact.id)}
+              active={activeKeys.has(artifactKey(artifact))}
+              onClick={() => onSelect(artifact)}
+              onAccept={() => onAccept(artifact)}
+              onReject={() => onReject(artifact)}
               labels={{
                 proposedRewrite: labels.proposedRewrite,
                 conflicted: labels.conflicted,

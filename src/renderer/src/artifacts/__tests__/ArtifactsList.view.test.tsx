@@ -1,5 +1,5 @@
 // ArtifactsList renders the empty state when there are no artifacts, and otherwise one card per artifact
-// by kind, wiring each card's interactions to the id-keyed callbacks.
+// by kind, wiring each card's interactions to callbacks that receive the whole artifact.
 
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
@@ -18,6 +18,7 @@ const labels = {
 const artifacts: readonly Artifact[] = [
   {
     kind: 'proposal',
+    path: '/a.md',
     id: 'p_1',
     from: 2,
     originalText: 'old',
@@ -26,6 +27,7 @@ const artifacts: readonly Artifact[] = [
   },
   {
     kind: 'annotation',
+    path: '/a.md',
     id: 'a_1',
     from: 9,
     label: 'Tension',
@@ -44,7 +46,7 @@ describe('ArtifactsList', () => {
     render(
       <ArtifactsList
         artifacts={[]}
-        activeIds={new Set()}
+        activeKeys={new Set()}
         onSelect={noop}
         onAccept={noop}
         onReject={noop}
@@ -56,12 +58,12 @@ describe('ArtifactsList', () => {
     expect(screen.getByText('No artifacts yet.')).toBeInTheDocument()
   })
 
-  it('renders a card per artifact and selects by id', () => {
+  it('renders a card per artifact and selects with the whole artifact', () => {
     const onSelect = vi.fn()
     render(
       <ArtifactsList
         artifacts={artifacts}
-        activeIds={new Set()}
+        activeKeys={new Set()}
         onSelect={onSelect}
         onAccept={noop}
         onReject={noop}
@@ -74,6 +76,6 @@ describe('ArtifactsList', () => {
     expect(screen.getByText('new')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Soften it.'))
-    expect(onSelect).toHaveBeenCalledWith('a_1')
+    expect(onSelect).toHaveBeenCalledWith(artifacts[1])
   })
 })

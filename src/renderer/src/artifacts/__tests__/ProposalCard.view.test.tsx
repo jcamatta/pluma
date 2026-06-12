@@ -16,6 +16,7 @@ const labels = {
 function ready(): ProposalArtifact {
   return {
     kind: 'proposal',
+    path: '/a.md',
     id: 'p_1',
     from: 4,
     originalText: 'only paper',

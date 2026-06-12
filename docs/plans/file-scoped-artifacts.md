@@ -86,8 +86,23 @@ future **tabs** feature needs (open-set + active tab + per-file editor), so none
    `path` (or the whole artifact) through `ArtifactsList`/cards/controller instead of a bare `id`, and
    the controller resolves the target editor via `editors.get(path)`.
 
+   **DONE.** `path` is now on both `Artifact` variants; `artifact-key.ts` exports the pure
+   `artifactKey({path, id})` → `path::id`. `to-artifacts.ts` takes `{ path, annotations, proposals }`
+   and stamps the path per artifact. `useOpenArtifacts` replaces `useEditorArtifacts`: it reads the
+   `editors` map from `ActiveEditorContext`, subscribes to **every** editor's `transaction` stream,
+   folds them into one path-tagged list, and returns `{ artifacts, activeKeys }` (composite keys), with
+   the `useSyncExternalStore` snapshot cached against the per-editor list of `EditorState` identities.
+   `ArtifactsList` now keys cards by `artifactKey` and passes the **whole artifact** to handlers; the
+   panel controller resolves the target editor via `editors.get(artifact.path)` for select/accept/
+   reject/dismiss. `useReviewTab`'s badge count now spans all open files. Reveal still runs on the
+   resolved editor — cross-file open + reveal-after-show is step 5. The cards' own `data-testid`
+   (still `artifact-card:<id>`) moves to the composite key in **step 4**, which already edits them for
+   the file label; the e2e prefix selector matches either form, so nothing breaks meanwhile.
+
 4. **Card shows its file (#1).** Cards render a file label from `path` (basename via a pure helper,
-   reusing `editor-file-name-logic`). View tests; translation-ready label.
+   reusing `editor-file-name-logic`). View tests; translation-ready label. Also switch the cards'
+   `data-testid` to the composite `artifact-card:<path>::<id>` (deferred from step 3) now that the cards
+   are being edited anyway.
 
 5. **Cross-file select (#3).** The panel controller resolves the artifact's editor by `path`. Same
    file → activate decoration + reveal as today. Different file → request `onOpen(path)` (App makes

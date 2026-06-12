@@ -1,9 +1,9 @@
 // The rail's Chat/Review tab state plus the live count of editor artifacts that badges the Review tab.
 // Bundled into one hook so the chat controller reads tab + count in a single call and stays within its
-// statement budget. The count tracks the active editor's annotations/proposals via useEditorArtifacts.
+// statement budget. The count tracks every open file's annotations/proposals via useOpenArtifacts.
 
 import { useState } from 'react'
-import { useEditorArtifacts } from '../artifacts/useEditorArtifacts'
+import { useOpenArtifacts } from '../artifacts/useOpenArtifacts'
 import type { RailTab } from './ConversationRail.view'
 
 interface ReviewTab {
@@ -14,7 +14,7 @@ interface ReviewTab {
 
 function useReviewTab(): ReviewTab {
   const [tab, setTab] = useState<RailTab>('chat')
-  const { artifacts } = useEditorArtifacts()
+  const { artifacts } = useOpenArtifacts()
   return { tab, setTab, reviewCount: artifacts.length }
 }
 

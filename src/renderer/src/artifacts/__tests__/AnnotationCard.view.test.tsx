@@ -8,6 +8,7 @@ import type { AnnotationArtifact } from '../artifact'
 
 const artifact: AnnotationArtifact = {
   kind: 'annotation',
+  path: '/a.md',
   id: 'a_1',
   from: 10,
   label: 'Tension',

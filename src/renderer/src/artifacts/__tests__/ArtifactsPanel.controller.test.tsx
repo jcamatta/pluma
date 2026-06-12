@@ -1,6 +1,6 @@
-// ArtifactsPanelController lists the editor's live artifacts and maps card interactions to the editor's
-// own commands: selecting activates the decoration, Accept applies the rewrite, Dismiss removes the
-// annotation. Driven through a real headless editor registered into ActiveEditorContext.
+// ArtifactsPanelController lists every open editor's live artifacts and maps card interactions to the
+// owning editor's own commands: selecting activates the decoration, Accept applies the rewrite, Dismiss
+// removes the annotation. Driven through a real headless editor registered into ActiveEditorContext by path.
 
 import { useEffect } from 'react'
 import { describe, expect, it } from 'vitest'
@@ -24,13 +24,14 @@ import { createTestEditor } from '../../editor/extensions/__tests__/editor-test-
 import { ArtifactsPanelController } from '../ArtifactsPanel.controller'
 
 const CONTENT = 'The quick brown fox jumps over the lazy dog and keeps running onward.'
+const PATH = '/test.md'
 
 function RegisterEditor({ editor }: { readonly editor: Editor }): null {
-  const { register } = useActiveEditor()
+  const { registerEditor, unregisterEditor } = useActiveEditor()
   useEffect(() => {
-    register(editor)
-    return () => register(null)
-  }, [editor, register])
+    registerEditor(PATH, editor)
+    return () => unregisterEditor(PATH)
+  }, [editor, registerEditor, unregisterEditor])
   return null
 }
 
