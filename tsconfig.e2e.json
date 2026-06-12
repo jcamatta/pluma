@@ -4,6 +4,7 @@
   "compilerOptions": {
     "strict": true,
     "composite": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": ["node"]
   }
 }

@@ -46,7 +46,9 @@ _Landed: `@tiptap/extension-file-handler` pinned to exact `3.26.0`. `file-handle
 - `src/renderer/src/editor/extensions/__tests__/file-handler.test.ts` — harness test: simulate a paste/drop of a fake image `File` and assert an image node is inserted; simulate the GIF-as-PNG-with-`htmlContent` case and assert the URL source is used.
 - **Delivers:** the full paste + drag-drop UX on base64.
 
-### Step 4 — e2e (real app)
+### Step 4 — e2e (real app) ✅ done
+
+_Landed: `e2e/support/drop-image.ts` dispatches a real `drop` DragEvent with a `DataTransfer`+`File` at the surface centre; `editor.e2e.ts` gains a test that drops a PNG, asserts the `<img>` renders, polls the real file on disk for `data:image/png`, then switches files and back to prove it reloads from markdown. Added `DOM`/`DOM.Iterable` to `tsconfig.e2e.json` `lib` (needed for browser-context `evaluate`; standard Playwright setup). No manifest change — `editor` + `file.write` already claimed, no new IPC channel. Both editor specs green._
 
 - `e2e/editor.e2e.ts` — extend the existing `@e2e feature:editor` spec: open a file, drop a fixture image into the editor, assert an `<img>` renders, then trigger save + reload the file and assert the `<img>` is still present.
 - `e2e/support/` — add a small fixture image + a drop helper if needed.
