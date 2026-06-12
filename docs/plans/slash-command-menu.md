@@ -154,7 +154,7 @@ with no cast or guard. `render` forwards onStart/onUpdate → `bridge.open`, onK
 helper so the editor isn't torn down mid-await. Trigger config: `char: '/'`, `allowSpaces: false`, default
 word-boundary prefix (so `and/or` doesn't fire)._
 
-### 6. Popup view + icons + i18n (+ tests)
+### 6. Popup view + icons + i18n (+ tests) — DONE
 
 - `src/renderer/src/editor/slash/slash-command-icon.tsx` — maps an item `icon` id to its lucide component
   (`Type`, `Heading1`…, `List`, `ListOrdered`, `Quote`, `Code`, `Minus`). Pure view helper.
@@ -168,6 +168,13 @@ word-boundary prefix (so `and/or` doesn't fire)._
   `title` and `empty`). Weight 0; lands with the view that consumes it.
 - `src/renderer/src/editor/slash/__tests__/SlashMenu.view.test.tsx` — render with props, assert rows,
   labels, hints, active state, and the empty state.
+
+_Landed: used a fixed-position `motion.div` panel (not Base UI `Popover`) — `Popover` manages/steals focus,
+which fights the editor-owned keyboard; the rows are still Base UI `Button`s (the interactive primitive).
+Rows carry `role="option"` + `aria-selected` so the active highlight is asserted by accessible role, not a
+class. Props carry already-translated `label`/`hint` + the `heading`/`emptyLabel` strings (resolved in the
+hook); the icon is derived from `id` via `slash-command-icon.tsx`. i18n keys are `editor.slash.{heading,empty,
+<id>}`._
 
 ### 7. Hook + controller wiring (+ tests)
 
