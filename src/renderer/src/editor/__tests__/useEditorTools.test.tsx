@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
+import type { Editor } from '@tiptap/core'
 import { AgentToolsProvider } from '../../agent/AgentToolsProvider'
 import { useToolRegistry, type ToolRegistry } from '../../agent/AgentToolsContext'
 import { agentToolSpecs, getRangesTool, proposeEditTool } from '../../agent/tools/specs'
@@ -9,14 +10,24 @@ import { getProposals } from '../extensions/proposals'
 import { createTestEditor } from '../extensions/__tests__/editor-test-harness'
 import { useEditorTools } from '../useEditorTools'
 
+const PATH = '/test.md'
+
 function wrapper({ children }: { readonly children: ReactNode }): React.JSX.Element {
   return <AgentToolsProvider>{children}</AgentToolsProvider>
 }
 
-function renderRegistry(editor: Parameters<typeof useEditorTools>[0]): ToolRegistry {
+// Deps that resolve the active file to `editor`; a null editor models "no document open".
+function depsFor(editor: Editor | null): Parameters<typeof useEditorTools>[0] {
+  return {
+    resolve: (path: string) => (editor !== null && path === PATH ? editor : null),
+    activePath: editor === null ? null : PATH
+  }
+}
+
+function renderRegistry(deps: Parameters<typeof useEditorTools>[0]): ToolRegistry {
   const { result } = renderHook(
     () => {
-      useEditorTools(editor)
+      useEditorTools(deps)
       return useToolRegistry()
     },
     { wrapper }
@@ -41,7 +52,7 @@ describe('useEditorTools', () => {
   it('registers all five editor tools in the registry', () => {
     const editor = createTestEditor('hello world')
     try {
-      const registry = renderRegistry(editor)
+      const registry = renderRegistry(depsFor(editor))
       const names = registry.snapshot().map((tool) => tool.name)
       expect(names).toEqual(agentToolSpecs.map((tool) => tool.name))
     } finally {
@@ -52,7 +63,7 @@ describe('useEditorTools', () => {
   it('dispatches a registered handler against the live editor', async () => {
     const editor = createTestEditor('hello world')
     try {
-      const registry = renderRegistry(editor)
+      const registry = renderRegistry(depsFor(editor))
 
       const resolved = await registry.byName(getRangesTool.name)?.handler({ text: 'world' })
       const rangeId = rangeIdOf(resolved)
@@ -69,7 +80,7 @@ describe('useEditorTools', () => {
   })
 
   it('reports a recoverable error while no editor is mounted', async () => {
-    const registry = renderRegistry(null)
+    const registry = renderRegistry(depsFor(null))
 
     const result = await registry.byName(getRangesTool.name)?.handler({ text: 'anything' })
 

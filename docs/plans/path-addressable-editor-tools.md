@@ -53,7 +53,7 @@ the registry is the resolution table.
 
 ## Steps
 
-- [ ] **Step 1 — resolver seam (pure refactor, no behavior change).** Introduce `EditorResolverPort`
+- [x] **Step 1 — resolver seam (pure refactor, no behavior change).** Introduce `EditorResolverPort`
   and change `useEditorTools(editor)` → it receives a `resolve` and the active `path`, with every handler
   resolving the active editor via `resolve(activePath)` exactly as today. `EditorToolsBridge` builds the
   resolver from `useActiveEditor().editors` and reads the active path from `useOpenFiles()`. Update the

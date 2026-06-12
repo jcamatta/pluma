@@ -16,6 +16,12 @@ import { getCurrentSelection } from '../agent/tools/tool-get-current-selection'
 import { getRanges } from '../agent/tools/tool-get-ranges'
 import { proposeEdit } from '../agent/tools/tool-propose-edit'
 import type { AnnotationSeverity } from './extensions/annotations'
+import type { EditorResolverPort } from './editor-resolver.port'
+
+interface EditorToolDeps {
+  readonly resolve: EditorResolverPort
+  readonly activePath: string | null
+}
 
 interface EditorToolEntries {
   readonly selection: ToolEntry
@@ -27,11 +33,16 @@ interface EditorToolEntries {
 
 type EditorRun = (editor: Editor, args: unknown) => AgentToolResult
 
-function editorToolEntries(editor: Editor | null): EditorToolEntries {
+function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
+  const activeEditor = (): Editor | null =>
+    deps.activePath === null ? null : deps.resolve(deps.activePath)
+
   const withLiveEditor =
     (run: EditorRun): ToolHandler =>
-    (args) =>
-      editor ? run(editor, args) : { ok: false, error: 'No document is open in the editor.' }
+    (args) => {
+      const editor = activeEditor()
+      return editor ? run(editor, args) : { ok: false, error: 'No document is open in the editor.' }
+    }
 
   return {
     selection: {
@@ -74,8 +85,8 @@ function editorToolEntries(editor: Editor | null): EditorToolEntries {
   }
 }
 
-function useEditorTools(editor: Editor | null): void {
-  const entries = editorToolEntries(editor)
+function useEditorTools(deps: EditorToolDeps): void {
+  const entries = editorToolEntries(deps)
   useFrontendTool(entries.selection)
   useFrontendTool(entries.document)
   useFrontendTool(entries.ranges)
