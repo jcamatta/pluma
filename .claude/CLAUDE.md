@@ -2,12 +2,39 @@
 
 Build features the same way every time: **plan first, then execute the plan one small piece at a time.**
 
+### The workflow, end to end
+
+Every change — small or large, `feat` or `fix` — follows the same loop:
+
+1. **Plan.** Write the plan in `docs/plans/` (see "Plan first").
+2. **The human reviews the plan** and approves it before any code is written. Do not start implementing until the plan is approved.
+3. **The plan gets its own branch.** One plan, one branch — regardless of size or type (`feat`, `fix`, `chore`, `docs`, `test`, …). Create the branch before starting (see "Commits" for the branch grammar).
+4. **Subdivide the plan into mini-commits.** Each step is one small, coherent commit that stays under the commit-size budget and leaves the checks green. Small commits are not just about the budget — they are **far easier for the `veto` reviewer to judge**, so prefer more, smaller commits over fewer big ones.
+5. **Each commit triggers the `veto` reviewer** (the pre-commit gate). Fix what it flags before moving on (see "Reviewer gate").
+6. **When every step is done,** run the `finish-plan` skill — it runs the checks, proves the change works, removes the completed plan file, pushes the branch, and opens the PR.
+7. **The human reviews the PR on GitHub** and decides: merge, or leave comments / request changes. Never merge it yourself.
+
+### Worktrees and parallel work
+
+**We work in git worktrees, and multiple agents may be working in parallel at the same time.** Always assume another agent is changing the tree underneath you:
+
+- Keep your diff confined to your own plan's files so two streams never collide. If another agent's in-progress work touches a file you need, **stop and ask the human** rather than editing around them or reverting their work.
+- `git status` captured at session start can be stale — re-check before relying on it. A full-suite failure may come from another agent's work, not yours; verify by running only the files you touched.
+- **Stay up to date with `main`.** Before opening a PR (and whenever your branch has been alive a while), pull the latest `main` and **rebase your branch onto it** so you are always building on current code. A branch that sits for a long time will drift.
+- **Assume a PR can develop merge conflicts** after it has been open for a while, because parallel work lands on `main` in the meantime. When that happens, rebase onto the latest `main`, resolve the conflicts, re-run the checks, and push again. Do not merge with unresolved drift.
+
 ### Plan first
 
 Before writing code for a feature, write a plan. The plan exists to split a big feature into **small, independently committable units** — small enough to pass the commit-size budget (see below), each one ending with the checks green. We do not implement a feature in one large change; we slice it.
 
 - **Plans live in `docs/plans/`,** one file per feature (e.g. `04-chat-panel.md`, `agent-architecture.md`). A plan names the feature, states what "done" looks like, lists the sequenced steps, and records the constraints and open questions.
 - A plan's steps are the unit of work. Each step is sized so its commit fits the budget and leaves every check passing.
+
+**How to slice a plan.** Two forces shape the cut: the architecture and the commit-size budget.
+
+- **Separate by concern / layer.** Keep backend, frontend, dependencies, and infrastructure/testing in their own steps rather than mixing them in one commit. A natural ordering follows the dependency direction: shared types/contracts → backend (data → port → use case → adapter → IPC) → renderer (port → adapter → hooks → view/controller) → e2e. Each step depends only on what came before, so it lands green on its own.
+- **Size every step to one mini-commit.** A step must fit the commit-size budget (max ~300 weighted `src/` lines, ≤15 source files, tests landing with code). If a step would blow the budget, that is a planning signal — split it further, don't write a fat commit. **Smaller commits also make the `veto` reviewer's job easier and its judgments sharper**, so err toward more, smaller steps.
+- Each step should be **independently committable and independently green** — a reviewer can read it in isolation and the checks pass at that point in the sequence.
 
 ### Then execute, and record what you did
 
@@ -29,7 +56,7 @@ A pre-commit hook (`.husky/check-commit-size.sh`) rejects commits that are too l
 - **Max 15 source files** touched per commit.
 - **A commit over 30 source lines must change at least one test file** — code and its tests land together.
 
-**Only files under `src/` carry weight.** Everything outside `src/` — `docs/` (including `FILE.md` and the plans), config, scripts, the `e2e/` harness, lockfiles, snapshots, generated files — counts as weight 0, so updating docs/plans alongside code never pushes a commit over the budget. Within `src/`, `*.test.*` / `*.spec.*` / `*.e2e.*` / `__tests__` count as tests (they satisfy the "needs tests" check but do not add weight). If a commit trips the hook, the answer is never to weaken the hook — it is to make a smaller, coherent commit.
+**Only files under `src/` carry weight.** Everything outside `src/` — `docs/` (including the plans), config, scripts, the `e2e/` harness, lockfiles, snapshots, generated files — counts as weight 0, so updating docs/plans alongside code never pushes a commit over the budget. Within `src/`, `*.test.*` / `*.spec.*` / `*.e2e.*` / `__tests__` count as tests (they satisfy the "needs tests" check but do not add weight). If a commit trips the hook, the answer is never to weaken the hook — it is to make a smaller, coherent commit.
 
 ## General rules
 
@@ -144,20 +171,7 @@ These rules are enforced with ESLint. Write code that already complies.
 - **One export per file.** This is the strong default. The only allowed exceptions are a type/interface co-located with the single export it describes, and barrel `index.ts` files that only re-export. Do not split these artificially.
 - **One responsibility per file.** A file does one thing; if it grows a second concern, split it.
 - **No inline comments.** Do not write comments in the middle of code — the code should read clearly on its own.
-- **No file-header comments — document files in `docs/FILE.md` instead.** Do **not** start a file with a header comment explaining what it is about. We keep that explanation out of the source entirely and write it once, centrally, in `docs/FILE.md` (see "Documenting files" below). A source file carries no prose about its own purpose.
-
-## Documenting files (`docs/FILE.md`)
-
-Instead of a header comment in each source file, every file's purpose is described in **`docs/FILE.md`** — a central index of what each file in the project is about.
-
-- **Whenever you create, edit, or delete a file under `src/`, update `docs/FILE.md` in the same change.** Create → add its entry. Delete → remove its entry. Edit that changes what the file is for → revise its entry. (A pure refactor that does not change a file's responsibility needs no `FILE.md` change.)
-- **Key every entry by the exact repo-relative path,** verbatim — e.g. `src/main/application/file/usecase/create-file.ts`, not just `create-file.ts`. Filenames like `index.ts` / `types.ts` collide across features, so the full path is what makes an entry unambiguous (and what the sync hook matches against).
-- **Write a functional description:** what the file does — its responsibility, the role it plays, the contract it exposes. One to a few sentences per file.
-- **Do not put change-history or process notes in `FILE.md`.** No "this file was added in plan 04", no "edited to fix X", no plan IDs. That belongs to git and to the plan files, not here. `FILE.md` describes the file as it is now, not how it got here.
-
-This is enforced at pre-commit by `.husky/check-file-doc-sync.sh`: a staged **added** `src/` file whose path is absent from `FILE.md` fails the commit, and a staged **deleted** `src/` file whose path still appears in `FILE.md` fails too. The hook checks for the path string only — it cannot judge whether the description is accurate or current; that is on you.
-
-`docs/FILE.md` replaces the per-file header comment; together with the plans it lets an agent understand the codebase's shape without opening every file.
+- **No file-header comments.** Do **not** start a file with a header comment explaining what it is about. A source file carries no prose about its own purpose; rely on clear naming and the plans to convey intent.
 
 ## Tooling and enforcement
 
@@ -212,7 +226,7 @@ These were considered and left out for now to avoid new dependencies or false-po
 ### Git hooks (husky)
 
 - **commit-msg**: refuses a commit made on a trunk branch (`main`/`master`/`develop`) or from a branch whose name is not a valid Conventional Branch name; validates the subject against Conventional Commits (type, optional scope/`!`, 1–100 char description); and rejects any authored/attribution footer — `Co-authored-by`, `Signed-off-by`, `Generated with`, and the like.
-- **pre-commit**: `check-commit-size` → `check-file-doc-sync` (every added `src/` file has a `docs/FILE.md` entry; every deleted one no longer does) → `lint-staged` (eslint --fix + prettier on staged files) → `veto` (the reviewer gate, see below).
+- **pre-commit**: `check-commit-size` → `lint-staged` (eslint --fix + prettier on staged files) → `veto` (the reviewer gate, see below).
 - **pre-push** (heavy): `test:coverage` → `type-coverage` → `build`.
 
 `start` (the Electron preview) is never run in a hook — it does not exit. Run it manually.
@@ -466,12 +480,14 @@ Do not end the subject with a period.
 
 Use `!` for breaking changes.
 
-Do not add `Co-authored-by` or other authored/attribution footers (`Signed-off-by`, "Generated with", etc.). This is enforced by the `commit-msg` hook, not just convention.
+**Never add any authorship or attribution metadata, and never mention Claude, an AI, or an agent anywhere in a commit or PR.** No `Co-authored-by`, no `Signed-off-by`, no "Generated with…", no "🤖", no "Claude", no "AI-generated" — not in a commit message, commit footer, PR title, or PR body. Commits and PRs read as if a human authored them. This is enforced by the `commit-msg` hook, but the rule is absolute regardless of what the hook catches.
 
 **Always work on a branch — never commit on a trunk branch (`main`/`master`/`develop`).** Every plan and every change gets its own branch, and branch names follow [Conventional Branch](https://conventionalbranch.org): `<type>/<description>`, where `type` is one of `feat`, `fix`, `hotfix`, `release`, or `chore`, and the description is lowercase letters, digits, and hyphens (dots only for release version numbers). Examples: `feat/chat-panel`, `fix/null-response`, `release/1.2.0`. This is enforced by the `commit-msg` hook, which refuses a commit made on a trunk branch or from a branch whose name does not match the grammar. Create the branch before you start the work.
 
-**A plan is worked entirely on its branch, then opened as a PR for review.** Commit through the plan's steps on the branch — including the final commit that removes the completed plan file (see "When a plan is done"). When the plan is finished and the checks are green, push the branch and open a **pull request into `main`** with a structured description: what was done, the files involved and their purpose, how to validate it manually in the running app, what tests were run, and any open questions. The human reviews the PR and gives final approval — **do not merge it yourself.** The `finish-plan` skill runs this whole closing sequence (verify done → run checks → draft the PR body → remove the plan → push → open the PR); invoke it when a plan is complete.
+**A plan is worked entirely on its branch, then opened as a PR for review.** Commit through the plan's steps on the branch — including the final commit that removes the completed plan file (see "When a plan is done"). Before opening the PR, **rebase the branch onto the latest `main`** so it is up to date (see "Worktrees and parallel work"). When the plan is finished and the checks are green, push the branch and open a **pull request into `main`** with a structured description: what was done, the files involved and their purpose, how to validate it manually in the running app, what tests were run, and any open questions. The human reviews the PR and gives final approval — **do not merge it yourself.** The `finish-plan` skill runs this whole closing sequence (verify done → run checks → draft the PR body → remove the plan → push → open the PR); invoke it when a plan is complete.
+
+**A PR that has been open a while can develop merge conflicts** as parallel work lands on `main`. When that happens, rebase onto the latest `main`, resolve the conflicts, re-run the checks green, and push again.
 
 Keep each commit within the **commit-size budget** (see "How we work" → "Commit-size budget"); it is enforced at pre-commit. If a change is too big, that is a planning signal — split it into the plan's next step, not a workaround.
 
-**Docs travel with the code.** `docs/FILE.md` and the relevant `docs/plans/` entry are part of the change, not a separate chore: a commit that adds, edits, or deletes a `src/` file includes its `FILE.md` update in the same commit (a pre-commit hook enforces that `FILE.md` stays in sync — see "Documenting files"), and a commit that advances a feature updates that feature's plan. `.md` weight is excluded from the commit-size budget, so this never pushes a commit over the limit.
+**Docs travel with the code.** The relevant `docs/plans/` entry is part of the change, not a separate chore: a commit that advances a feature updates that feature's plan. `.md` weight is excluded from the commit-size budget, so this never pushes a commit over the limit.
