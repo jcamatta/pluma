@@ -19,7 +19,8 @@ const writerThatSucceeds = (deleted: string[]): Layer.Layer<FolderWriterPort> =>
       deleteFolder: (path) =>
         Effect.sync(() => {
           deleted.push(path)
-        })
+        }),
+      renameFolder: () => Effect.void
     })
   )
 
@@ -30,7 +31,8 @@ const writerThatFails = (
     FolderWriter,
     FolderWriter.of({
       createFolder: () => Effect.void,
-      deleteFolder: () => Effect.fail(error)
+      deleteFolder: () => Effect.fail(error),
+      renameFolder: () => Effect.void
     })
   )
 

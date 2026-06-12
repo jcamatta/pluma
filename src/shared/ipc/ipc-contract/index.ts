@@ -22,6 +22,7 @@ import type {
 import type {
   FolderCreateContract,
   FolderDeleteContract,
+  FolderRenameContract,
   FolderListContract,
   FolderPickContract,
   FolderWatchContract
@@ -34,6 +35,7 @@ type IpcContract =
   | FileReadContract
   | FolderCreateContract
   | FolderDeleteContract
+  | FolderRenameContract
   | FolderListContract
   | FolderPickContract
   | FolderWatchContract

@@ -8,6 +8,7 @@ import type { IpcContractDefinition } from './types'
 
 const FOLDER_CREATE_CHANNEL = 'folder:create'
 const FOLDER_DELETE_CHANNEL = 'folder:delete'
+const FOLDER_RENAME_CHANNEL = 'folder:rename'
 const FOLDER_LIST_CHANNEL = 'folder:list'
 const FOLDER_PICK_CHANNEL = 'folder:pick'
 const FOLDER_WATCH_CHANNEL = 'folder:watch'
@@ -15,6 +16,11 @@ const FOLDER_WATCH_CHANNEL = 'folder:watch'
 interface FolderEntry {
   readonly name: string
   readonly type: 'file' | 'directory'
+}
+
+interface FolderRenameRequest {
+  readonly oldPath: string
+  readonly newPath: string
 }
 
 interface FolderCreateError {
@@ -28,6 +34,15 @@ interface FolderCreateError {
 
 interface FolderDeleteError {
   readonly _tag: 'InvalidFolderPath' | 'FolderNotFound' | 'FolderDeleteFailed'
+  readonly path: string
+}
+
+interface FolderRenameError {
+  readonly _tag:
+    | 'InvalidFolderPath'
+    | 'FolderNotFound'
+    | 'FolderAlreadyExists'
+    | 'FolderRenameFailed'
   readonly path: string
 }
 
@@ -59,6 +74,13 @@ type FolderDeleteContract = IpcContractDefinition<
   FolderDeleteError
 >
 
+type FolderRenameContract = IpcContractDefinition<
+  typeof FOLDER_RENAME_CHANNEL,
+  FolderRenameRequest,
+  string,
+  FolderRenameError
+>
+
 type FolderListContract = IpcContractDefinition<
   typeof FOLDER_LIST_CHANNEL,
   string,
@@ -83,17 +105,21 @@ type FolderWatchContract = IpcContractDefinition<
 export {
   FOLDER_CREATE_CHANNEL,
   FOLDER_DELETE_CHANNEL,
+  FOLDER_RENAME_CHANNEL,
   FOLDER_LIST_CHANNEL,
   FOLDER_PICK_CHANNEL,
   FOLDER_WATCH_CHANNEL,
   type FolderEntry,
+  type FolderRenameRequest,
   type FolderCreateError,
   type FolderDeleteError,
+  type FolderRenameError,
   type FolderListError,
   type FolderPickError,
   type FolderWatchError,
   type FolderCreateContract,
   type FolderDeleteContract,
+  type FolderRenameContract,
   type FolderListContract,
   type FolderPickContract,
   type FolderWatchContract

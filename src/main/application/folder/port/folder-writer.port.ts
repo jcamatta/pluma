@@ -8,12 +8,17 @@ import type { ParentDirectoryNotFound } from '../error/parent-directory-not-foun
 import type { FolderCreationFailed } from '../error/folder-creation-failed'
 import type { FolderNotFound } from '../error/folder-not-found'
 import type { FolderDeleteFailed } from '../error/folder-delete-failed'
+import type { FolderRenameFailed } from '../error/folder-rename-failed'
 
 export interface FolderWriterPort {
   readonly createFolder: (
     path: string
   ) => Effect.Effect<void, FolderAlreadyExists | ParentDirectoryNotFound | FolderCreationFailed>
   readonly deleteFolder: (path: string) => Effect.Effect<void, FolderNotFound | FolderDeleteFailed>
+  readonly renameFolder: (
+    oldPath: string,
+    newPath: string
+  ) => Effect.Effect<void, FolderNotFound | FolderAlreadyExists | FolderRenameFailed>
 }
 
 export const FolderWriter = Context.GenericTag<FolderWriterPort>('application/FolderWriter')
