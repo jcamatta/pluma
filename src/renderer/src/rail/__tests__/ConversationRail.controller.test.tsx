@@ -70,7 +70,7 @@ function renderRail(agent: FakeAgent = new FakeAgent()): { agent: FakeAgent } {
   render(
     <I18nextProvider i18n={i18n}>
       <AgentContext.Provider value={agent}>
-        <ConversationRailController onClose={() => undefined} />
+        <ConversationRailController cwd="/work" onClose={() => undefined} />
       </AgentContext.Provider>
     </I18nextProvider>
   )

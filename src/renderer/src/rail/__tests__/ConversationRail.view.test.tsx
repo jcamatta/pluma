@@ -28,6 +28,7 @@ const baseProps = {
   onSubmit: noop,
   onStop: noop,
   onNewChat: noop,
+  onShowThreads: noop,
   onClose: noop
 }
 
@@ -98,14 +99,24 @@ describe('ConversationRailView', () => {
     expect(onChange).toHaveBeenCalledWith('hi')
   })
 
-  it('fires onNewChat and onClose from the header buttons', () => {
+  it('fires onShowThreads, onNewChat and onClose from the header buttons', () => {
+    const onShowThreads = vi.fn()
     const onNewChat = vi.fn()
     const onClose = vi.fn()
-    render(<ConversationRailView {...baseProps} onNewChat={onNewChat} onClose={onClose} />)
+    render(
+      <ConversationRailView
+        {...baseProps}
+        onShowThreads={onShowThreads}
+        onNewChat={onNewChat}
+        onClose={onClose}
+      />
+    )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Chats' }))
     fireEvent.click(screen.getByRole('button', { name: 'New chat' }))
     fireEvent.click(screen.getByRole('button', { name: 'Collapse panel' }))
 
+    expect(onShowThreads).toHaveBeenCalledOnce()
     expect(onNewChat).toHaveBeenCalledOnce()
     expect(onClose).toHaveBeenCalledOnce()
   })

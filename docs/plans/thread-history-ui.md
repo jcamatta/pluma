@@ -71,7 +71,22 @@ supplies alongside the agent. Prefer the least-invasive option that keeps the fa
 Unit-test the seeding (next `startRun` sends the selected id as `threadId`; `newThread` sends none).
 Update `FILE.md`.
 
-### 8. Threads list view + panel
+### 8. Threads list view + panel — DONE
+
+**Landed.** Pure `threads/ThreadsPanel.view.tsx` (header: back/title/new; scrollable list of rows = title
+
+- relative-time subtitle, active row highlighted) + `ThreadsPanel.controller.tsx` (reads `useThreads(cwd)`,
+  maps summaries → rows with the localized `threads.untitled` fallback and a `format-relative-time` subtitle;
+  selection/new/back lifted to the rail via props). `ThreadsProvider` mounted at the app root in `main.tsx`
+  (beside the explorer's `RepositoriesProvider`). Rail integration via `rail/useThreadSession.ts` (owns
+  chat-vs-threads view + active id; seeds the agent on select / new); `ConversationRail.controller` is now a
+  thin switch between the new `ChatRail.controller` (the prior turn logic, extracted to stay under the
+  size/statement limits) and `ThreadsPanelController`. The chat header's chats button opens the list. The
+  chat half **remounts** when returning from the list, so selecting/new naturally clears the live turn.
+  `Date.now()` captured once via `useState` initializer (purity rule); `formatRelativeTime` takes one args
+  object (max-params). **Deferred to 8b:** rename/delete affordances + command hooks. **Deferred to 9:**
+  loading + rendering the selected thread's history (today select only resumes the session via
+  `seedThread(id, [])`) and run-finished `threadsKey` invalidation.
 
 Add `ThreadList.view.tsx` (rows: title + relative time, Base UI buttons, Motion mount/hover; each row
 exposes a **rename** and **delete** affordance via props — the view stays hook-free, just calls

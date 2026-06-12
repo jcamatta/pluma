@@ -73,7 +73,7 @@ export const App = (): React.JSX.Element => {
 
           {railOpen && (
             <div className="flex-none" style={{ width: 'var(--rail-w)' }}>
-              <ConversationRailController onClose={() => setRailOpen(false)} />
+              <ConversationRailController cwd={root} onClose={() => setRailOpen(false)} />
             </div>
           )}
 

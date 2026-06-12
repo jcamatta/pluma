@@ -37,6 +37,7 @@ interface ConversationRailViewProps {
   readonly onSubmit: () => void
   readonly onStop: () => void
   readonly onNewChat: () => void
+  readonly onShowThreads: () => void
   readonly onClose: () => void
 }
 
@@ -51,6 +52,7 @@ export function ConversationRailView({
   onSubmit,
   onStop,
   onNewChat,
+  onShowThreads,
   onClose
 }: ConversationRailViewProps): React.JSX.Element {
   return (
@@ -60,9 +62,9 @@ export function ConversationRailView({
       data-testid="conversation-rail"
     >
       <div className="flex items-center gap-2 border-b border-(--line) py-4 pl-4 pr-3">
-        <span className="ml-1 flex flex-none text-action-primary">
+        <IconButton label={labels.chats} onClick={onShowThreads} className="ml-1 rounded-lg">
           <MessagesSquare size={17} />
-        </span>
+        </IconButton>
         <span className="flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
         <IconButton label={labels.newChat} onClick={onNewChat} className="rounded-lg">
           <Plus size={17} />
