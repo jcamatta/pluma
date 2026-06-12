@@ -1,5 +1,5 @@
 {
-  "$comment": "Project-shared Claude Code settings. The deny rules below stop the agent from skipping the git hooks (.husky pre-commit / pre-push). Hooks are how check-commit-size, check-file-doc-sync, lint, test, type-coverage, and build are enforced — bypassing them defeats the whole working agreement, so it is banned the same way an eslint-disable is. This binds the agent, not a human at their own terminal; it is a guardrail, not a cryptographic lock.",
+  "$comment": "Project-shared Claude Code settings. The deny rules below stop the agent from skipping the git hooks (.husky pre-commit / pre-push). Hooks are how check-commit-size, lint, test, type-coverage, and build are enforced — bypassing them defeats the whole working agreement, so it is banned the same way an eslint-disable is. This binds the agent, not a human at their own terminal; it is a guardrail, not a cryptographic lock.",
   "permissions": {
     "deny": [
       "Bash(*--no-verify*)",

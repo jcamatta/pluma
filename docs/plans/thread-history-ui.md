@@ -60,7 +60,6 @@ concrete `Agent`, or (b) a small `ThreadControls` interface the `Agent` implemen
 supplies alongside the agent. Prefer the least-invasive option that keeps the fake-agent tests working.
 
 Unit-test the seeding (next `startRun` sends the selected id as `threadId`; `newThread` sends none).
-Update `FILE.md`.
 
 ### 8. Threads list view + panel
 
@@ -73,7 +72,7 @@ share it. Thread `cwd` down from `App`'s `root` as a prop (like `ExplorerControl
 Wire the rail's existing "Threads"/chats entry (`rail.chats` label → a `rail.threads` key, or a new
 threads entry) to open this panel; "New thread" → `newThread()`. View tests render with plain props;
 controller test with the fake provider asserts select invokes the seam. Add i18n keys to `en.json`
-(including the empty-title fallback). Update `FILE.md`.
+(including the empty-title fallback).
 
 ### 8b. Rename + delete command hooks, wired into the panel
 
@@ -83,7 +82,7 @@ returns a `Result`, and on `ok:true` **invalidates `threadsKey(cwd)`** — never
 `NameInput`); delete via a Base UI `AlertDialog` to confirm, and if the deleted thread is the active one,
 call `newThread()`. Map `error._tag` → a `t()` key per failure. Hook tests via `renderHook` +
 `QueryClientProvider` + fake writer asserting mutation + invalidation; extend the controller test for
-rename/delete. Add i18n keys. Update `FILE.md`.
+rename/delete. Add i18n keys.
 
 ### 9a. Render the in-session transcript from `agent.messages` (done)
 
@@ -128,7 +127,7 @@ When a thread is selected, render its loaded history above the live turn (reuse/
 `useThreadHistory(cwd, selectedId)` and seed the agent with it on select (step 7's `selectThread`).
 Empty/error states map `error._tag` → a `t()` key. Decide (O5) whether selecting a thread replaces the
 single-turn view with a scrollable transcript or keeps the latest turn with history above — **lean toward
-a simple scrollable transcript**. Tests for the view + loading/error branches. Update `FILE.md`.
+a simple scrollable transcript**. Tests for the view + loading/error branches.
 
 Also wire **run-finished invalidation**: when a run completes, invalidate `threadsKey(cwd)` so a brand
 new thread appears in the list (deferred from the data layer — do it where the run lifecycle is observed,
