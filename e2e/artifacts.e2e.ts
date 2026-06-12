@@ -7,10 +7,13 @@
 // the card: the card stays in the panel labeled with its file, and because leaving deactivated it a single
 // click reopens that file and re-activates its highlight (the regressions where artifacts died after
 // switching files, a card for a non-active file did nothing, and a stale-active card needed two clicks).
+// A second test proves path-addressing: with chapter.md active, the agent is told to annotate notes.md by
+// name. It discovers the file with list_open_files and passes that path to the acting tools, so the
+// artifact lands on a file the user is not viewing — no UI navigation — and the card is labeled with it.
 // Nothing about the agent is mocked; only the native folder dialog is stubbed (the one sanctioned
 // human-gesture stub). The artifacts come from real Claude tool calls (this also exercises the
-// frontend-tool permission allow-list in build-options), so the prompt pins each edit and the assertions
-// use generous timeouts for the round-trips.
+// frontend-tool permission allow-list in build-options), so the prompt pins each edit and tells the agent
+// to read the file's path first, and the assertions use generous timeouts for the round-trips.
 //
 // @e2e feature:artifacts
 // @e2e feature:artifacts-cross-file
@@ -32,7 +35,20 @@ const PROMPT =
   `1. Call create_annotation on the word "cat" with label "${ANNOTATION_LABEL}" and description ` +
   '"Consider a sharper image.".\n' +
   '2. Call propose_edit to replace the word "mat" with "rug".\n' +
-  'Use get_ranges first to resolve each word. Do not reply with prose and do not ask for confirmation.'
+  'First call get_current_document to read the document and learn its path, then pass that path to ' +
+  'get_ranges (resolve each word) and to create_annotation and propose_edit. ' +
+  'Do not reply with prose and do not ask for confirmation.'
+
+// The cross-file run: the user is active in chapter.md, but the agent is told to annotate notes.md by
+// name. It must discover the path with list_open_files and pass it to the acting tools — the artifact
+// lands on a file the user is not viewing, with no UI navigation.
+const CROSS_FILE_LABEL = 'NOTE'
+const CROSS_FILE_PROMPT =
+  'Annotate a different file without leaving the one you are viewing, then stop. ' +
+  'Call list_open_files and find the file named "notes.md". In that file — pass its path to every ' +
+  `tool — call get_ranges to resolve the word "research", then call create_annotation on it with label ` +
+  `"${CROSS_FILE_LABEL}" and description "A loose thread to follow.". Do not touch any other file. ` +
+  'Do not reply with prose and do not ask for confirmation.'
 
 // Two real Claude tool round-trips (resolve a range, then act, twice over) need well over the default.
 test.setTimeout(180_000)
@@ -101,6 +117,61 @@ test('shows the agent annotation and proposal in Review, and applies the proposa
         // toggle it off and never navigate.
         await annotationCard.click()
         await expect(window.locator('.ProseMirror:visible')).toContainText('rug', {
+          timeout: 30_000
+        })
+        await expect(
+          window.locator('.ProseMirror:visible [class*="annotation-"]').first()
+        ).toBeVisible()
+      } finally {
+        await app.close()
+      }
+    }
+  )
+})
+
+test('annotates a non-active file by path, addressed by the agent through list_open_files', async () => {
+  await withTempFolder(
+    [
+      { name: FILE, content: ORIGINAL },
+      { name: SECOND_FILE, content: SECOND_CONTENT }
+    ],
+    async (folder) => {
+      const { app, window } = await launchApp()
+      try {
+        await stubFolderPicker(app, folder)
+        await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+
+        const rail = window.getByTestId('conversation-rail')
+        await expect(rail).toBeVisible({ timeout: 30_000 })
+
+        // Open both files so both editors are mounted (list_open_files reads the open set), then make
+        // chapter.md the active one — notes.md stays open but out of view.
+        await window.getByText(SECOND_FILE, { exact: true }).click()
+        await expect(window.locator('.ProseMirror:visible')).toContainText('research', {
+          timeout: 30_000
+        })
+        await window.getByText(FILE, { exact: true }).click()
+        await expect(window.locator('.ProseMirror:visible')).toContainText('cat', { timeout: 30_000 })
+
+        // Ask the agent to annotate notes.md by name while chapter.md is the active file.
+        const composer = rail.locator('textarea[data-rail-composer]')
+        await composer.click()
+        await composer.fill(CROSS_FILE_PROMPT)
+        await rail.getByRole('button', { name: 'Send', exact: true }).click()
+
+        // The annotation lands on notes.md: a card appears labeled with that file while the visible editor
+        // is still chapter.md — the agent reached another open file purely by the path it discovered.
+        await rail.getByRole('button', { name: /Review/ }).click()
+        const card = rail
+          .locator('[data-testid^="artifact-card:"]')
+          .filter({ hasText: CROSS_FILE_LABEL })
+        await expect(card).toBeVisible({ timeout: 120_000 })
+        await expect(card).toContainText('notes')
+        await expect(window.locator('.ProseMirror:visible')).toContainText('cat')
+
+        // Clicking the card opens notes.md and reveals the annotation there.
+        await card.click()
+        await expect(window.locator('.ProseMirror:visible')).toContainText('research', {
           timeout: 30_000
         })
         await expect(

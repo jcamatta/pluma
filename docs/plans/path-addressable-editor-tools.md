@@ -78,7 +78,7 @@ the registry is the resolution table.
   `list_open_files` rather than guessing. Tighten/replace the interim paragraph shipped earlier. Assert in
   `agent-system-prompt.test.ts`. (backend)
 
-- [ ] **Step 6 — e2e.** First confirm the existing artifacts real-app spec still passes: with required
+- [x] **Step 6 — e2e.** First confirm the existing artifacts real-app spec still passes: with required
   `path` the real agent must now supply it, so it has to read the file (or `list_open_files`) first — the
   spec/prompt may need a light nudge so the round-trip stays deterministic. Then extend it (or add a
   sibling) so the agent acts on a **named** file by path while another file is active, proving the edit
