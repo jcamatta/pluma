@@ -10,6 +10,7 @@ import { FOLDER_PICK_CHANNEL, FOLDER_LIST_CHANNEL } from '../../../shared/ipc/ip
 import { i18n } from '../i18n'
 import { App } from '../App'
 import { RepositoriesProvider } from '../explorer/RepositoriesProvider'
+import { ThreadsProvider } from '../threads/ThreadsProvider'
 import { installFakeWindowApi } from '../explorer/__tests__/fake-window-api'
 
 afterEach(() => vi.unstubAllGlobals())
@@ -20,7 +21,9 @@ const renderApp = (): void => {
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <RepositoriesProvider>
-          <App />
+          <ThreadsProvider>
+            <App />
+          </ThreadsProvider>
         </RepositoriesProvider>
       </I18nextProvider>
     </QueryClientProvider>

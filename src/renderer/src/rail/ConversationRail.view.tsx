@@ -4,7 +4,7 @@
 // ConversationRail.controller. The turn body is a slot (`children`) the controller fills with the
 // ConversationTurn; until then it shows the empty state. Rendered in our design tokens.
 
-import { MessagesSquare, PanelRight, Plus, Sparkles } from 'lucide-react'
+import { History, PanelRight, Plus, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@base-ui/react'
 import { motion } from 'motion/react'
@@ -43,6 +43,7 @@ interface ConversationRailViewProps {
   readonly onSubmit: () => void
   readonly onStop: () => void
   readonly onNewChat: () => void
+  readonly onShowThreads: () => void
   readonly onClose: () => void
   readonly tab?: RailTab
   readonly onTab?: (tab: RailTab) => void
@@ -125,8 +126,8 @@ function ChatPane({
 }
 
 export function ConversationRailView(props: ConversationRailViewProps): React.JSX.Element {
-  const { labels, title, onNewChat, onClose, tab = 'chat', onTab = () => undefined } = props
-  const { reviewCount = 0, review = null } = props
+  const { labels, title, onNewChat, onShowThreads, onClose } = props
+  const { tab = 'chat', onTab = () => undefined, reviewCount = 0, review = null } = props
 
   return (
     <div
@@ -135,12 +136,12 @@ export function ConversationRailView(props: ConversationRailViewProps): React.JS
       data-testid="conversation-rail"
     >
       <div className="flex items-center gap-2 border-b border-(--line) py-4 pl-4 pr-3">
-        <span className="ml-1 flex flex-none text-action-primary">
-          <MessagesSquare size={17} />
-        </span>
-        <span className="flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
+        <span className="ml-1 flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
         <IconButton label={labels.newChat} onClick={onNewChat} className="rounded-lg">
           <Plus size={17} />
+        </IconButton>
+        <IconButton label={labels.chats} onClick={onShowThreads} className="rounded-lg">
+          <History size={17} />
         </IconButton>
         <IconButton label={labels.collapse} onClick={onClose} className="rounded-lg">
           <PanelRight size={17} />

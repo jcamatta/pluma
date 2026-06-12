@@ -15,6 +15,7 @@ import { AgentProvider } from '../../agent/AgentProvider'
 import { AgentToolsProvider } from '../../agent/AgentToolsProvider'
 import { ThreadsContext } from '../../threads/ThreadsContext'
 import { createFakeThreadsRepository } from '../../threads/__tests__/fake-threads-repository'
+import { ActiveEditorProvider } from '../../editor/ActiveEditorProvider'
 import { ConversationRailController } from '../ConversationRail.controller'
 
 afterEach(() => vi.unstubAllGlobals())
@@ -36,7 +37,9 @@ function renderRail(): void {
       <I18nextProvider i18n={i18n}>
         <ThreadsContext.Provider value={repos}>
           <AgentToolsProvider>
-            <AgentProvider cwd="/work">{children}</AgentProvider>
+            <AgentProvider cwd="/work">
+              <ActiveEditorProvider>{children}</ActiveEditorProvider>
+            </AgentProvider>
           </AgentToolsProvider>
         </ThreadsContext.Provider>
       </I18nextProvider>
