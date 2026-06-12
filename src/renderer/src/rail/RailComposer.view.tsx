@@ -7,7 +7,7 @@
 import { ArrowUp, Square } from 'lucide-react'
 import { Button } from '@base-ui/react'
 import { motion } from 'motion/react'
-import { Scrollable } from '../components/Scrollable'
+import { ComposerField } from './ComposerField'
 
 interface RailComposerProps {
   readonly placeholder: string
@@ -37,22 +37,17 @@ export function RailComposer({
   return (
     <div className="flex-none border-t border-(--line) px-4 pb-4 pt-3">
       <div className="overflow-hidden rounded-2xl border border-(--line2) bg-surface-1">
-        <Scrollable className="max-h-40">
-          <textarea
-            data-rail-composer
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            onKeyDown={(event) => {
-              if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !working) {
-                event.preventDefault()
-                onSubmit()
-              }
-            }}
-            placeholder={placeholder}
-            rows={2}
-            className="block w-full resize-none overflow-hidden bg-transparent px-4 pb-1 pt-3 font-ui text-sm leading-normal text-text-primary outline-none field-sizing-content"
-          />
-        </Scrollable>
+        <ComposerField
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          onKeyDown={(event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !working) {
+              event.preventDefault()
+              onSubmit()
+            }
+          }}
+        />
         <div className="flex items-center gap-2 px-3 pb-2 pt-1">
           <span className="flex items-center gap-2 text-xs text-text-muted">
             <kbd className="rounded-md border border-(--line2) bg-surface-3 px-2 py-1 font-ui text-xs">

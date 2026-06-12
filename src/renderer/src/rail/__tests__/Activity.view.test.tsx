@@ -66,11 +66,12 @@ describe('ActivityView', () => {
     expect(screen.queryByText('Worked')).not.toBeInTheDocument()
   })
 
-  it('when done: shows "Worked" and the step count', () => {
+  it('when done: shows "Worked" and the step count without a leading dot', () => {
     renderActivity(done)
 
     expect(screen.getByText('Worked')).toBeInTheDocument()
-    expect(screen.getByText('· 1 step')).toBeInTheDocument()
+    expect(screen.getByText('1 step')).toBeInTheDocument()
+    expect(screen.queryByText('· 1 step')).not.toBeInTheDocument()
   })
 
   it('when errored: shows "Run failed", not "Worked"', () => {
@@ -85,10 +86,19 @@ describe('ActivityView', () => {
     expect(screen.queryByText('propose_edit')).not.toBeInTheDocument()
   })
 
-  it('toggles expansion through the header (enabled only once the run finishes)', () => {
+  it('toggles expansion through the header when settled', () => {
     const { onToggleExpand } = renderActivity(done)
 
     fireEvent.click(screen.getByRole('button', { name: /Worked/ }))
+    expect(onToggleExpand).toHaveBeenCalledOnce()
+  })
+
+  it('toggles expansion through the header while still working', () => {
+    const { onToggleExpand } = renderActivity(working)
+
+    const header = screen.getByRole('button', { name: /Calling propose_edit…/ })
+    expect(header).toBeEnabled()
+    fireEvent.click(header)
     expect(onToggleExpand).toHaveBeenCalledOnce()
   })
 })

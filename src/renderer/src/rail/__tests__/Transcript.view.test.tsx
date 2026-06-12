@@ -24,4 +24,12 @@ describe('TranscriptView', () => {
     const { container } = render(<TranscriptView items={[]} />)
     expect(container.querySelector('.rise-in')).toBeNull()
   })
+
+  it('renders assistant markdown as marks, not raw asterisks', () => {
+    render(
+      <TranscriptView items={[{ id: 'a', role: 'assistant', text: 'tighten the **intro**' }]} />
+    )
+
+    expect(screen.getByText('intro').tagName).toBe('STRONG')
+  })
 })

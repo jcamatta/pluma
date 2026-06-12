@@ -5,7 +5,7 @@
 // setMessages clears) and lets the test drive AG-UI events and settle replies. The threads repository is
 // the in-memory fake and the thread controls are bound to the fake agent — no IPC.
 
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -137,6 +137,8 @@ function runTurn(agent: FakeAgent, reply: string): void {
 }
 
 describe('ConversationRailController', () => {
+  afterEach(() => vi.restoreAllMocks())
+
   it('shows the empty state before the first message', () => {
     renderRail()
     expect(screen.getByText(i18n.t('rail.newChatEmpty'))).toBeInTheDocument()
@@ -202,6 +204,25 @@ describe('ConversationRailController', () => {
 
     expect(screen.getByText('Done.')).toBeInTheDocument()
     expect(screen.getByText(i18n.t('rail.worked'))).toBeInTheDocument()
+  })
+
+  it('scrolls the sent message into view as the turn goes live, but not on assistant streaming', () => {
+    const scrollIntoView = vi.spyOn(Element.prototype, 'scrollIntoView')
+    const { agent } = renderRail()
+
+    // The turn becomes the live current prompt on RUN_STARTED — that is when the user bubble mounts
+    // and is scrolled into view.
+    act(() => {
+      send('revise')
+      agent.emit(event({ type: EventType.RUN_STARTED }))
+    })
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+
+    // Assistant deltas (the live reply streaming in) leave currentPrompt unchanged → no re-scroll.
+    act(() => {
+      agent.emit(event({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: 'm', delta: 'Done.' }))
+    })
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
   })
 
   it('clears the conversation on new chat', () => {
