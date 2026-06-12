@@ -8,7 +8,7 @@ import type { AnnotationArtifact } from '../artifact'
 
 const artifact: AnnotationArtifact = {
   kind: 'annotation',
-  path: '/a.md',
+  path: '/manuscript/Act I.md',
   id: 'a_1',
   from: 10,
   label: 'Tension',
@@ -32,6 +32,7 @@ describe('AnnotationCard', () => {
     expect(screen.getByText('Tension')).toBeInTheDocument()
     expect(screen.getByText(/only paper/)).toBeInTheDocument()
     expect(screen.getByText('Soften the threat.')).toBeInTheDocument()
+    expect(screen.getByText('Act I')).toBeInTheDocument()
   })
 
   it('selects on a body click, and dismisses without re-selecting', () => {

@@ -16,7 +16,7 @@ const labels = {
 function ready(): ProposalArtifact {
   return {
     kind: 'proposal',
-    path: '/a.md',
+    path: '/manuscript/Act I.md',
     id: 'p_1',
     from: 4,
     originalText: 'only paper',
@@ -40,6 +40,7 @@ describe('ProposalCard', () => {
 
     expect(screen.getByText('only paper')).toBeInTheDocument()
     expect(screen.getByText('paper she could burn')).toBeInTheDocument()
+    expect(screen.getByText('Act I')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reject' })).toBeInTheDocument()
   })

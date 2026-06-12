@@ -104,6 +104,12 @@ future **tabs** feature needs (open-set + active tab + per-file editor), so none
    `data-testid` to the composite `artifact-card:<path>::<id>` (deferred from step 3) now that the cards
    are being edited anyway.
 
+   **DONE.** New `ArtifactFileLabel.view.tsx` renders the owning file's basename (`.md` stripped, same
+   `editorFileName` the top bar uses) as a muted chip with the full path as a hover `title`; both
+   `AnnotationCard`/`ProposalCard` place it at the right end of their header row. The cards' `data-testid`
+   is now the composite `artifact-card:<path>::<id>` (controller test updated; e2e prefix selector still
+   matches). The label is a bare filename — no hardcoded English, so nothing to translate.
+
 5. **Cross-file select (#3).** The panel controller resolves the artifact's editor by `path`. Same
    file → activate decoration + reveal as today. Different file → request `onOpen(path)` (App makes
    it the active/visible file), then activate + reveal in that editor once it's shown. Controller

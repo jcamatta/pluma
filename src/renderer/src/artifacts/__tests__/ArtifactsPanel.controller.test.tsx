@@ -119,7 +119,7 @@ describe('ArtifactsPanelController', () => {
 
       // Target the card by id: once active, the proposal also renders its replacement as an editor
       // decoration, so the card text alone is ambiguous.
-      const card = screen.getByTestId('artifact-card:p_1')
+      const card = screen.getByTestId(`artifact-card:${PATH}::p_1`)
       fireEvent.click(card)
       expect(getActiveProposalId(editor)).toBe('p_1')
 
