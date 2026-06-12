@@ -68,6 +68,10 @@ test('drops an image into the editor and persists it as markdown', async () => {
         await dropImage(surface, 'pic.png')
         await expect(surface.locator('img')).toBeVisible()
 
+        // Clicking the image selects the node, which must show the selected affordance.
+        await surface.locator('img').click()
+        await expect(surface.locator('img')).toHaveClass(/ProseMirror-selectednode/)
+
         // The debounced autosave must persist the image as a markdown data-URI reference.
         await expect
           .poll(() => readFile(path, 'utf8'), { timeout: 5000 })
