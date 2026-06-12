@@ -25,7 +25,9 @@ _Landed: `@tiptap/extension-image` pinned to exact `3.26.0` (the `^` range resol
 - `src/renderer/src/editor/extensions/__tests__/image.test.ts` — using the existing editor test harness: inserting an image node and calling `getMarkdown()` round-trips to `![alt](src)`, and setting markdown `![](data:image/png;base64,…)` parses back to an image node.
 - **Delivers:** images/GIFs render and round-trip through markdown. No paste/drop yet.
 
-### Step 2 — pure source-resolution logic
+### Step 2 — pure source-resolution logic ✅ done
+
+_Landed: `image-source-logic.ts` exports `ALLOWED_IMAGE_MIME_TYPES`, `filterImageFiles`, `extractImageSrc`, and `resolveImageSource` (→ `{kind:'url'|'file'}`). `extractImageSrc` parses the html with `DOMParser` (no `as`). Decision: prefer an html `<img src>` over the file when present, which covers the pasted-gif degradation. 6 tests green._
 
 - `src/renderer/src/editor/extensions/image-source-logic.ts` — pure calculations, no DOM side effects:
   - filter a `File[]` down to the allowed image types (png, jpeg, gif, webp);
