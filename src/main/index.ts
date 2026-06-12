@@ -6,6 +6,7 @@ import * as Exit from 'effect/Exit'
 import * as Scope from 'effect/Scope'
 import icon from '../../resources/icon.png?asset'
 import { registerAgent, registerIpc, registerWatch } from './ipc/register'
+import { mainRuntime } from './runtime/main-runtime'
 
 // The app-lifetime scope owns the folder watcher fiber and its OS subscription; closing it on quit
 // releases them.
@@ -80,6 +81,7 @@ app.whenReady().then(() => {
 // its OS subscription and PubSub.
 app.on('before-quit', () => {
   Effect.runFork(Scope.close(appScope, Exit.void))
+  void mainRuntime.dispose()
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
