@@ -11,6 +11,17 @@ import { annotationSeverities } from '../../editor/extensions/annotations'
 const filePathDescription =
   'Absolute path of the open file to act on, taken from list_open_files or a read-tool result.'
 
+const listOpenFilesTool: Tool = {
+  name: 'list_open_files',
+  description:
+    'List the files currently open in the editor — each with its absolute path, display name, and whether it is the file the user is active in. Use a returned path to address the acting tools; the set can change between turns, so check it again if a path is rejected.',
+  parameters: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {}
+  }
+}
+
 const getCurrentSelectionTool: Tool = {
   name: 'get_current_selection',
   description: 'Return the current editor selection as text or Markdown.',
@@ -86,6 +97,7 @@ const proposeEditTool: Tool = {
 }
 
 const agentToolSpecs: readonly Tool[] = [
+  listOpenFilesTool,
   getCurrentSelectionTool,
   getCurrentDocumentTool,
   getRangesTool,
@@ -94,6 +106,7 @@ const agentToolSpecs: readonly Tool[] = [
 ]
 
 export {
+  listOpenFilesTool,
   getCurrentSelectionTool,
   getCurrentDocumentTool,
   getRangesTool,

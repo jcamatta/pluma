@@ -4,7 +4,7 @@
 // at the active path, and (once the tools take a path) any open file can be addressed by it. Renders
 // nothing; it exists only to own the registration.
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { Editor } from '@tiptap/core'
 import { useActiveEditor } from './ActiveEditorContext'
 import { useOpenFiles } from './OpenFilesContext'
@@ -17,7 +17,8 @@ function EditorToolsBridge(): null {
     (path: string): Editor | null => editors.get(path) ?? null,
     [editors]
   )
-  useEditorTools({ resolve, activePath })
+  const openPaths = useMemo(() => [...editors.keys()], [editors])
+  useEditorTools({ resolve, activePath, openPaths })
   return null
 }
 

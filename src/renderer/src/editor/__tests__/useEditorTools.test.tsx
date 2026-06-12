@@ -8,6 +8,7 @@ import {
   agentToolSpecs,
   getCurrentDocumentTool,
   getRangesTool,
+  listOpenFilesTool,
   proposeEditTool
 } from '../../agent/tools/specs'
 import type { AgentToolResult } from '../../agent/tools/types'
@@ -25,7 +26,8 @@ function wrapper({ children }: { readonly children: ReactNode }): React.JSX.Elem
 function depsFor(editor: Editor | null): Parameters<typeof useEditorTools>[0] {
   return {
     resolve: (path: string) => (editor !== null && path === PATH ? editor : null),
-    activePath: editor === null ? null : PATH
+    activePath: editor === null ? null : PATH,
+    openPaths: editor === null ? [] : [PATH]
   }
 }
 
@@ -81,6 +83,22 @@ describe('useEditorTools', () => {
 
       expect(proposed?.ok).toBe(true)
       expect(getProposals(editor)).toHaveLength(1)
+    } finally {
+      editor.destroy()
+    }
+  })
+
+  it('lists the open files with the active one flagged', async () => {
+    const editor = createTestEditor('hello world')
+    try {
+      const registry = renderRegistry(depsFor(editor))
+
+      const result = await registry.byName(listOpenFilesTool.name)?.handler({})
+
+      expect(result).toEqual({
+        ok: true,
+        output: { type: 'json', value: { files: [{ path: PATH, name: 'test', active: true }] } }
+      })
     } finally {
       editor.destroy()
     }

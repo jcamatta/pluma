@@ -64,7 +64,7 @@ the registry is the resolution table.
   return `no_open_editor:<path>` when it is not open. Tests: resolves by explicit path, errors on an
   unknown/closed path. (renderer)
 
-- [ ] **Step 3 — `list_open_files` tool.** New spec + handler (a calculation over `{ editors, activePath }`
+- [x] **Step 3 — `list_open_files` tool.** New spec + handler (a calculation over `{ editors, activePath }`
   → `[{ path, name, active }]`, names via the existing `editorFileName` logic) + registration in
   `useEditorTools`. Tests for the snapshot shape and the active flag. (renderer)
 

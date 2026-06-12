@@ -8,12 +8,14 @@ import {
   getCurrentDocumentTool,
   getCurrentSelectionTool,
   getRangesTool,
+  listOpenFilesTool,
   proposeEditTool
 } from '../agent/tools/specs'
 import { createAnnotationTool as runCreateAnnotation } from '../agent/tools/tool-create-annotation'
 import { getCurrentDocument } from '../agent/tools/tool-get-current-document'
 import { getCurrentSelection } from '../agent/tools/tool-get-current-selection'
 import { getRanges } from '../agent/tools/tool-get-ranges'
+import { listOpenFiles } from '../agent/tools/tool-list-open-files'
 import { proposeEdit } from '../agent/tools/tool-propose-edit'
 import type { AnnotationSeverity } from './extensions/annotations'
 import type { EditorResolverPort } from './editor-resolver.port'
@@ -21,9 +23,11 @@ import type { EditorResolverPort } from './editor-resolver.port'
 interface EditorToolDeps {
   readonly resolve: EditorResolverPort
   readonly activePath: string | null
+  readonly openPaths: readonly string[]
 }
 
 interface EditorToolEntries {
+  readonly list: ToolEntry
   readonly selection: ToolEntry
   readonly document: ToolEntry
   readonly ranges: ToolEntry
@@ -50,6 +54,10 @@ function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
   }
 
   return {
+    list: {
+      spec: listOpenFilesTool,
+      handler: () => listOpenFiles({ openPaths: deps.openPaths, activePath: deps.activePath })
+    },
     selection: {
       spec: getCurrentSelectionTool,
       handler: withLiveEditor((live) => getCurrentSelection(live))
@@ -93,6 +101,7 @@ function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
 
 function useEditorTools(deps: EditorToolDeps): void {
   const entries = editorToolEntries(deps)
+  useFrontendTool(entries.list)
   useFrontendTool(entries.selection)
   useFrontendTool(entries.document)
   useFrontendTool(entries.ranges)
