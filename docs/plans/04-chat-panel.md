@@ -26,6 +26,24 @@ children.
 
 Pick up the next unchecked item in §3. What has landed so far:
 
+- **Design-fidelity pass (conversation half) — DONE.** Compared each in-scope rail view against
+  `app.jsx` component-by-component: the header, scrollable body, pinned composer card (textarea +
+  `⌘↵` hint + animated Send), the collapsible `Activity` header (spinner/check/cross + label + step
+  count + chevron), `LogRow` (glyph in the timeline gutter + mono meta line), `UserMessage`,
+  `ThreadDot`, and `Empty` all match the prototype's anatomy and spacing. The custom glyph animations
+  in `App.css` (`spinner-ring` = accent ring + bright arc spinning, `agent-status-dot` = `pulse-dot`,
+  `rise-in`) replicate the design's. The only deviations are the two already documented and
+  intentional per the design-tokens exception: **Stop lives in the composer** (run-control, not a
+  per-message action) and the **user bubble uses the accent pairing** (`bg-action-primary` /
+  `text-on-accent`) in place of the design's `surface-inverse-*` tokens we don't carry. Artifact
+  chips and the chats-list/`ChatListRow` are out of scope here (F5 split out / Q5 deferred).
+
+- **e2e — DONE.** `feature:rail` + `agent.run`/`agent.event` were already covered by
+  [rail.e2e.ts](../../e2e/rail.e2e.ts); added **`agent.abort`** to the coverage manifest and a second
+  real-app spec that fills a long prompt, starts a run, and clicks the composer **Stop** while the run
+  is in flight, asserting the run settles (Stop → Send returns) — driving `agent:abort` over IPC with
+  nothing mocked but the native folder dialog. The fast Vitest audit is green.
+
 - **B5 (the gate) + Q3 — DONE.** The `propose_edit` round-trip is proven end to end into a real
   headless editor: [tool-round-trip.integration.test.tsx](../../src/renderer/src/agent/__tests__/tool-round-trip.integration.test.tsx)
   drives an `agent:tool-call` for `get_ranges` through `useToolBridge` into the real handlers and a
@@ -141,9 +159,16 @@ multi-turn chat is fixed. What is left:
   against the live editor; only the rail-side _surfacing_ of them is deferred.
 - **F6 — `es.json`.** No Spanish namespace exists for any feature yet; this is a whole-app concern,
   deferred.
-- **Design-fidelity pass** — component-by-component against `app.jsx` (the conversation/activity/
-  composer half; the artifact chips are out of scope here per F5 above).
-- **e2e** — the rail's manifest entry + real-app spec.
+- ~~**Design-fidelity pass**~~ **DONE** (conversation half; see §Progress).
+- ~~**e2e**~~ **DONE** — `feature:rail` + `agent.run`/`agent.event`/`agent.abort` covered by
+  `rail.e2e.ts`; both specs pass against the real app (see §Progress).
+
+**This plan's PR ships the conversation half of the rail end to end** (composer → live agent run →
+activity timeline → streamed reply → Stop/abort) plus the frontend-tool round-trip (B5/Q3), with unit
+and real-app e2e coverage. The only follow-ups are the **F5 artifact-surfacing PR** (hover/click cards
+
+- Q4) and the whole-app **`es.json`**, both intentionally out of this plan's scope. Because those
+  remain, the plan file stays (per AGENTS' "a plan with deferred items is not done").
 
 ---
 
