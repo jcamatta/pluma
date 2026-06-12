@@ -66,6 +66,8 @@
   },
   "rail": {
     "chats": "Chats",
+    "chat": "Chat",
+    "review": "Review",
     "newChat": "New chat",
     "open": "Open chat",
     "collapse": "Collapse panel",

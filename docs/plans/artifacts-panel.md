@@ -192,7 +192,19 @@ Tests: list view with plain props; controller test rendering inside `ActiveEdito
 editor — click a card asserts it becomes active, Accept asserts the proposal’s text is applied and the
 card leaves the list, Dismiss removes an annotation.
 
-### 6. Mount the panel in the rail + i18n
+### 6. Mount the panel in the rail + i18n ✅ done
+
+Landed a two-tab rail (Chat | Review). `ConversationRail.view` gained optional `tab`/`onTab`/`reviewCount`/
+`review` props (default to the chat tab, so existing tests stand) and a `TabButton` + `ChatPane` local
+split; the Review tab swaps the conversation/composer for the `review` slot and badges the count.
+`ConversationRail.controller` owns the `tab` state, reads `useEditorArtifacts().artifacts.length` for the
+badge, and passes `<ArtifactsPanelController />` as the slot (labels via a `railLabels(t)` helper to stay
+under the size budget). Added `rail.chat`/`rail.review` to `en.json`. Tests: a `· tabs` describe in
+`ConversationRail.view.test` (Review shows the slot + hides the composer; click fires `onTab`; badge
+shows the count) and a controller test (the existing render now wraps `ActiveEditorProvider`; clicking
+Review shows the artifacts empty state). Checks green (lint, full rail+artifacts+App suite, web typecheck).
+
+> Original design notes:
 
 Surface the panel in the rail. **Lean toward a two-tab rail header (`Chat` | `Review`)** matching the
 reference’s split, with a count badge on `Review` (number of unresolved artifacts). The `Review` tab

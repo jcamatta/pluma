@@ -1,16 +1,20 @@
-// Pure right-hand conversation rail, ported from the design's ConversationRail (conversation
-// experience). Holds no hooks beyond render and no IPC; data, callbacks, and resolved label strings all
-// arrive through props from ConversationRail.controller. Rendered in our design tokens. This is the
-// chat view only — the chats-list view and ChatListRow are deferred until threads persist (Plan 04 Q5).
-// The turn body is a slot (`children`) the controller fills with the ConversationTurn once built (F3);
-// until then it shows the empty state.
+// Pure right-hand rail. Two tabs sit under the header: Chat (the conversation + composer) and Review (the
+// artifacts the agent produced, supplied as the `review` slot, with a count badge). Holds no hooks beyond
+// render and no IPC; data, callbacks, and resolved label strings all arrive through props from
+// ConversationRail.controller. The turn body is a slot (`children`) the controller fills with the
+// ConversationTurn; until then it shows the empty state. Rendered in our design tokens.
 
-import { History, PanelRight, Plus, Sparkles } from 'lucide-react'
+import { MessagesSquare, PanelRight, Plus, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { Button } from '@base-ui/react'
+import { motion } from 'motion/react'
 import { IconButton } from '../components/IconButton'
 import { Scrollable } from '../components/Scrollable'
+import { cn } from '../components/cn'
 import { Empty } from './Empty.view'
 import { RailComposer } from './RailComposer.view'
+
+type RailTab = 'chat' | 'review'
 
 interface RailLabels {
   readonly chats: string
@@ -21,6 +25,8 @@ interface RailLabels {
   readonly send: string
   readonly toSend: string
   readonly stop: string
+  readonly chatTab: string
+  readonly reviewTab: string
 }
 
 interface ConversationRailViewProps {
@@ -37,43 +43,68 @@ interface ConversationRailViewProps {
   readonly onSubmit: () => void
   readonly onStop: () => void
   readonly onNewChat: () => void
-  readonly onShowThreads: () => void
   readonly onClose: () => void
+  readonly tab?: RailTab
+  readonly onTab?: (tab: RailTab) => void
+  readonly reviewCount?: number
+  readonly review?: ReactNode
 }
 
-export function ConversationRailView({
+function TabButton({
+  label,
+  active,
+  count,
+  onClick
+}: {
+  readonly label: string
+  readonly active: boolean
+  readonly count: number
+  readonly onClick: () => void
+}): React.JSX.Element {
+  return (
+    <Button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-2 rounded-lg px-3 py-1 text-sm font-semibold transition-colors',
+        active ? 'bg-action-primary text-text-on-accent' : 'text-text-secondary hover:bg-(--hover)'
+      )}
+      render={
+        <motion.button whileTap={{ scale: 0.96 }}>
+          {label}
+          {count > 0 && (
+            <span
+              className={cn(
+                'flex min-w-4 items-center justify-center rounded-full px-1 text-xs font-bold',
+                active
+                  ? 'bg-text-on-accent/20 text-text-on-accent'
+                  : 'bg-action-primary text-text-on-accent'
+              )}
+            >
+              {count}
+            </span>
+          )}
+        </motion.button>
+      }
+    />
+  )
+}
+
+function ChatPane({
   labels,
-  title,
   children,
   hasTurn,
   working,
   value,
   onChange,
   onSubmit,
-  onStop,
-  onNewChat,
-  onShowThreads,
-  onClose
-}: ConversationRailViewProps): React.JSX.Element {
+  onStop
+}: Pick<
+  ConversationRailViewProps,
+  'labels' | 'children' | 'hasTurn' | 'working' | 'value' | 'onChange' | 'onSubmit' | 'onStop'
+>): React.JSX.Element {
   return (
-    <div
-      className="flex h-full flex-col rounded-2xl bg-surface-3"
-      style={{ width: 'var(--rail-w)' }}
-      data-testid="conversation-rail"
-    >
-      <div className="flex items-center gap-2 border-b border-(--line) py-4 pl-4 pr-3">
-        <span className="ml-1 flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
-        <IconButton label={labels.newChat} onClick={onNewChat} className="rounded-lg">
-          <Plus size={17} />
-        </IconButton>
-        <IconButton label={labels.chats} onClick={onShowThreads} className="rounded-lg">
-          <History size={17} />
-        </IconButton>
-        <IconButton label={labels.collapse} onClick={onClose} className="rounded-lg">
-          <PanelRight size={17} />
-        </IconButton>
-      </div>
-
+    <>
       <Scrollable className="min-h-0 flex-1" contentClassName="px-4 pb-2 pt-4">
         {hasTurn ? children : <Empty icon={<Sparkles size={22} />} text={labels.newChatEmpty} />}
       </Scrollable>
@@ -89,8 +120,65 @@ export function ConversationRailView({
         onSubmit={onSubmit}
         onStop={onStop}
       />
+    </>
+  )
+}
+
+export function ConversationRailView(props: ConversationRailViewProps): React.JSX.Element {
+  const { labels, title, onNewChat, onClose, tab = 'chat', onTab = () => undefined } = props
+  const { reviewCount = 0, review = null } = props
+
+  return (
+    <div
+      className="flex h-full flex-col rounded-2xl bg-surface-3"
+      style={{ width: 'var(--rail-w)' }}
+      data-testid="conversation-rail"
+    >
+      <div className="flex items-center gap-2 border-b border-(--line) py-4 pl-4 pr-3">
+        <span className="ml-1 flex flex-none text-action-primary">
+          <MessagesSquare size={17} />
+        </span>
+        <span className="flex-1 truncate text-sm font-semibold tracking-tight">{title}</span>
+        <IconButton label={labels.newChat} onClick={onNewChat} className="rounded-lg">
+          <Plus size={17} />
+        </IconButton>
+        <IconButton label={labels.collapse} onClick={onClose} className="rounded-lg">
+          <PanelRight size={17} />
+        </IconButton>
+      </div>
+
+      <div className="flex gap-1 border-b border-(--line) px-3 py-2">
+        <TabButton
+          label={labels.chatTab}
+          active={tab === 'chat'}
+          count={0}
+          onClick={() => onTab('chat')}
+        />
+        <TabButton
+          label={labels.reviewTab}
+          active={tab === 'review'}
+          count={reviewCount}
+          onClick={() => onTab('review')}
+        />
+      </div>
+
+      {tab === 'chat' ? (
+        <ChatPane
+          labels={labels}
+          hasTurn={props.hasTurn}
+          working={props.working}
+          value={props.value}
+          onChange={props.onChange}
+          onSubmit={props.onSubmit}
+          onStop={props.onStop}
+        >
+          {props.children}
+        </ChatPane>
+      ) : (
+        <Scrollable className="min-h-0 flex-1">{review}</Scrollable>
+      )}
     </div>
   )
 }
 
-export type { RailLabels, ConversationRailViewProps }
+export type { RailLabels, RailTab, ConversationRailViewProps }

@@ -9,8 +9,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAgent } from '../agent/useAgent'
+import { ArtifactsPanelController } from '../artifacts/ArtifactsPanel.controller'
 import { useAgentActivityLog } from './useAgentActivityLog'
 import { useThreadsRefresh } from './useThreadsRefresh'
+import { useReviewTab } from './useReviewTab'
 import { ConversationRailView } from './ConversationRail.view'
 import { TranscriptView } from './Transcript.view'
 import { ConversationTurnView } from './ConversationTurn.view'
@@ -49,11 +51,14 @@ export function ChatRailController({
   })
 
   useThreadsRefresh(agent, cwd)
+  const review = useReviewTab()
 
   const working = activity.status === 'working'
   const { history, currentPrompt } = splitConversation(agent.messages, activity.status !== 'idle')
-  const messageTitle = history.find((item) => item.role === 'user')?.text ?? currentPrompt
-  const title = resolveTitle(threadTitle, messageTitle)
+  const title = resolveTitle(
+    threadTitle,
+    history.find((item) => item.role === 'user')?.text ?? currentPrompt
+  )
 
   const submit = (): void => {
     const text = value.trim()
@@ -74,7 +79,9 @@ export function ChatRailController({
         composerPlaceholder: t('rail.composerPlaceholder'),
         send: t('rail.send'),
         toSend: t('rail.toSend'),
-        stop: t('rail.stop')
+        stop: t('rail.stop'),
+        chatTab: t('rail.chat'),
+        reviewTab: t('rail.review')
       }}
       title={title ?? t('rail.newChat')}
       hasTurn={history.length > 0 || currentPrompt !== null}
@@ -90,6 +97,10 @@ export function ChatRailController({
       }}
       onShowThreads={onShowThreads}
       onClose={onClose}
+      tab={review.tab}
+      onTab={review.setTab}
+      reviewCount={review.reviewCount}
+      review={<ArtifactsPanelController />}
     >
       <TranscriptView items={history} />
       {currentPrompt !== null && (
