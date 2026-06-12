@@ -51,6 +51,11 @@ if (typeof window !== 'undefined' && typeof window.PointerEvent === 'undefined')
   window.PointerEvent = PointerEventPolyfill
 }
 
+// jsdom omits Element.prototype.scrollIntoView; the rail scrolls a sent message into view on submit.
+if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => undefined
+}
+
 if (typeof Range !== 'undefined' && !Range.prototype.getClientRects) {
   const emptyRectList: DOMRectList = {
     item: () => null,

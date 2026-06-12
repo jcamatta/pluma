@@ -6,14 +6,16 @@
 // it. Opening the threads list and starting a new thread are lifted to the parent rail switch; a finished
 // run refreshes the thread list. Before the first message the rail shows its empty state.
 
+import type { TFunction } from 'i18next'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { TFunction } from 'i18next'
 import { useAgent } from '../agent/useAgent'
 import { ArtifactsPanelController } from '../artifacts/ArtifactsPanel.controller'
 import { useAgentActivityLog } from './useAgentActivityLog'
+import { useScrollSentMessageIntoView } from './useScrollSentMessageIntoView'
 import { useThreadsRefresh } from './useThreadsRefresh'
 import { useReviewTab } from './useReviewTab'
+import type { ActivityLabels } from './Activity.view'
 import { ConversationRailView, type RailLabels } from './ConversationRail.view'
 import { TranscriptView } from './Transcript.view'
 import { ConversationTurnView } from './ConversationTurn.view'
@@ -48,6 +50,15 @@ function railLabels(t: TFunction): RailLabels {
   }
 }
 
+function activityLabels(t: TFunction): ActivityLabels {
+  return {
+    thinking: t('rail.thinking'),
+    worked: t('rail.worked'),
+    runFailed: t('rail.runFailed'),
+    step: (count) => t('rail.step', { count })
+  }
+}
+
 export function ChatRailController({
   cwd,
   threadTitle,
@@ -71,10 +82,7 @@ export function ChatRailController({
 
   const working = activity.status === 'working'
   const { history, currentPrompt } = splitConversation(agent.messages, activity.status !== 'idle')
-  const title = resolveTitle(
-    threadTitle,
-    history.find((item) => item.role === 'user')?.text ?? currentPrompt
-  )
+  const userBubbleRef = useScrollSentMessageIntoView(currentPrompt)
 
   const submit = (): void => {
     const text = value.trim()
@@ -88,7 +96,10 @@ export function ChatRailController({
   return (
     <ConversationRailView
       labels={railLabels(t)}
-      title={title ?? t('rail.newChat')}
+      title={
+        resolveTitle(threadTitle, history.find((item) => item.role === 'user')?.text ?? currentPrompt) ??
+        t('rail.newChat')
+      }
       hasTurn={history.length > 0 || currentPrompt !== null}
       working={working}
       value={value}
@@ -110,14 +121,10 @@ export function ChatRailController({
       <TranscriptView items={history} />
       {currentPrompt !== null && (
         <ConversationTurnView
+          ref={userBubbleRef}
           prompt={currentPrompt}
           activity={activity}
-          labels={{
-            thinking: t('rail.thinking'),
-            worked: t('rail.worked'),
-            runFailed: t('rail.runFailed'),
-            step: (count) => t('rail.step', { count })
-          }}
+          labels={activityLabels(t)}
           expanded={expandOverride ?? working}
           onToggleExpand={() => setExpandOverride(!(expandOverride ?? working))}
         />
