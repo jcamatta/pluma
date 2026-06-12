@@ -61,3 +61,10 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/main/ipc/agent/thread-history-handler.ts` — IPC endpoint serializing the getThreadHistory use case to a Result.
 - `src/main/ipc/agent/__tests__/list-threads-handler.test.ts` — tests for the list-threads handler with the SDK mocked.
 - `src/main/ipc/agent/__tests__/thread-history-handler.test.ts` — tests for the thread-history handler with the SDK mocked.
+
+### src/main/ipc/agent — threads (write endpoints)
+
+- `src/main/ipc/agent/rename-thread-handler.ts` — IPC endpoint serializing the renameThread use case to an ack Result.
+- `src/main/ipc/agent/delete-thread-handler.ts` — IPC endpoint serializing the deleteThread use case to an ack Result.
+- `src/main/ipc/agent/__tests__/rename-thread-handler.test.ts` — tests for the rename-thread handler with the SDK mocked.
+- `src/main/ipc/agent/__tests__/delete-thread-handler.test.ts` — tests for the delete-thread handler with the SDK mocked.

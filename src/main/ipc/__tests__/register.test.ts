@@ -1,4 +1,5 @@
-// Test that registerIpc wires the file channels onto ipcMain.
+// Test that registerIpc wires the stateless request/response channels onto ipcMain, and that
+// registerWatch wires the per-window folder:watch channel.
 
 import * as Effect from 'effect/Effect'
 import * as Scope from 'effect/Scope'
@@ -8,75 +9,27 @@ const handle = vi.fn()
 const removeHandler = vi.fn()
 vi.mock('electron', () => ({ ipcMain: { handle, removeHandler } }))
 
+const STATELESS_CHANNELS = [
+  'file:create',
+  'file:delete',
+  'file:write',
+  'file:read',
+  'folder:create',
+  'folder:delete',
+  'folder:list',
+  'folder:pick',
+  'agent:list-threads',
+  'agent:thread-history',
+  'agent:rename-thread',
+  'agent:delete-thread'
+]
+
 describe('registerIpc', () => {
-  it('registers the file:create channel', async () => {
+  it.each(STATELESS_CHANNELS)('registers the %s channel', async (channel) => {
     const { registerIpc } = await import('../register')
     registerIpc()
 
-    expect(handle).toHaveBeenCalledWith('file:create', expect.any(Function))
-  })
-
-  it('registers the file:delete channel', async () => {
-    const { registerIpc } = await import('../register')
-    registerIpc()
-
-    expect(handle).toHaveBeenCalledWith('file:delete', expect.any(Function))
-  })
-
-  it('registers the file:write channel', async () => {
-    const { registerIpc } = await import('../register')
-    registerIpc()
-
-    expect(handle).toHaveBeenCalledWith('file:write', expect.any(Function))
-  })
-
-  it('registers the file:read channel', async () => {
-    const { registerIpc } = await import('../register')
-    registerIpc()
-
-    expect(handle).toHaveBeenCalledWith('file:read', expect.any(Function))
-  })
-
-  it('registers the folder:create channel', async () => {
-    const { registerIpc } = await import('../register')
-    registerIpc()
-
-    expect(handle).toHaveBeenCalledWith('folder:create', expect.any(Function))
-  })
-
-  it('registers the folder:delete channel', async () => {
-    const { registerIpc } = await import('../register')
-    registerIpc()
-
-    expect(handle).toHaveBeenCalledWith('folder:delete', expect.any(Function))
-  })
-
-  it('registers the folder:list channel', async () => {
-    const { registerIpc } = await import('../register')
-    registerIpc()
-
-    expect(handle).toHaveBeenCalledWith('folder:list', expect.any(Function))
-  })
-
-  it('registers the folder:pick channel', async () => {
-    const { registerIpc } = await import('../register')
-    registerIpc()
-
-    expect(handle).toHaveBeenCalledWith('folder:pick', expect.any(Function))
-  })
-
-  it('registers the agent:list-threads channel', async () => {
-    const { registerIpc } = await import('../register')
-    registerIpc()
-
-    expect(handle).toHaveBeenCalledWith('agent:list-threads', expect.any(Function))
-  })
-
-  it('registers the agent:thread-history channel', async () => {
-    const { registerIpc } = await import('../register')
-    registerIpc()
-
-    expect(handle).toHaveBeenCalledWith('agent:thread-history', expect.any(Function))
+    expect(handle).toHaveBeenCalledWith(channel, expect.any(Function))
   })
 
   it('registers the folder:watch channel for the window', async () => {

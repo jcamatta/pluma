@@ -265,6 +265,16 @@ new name; delete then list omits it. Update `FILE.md`.
    Register in `ipc/register.ts`. Handler tests assert `ok:true`/`ok:false` serialization. Update
    `FILE.md`.
 
+4b. ✅ **DONE.** Added `AGENT_RENAME_THREAD_CHANNEL` (`{ cwd, threadId, title }` → null ack) and
+`AGENT_DELETE_THREAD_CHANNEL` (`{ cwd, threadId }` → null ack), both with `ThreadWriteError`
+(`_tag: 'ThreadWriteFailed'`), in the contract + registry. Wire input types are named
+`RenameThreadRequest` / `DeleteThreadRequest` to avoid clashing with the app-layer `RenameThreadInput`.
+Handlers `rename-thread-handler.ts` / `delete-thread-handler.ts` run the use cases under
+`ClaudeThreadWriterLive` and serialize to `Result`; the four thread channels register via a
+`registerThreadChannels()` helper (keeps `registerIpc` under the statement limit). Handler + register
+tests added. **Backend track (steps 0–4b) is COMPLETE. Next: frontend track, starting at step 5
+(renderer reader/writer ports + IPC adapters + provider).**
+
 4b. **Two command channels.** In `shared/ipc/ipc-contract/agent.ts` add `AGENT_RENAME_THREAD_CHANNEL`
 (`{ cwd, threadId, title }` → ack) and `AGENT_DELETE_THREAD_CHANNEL` (`{ cwd, threadId }` → ack),
 each with a `ThreadWriteError` (`_tag`). Wire handlers in `ipc/agent/` running the step-2b use cases,

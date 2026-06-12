@@ -6,7 +6,9 @@
 import type { Result } from '../ipc-result'
 import type {
   AgentAbortContract,
+  AgentDeleteThreadContract,
   AgentListThreadsContract,
+  AgentRenameThreadContract,
   AgentRunContract,
   AgentThreadHistoryContract,
   AgentToolResultContract
@@ -40,6 +42,8 @@ type IpcContract =
   | AgentToolResultContract
   | AgentListThreadsContract
   | AgentThreadHistoryContract
+  | AgentRenameThreadContract
+  | AgentDeleteThreadContract
 
 type IpcChannel = IpcContract['channel']
 

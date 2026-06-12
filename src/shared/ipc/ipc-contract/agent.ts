@@ -28,6 +28,8 @@ const AGENT_ABORT_CHANNEL = 'agent:abort'
 const AGENT_TOOL_RESULT_CHANNEL = 'agent:tool-result'
 const AGENT_LIST_THREADS_CHANNEL = 'agent:list-threads'
 const AGENT_THREAD_HISTORY_CHANNEL = 'agent:thread-history'
+const AGENT_RENAME_THREAD_CHANNEL = 'agent:rename-thread'
+const AGENT_DELETE_THREAD_CHANNEL = 'agent:delete-thread'
 
 interface RunAgentError {
   readonly _tag: 'RunAgentFailed'
@@ -53,6 +55,23 @@ interface ListThreadsInput {
 }
 
 interface ThreadHistoryInput {
+  readonly cwd: string
+  readonly threadId: string
+}
+
+// Both thread writes fail the same way: the session is missing or could not be written. The renderer
+// maps the tag to a translated message.
+interface ThreadWriteError {
+  readonly _tag: 'ThreadWriteFailed'
+}
+
+interface RenameThreadRequest {
+  readonly cwd: string
+  readonly threadId: string
+  readonly title: string
+}
+
+interface DeleteThreadRequest {
   readonly cwd: string
   readonly threadId: string
 }
@@ -99,6 +118,20 @@ type AgentThreadHistoryContract = IpcContractDefinition<
   ThreadReadError
 >
 
+type AgentRenameThreadContract = IpcContractDefinition<
+  typeof AGENT_RENAME_THREAD_CHANNEL,
+  RenameThreadRequest,
+  null,
+  ThreadWriteError
+>
+
+type AgentDeleteThreadContract = IpcContractDefinition<
+  typeof AGENT_DELETE_THREAD_CHANNEL,
+  DeleteThreadRequest,
+  null,
+  ThreadWriteError
+>
+
 type AgentToolResultContract = IpcContractDefinition<
   typeof AGENT_TOOL_RESULT_CHANNEL,
   AgentToolResultMessage,
@@ -112,13 +145,18 @@ export {
   AGENT_TOOL_RESULT_CHANNEL,
   AGENT_LIST_THREADS_CHANNEL,
   AGENT_THREAD_HISTORY_CHANNEL,
+  AGENT_RENAME_THREAD_CHANNEL,
+  AGENT_DELETE_THREAD_CHANNEL,
   type RunAgentState,
   type RunAgentInput,
   type RunAgentError,
   type ThreadSummary,
   type ThreadReadError,
+  type ThreadWriteError,
   type ListThreadsInput,
   type ThreadHistoryInput,
+  type RenameThreadRequest,
+  type DeleteThreadRequest,
   type AgentToolOutput,
   type AgentToolResult,
   type AgentToolResultMessage,
@@ -126,5 +164,7 @@ export {
   type AgentAbortContract,
   type AgentToolResultContract,
   type AgentListThreadsContract,
-  type AgentThreadHistoryContract
+  type AgentThreadHistoryContract,
+  type AgentRenameThreadContract,
+  type AgentDeleteThreadContract
 }
