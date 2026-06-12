@@ -115,6 +115,18 @@ future **tabs** feature needs (open-set + active tab + per-file editor), so none
    it the active/visible file), then activate + reveal in that editor once it's shown. Controller
    tests with two fake editors covering both branches.
 
+   **DONE.** New `OpenFilesContext` carries `{ activePath, open }` — the navigation seam from App's
+   open-files state down to the rail-embedded panel without prop-drilling. App provides it (memoized
+   over `open.active`); its `open` runs the same `openFile` reducer the explorer uses. The panel
+   controller now reads it: `select` resolves `editors.get(artifact.path)`, activates the decoration
+   (extracted to an `activate({editor, artifact, wasActive})` helper to respect max-params), and — when
+   the artifact is in the active file — reveals immediately; when it is in another open file it stashes
+   a `pendingReveal` ref and calls `open(path)`, and a `useEffect` keyed on `activePath` fires the
+   reveal once that file becomes the active (visible) one, since a hidden editor cannot be scrolled.
+   Because artifacts only exist for mounted editors, `editors.get(path)` always resolves. Controller
+   test gains a cross-file case (two editors, asserts `open` is called and the decoration activates in
+   the right editor); split into a second `describe` to stay within the function-size limit.
+
 6. **e2e + manifest.** Real-app spec: agent creates an artifact in file A, switch to file B, assert
    A's card still shows (labeled A), click it, assert A reopens and scrolls to the range with the
    decoration intact. Update `e2e/coverage-manifest.ts` feature coverage. (Artifacts are

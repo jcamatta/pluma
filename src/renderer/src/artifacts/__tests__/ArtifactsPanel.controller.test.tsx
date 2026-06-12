@@ -1,15 +1,18 @@
 // ArtifactsPanelController lists every open editor's live artifacts and maps card interactions to the
 // owning editor's own commands: selecting activates the decoration, Accept applies the rewrite, Dismiss
-// removes the annotation. Driven through a real headless editor registered into ActiveEditorContext by path.
+// removes the annotation. For a card whose file is not the active one, selecting asks the shell to open
+// that file and then activates in its editor. Driven through real headless editors registered into
+// ActiveEditorContext by path, with a stateful OpenFiles nav whose `open` flips the active file.
 
-import { useEffect } from 'react'
-import { describe, expect, it } from 'vitest'
+import { useEffect, useMemo, useState } from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import type { Editor } from '@tiptap/core'
 import { i18n } from '../../i18n'
 import { ActiveEditorProvider } from '../../editor/ActiveEditorProvider'
 import { useActiveEditor } from '../../editor/ActiveEditorContext'
+import { OpenFilesContext } from '../../editor/OpenFilesContext'
 import {
   createAnnotation,
   getActiveAnnotationId,
@@ -26,24 +29,49 @@ import { ArtifactsPanelController } from '../ArtifactsPanel.controller'
 const CONTENT = 'The quick brown fox jumps over the lazy dog and keeps running onward.'
 const PATH = '/test.md'
 
-function RegisterEditor({ editor }: { readonly editor: Editor }): null {
+type Entries = readonly (readonly [string, Editor])[]
+
+function RegisterEditors({ entries }: { readonly entries: Entries }): null {
   const { registerEditor, unregisterEditor } = useActiveEditor()
   useEffect(() => {
-    registerEditor(PATH, editor)
-    return () => unregisterEditor(PATH)
-  }, [editor, registerEditor, unregisterEditor])
+    entries.forEach(([path, editor]) => registerEditor(path, editor))
+    return () => entries.forEach(([path]) => unregisterEditor(path))
+  }, [entries, registerEditor, unregisterEditor])
   return null
 }
 
-function renderPanel(editor: Editor): void {
-  render(
+function Shell({
+  entries,
+  onOpen
+}: {
+  readonly entries: Entries
+  readonly onOpen?: (path: string) => void
+}): React.JSX.Element {
+  const [activePath, setActivePath] = useState(entries[0][0])
+  const nav = useMemo(
+    () => ({
+      activePath,
+      open: (path: string): void => {
+        onOpen?.(path)
+        setActivePath(path)
+      }
+    }),
+    [activePath, onOpen]
+  )
+  return (
     <I18nextProvider i18n={i18n}>
       <ActiveEditorProvider>
-        <RegisterEditor editor={editor} />
-        <ArtifactsPanelController />
+        <OpenFilesContext.Provider value={nav}>
+          <RegisterEditors entries={entries} />
+          <ArtifactsPanelController />
+        </OpenFilesContext.Provider>
       </ActiveEditorProvider>
     </I18nextProvider>
   )
+}
+
+function renderPanel(entries: Entries, onOpen?: (path: string) => void): void {
+  render(<Shell entries={entries} onOpen={onOpen} />)
 }
 
 function seed(editor: Editor): void {
@@ -69,7 +97,7 @@ describe('ArtifactsPanelController', () => {
   it('shows the empty state with no artifacts', () => {
     const editor = createTestEditor(CONTENT)
     try {
-      renderPanel(editor)
+      renderPanel([[PATH, editor]])
       expect(screen.getByText(/No artifacts yet/)).toBeInTheDocument()
     } finally {
       editor.destroy()
@@ -79,7 +107,7 @@ describe('ArtifactsPanelController', () => {
   it('renders a card per artifact and activates the one selected', () => {
     const editor = createTestEditor(CONTENT)
     try {
-      renderPanel(editor)
+      renderPanel([[PATH, editor]])
       act(() => seed(editor))
 
       expect(screen.getByText('Soften the threat.')).toBeInTheDocument()
@@ -95,7 +123,7 @@ describe('ArtifactsPanelController', () => {
   it('keeps only one artifact active across kinds', () => {
     const editor = createTestEditor(CONTENT)
     try {
-      renderPanel(editor)
+      renderPanel([[PATH, editor]])
       act(() => seed(editor))
 
       fireEvent.click(screen.getByText('Soften the threat.'))
@@ -114,11 +142,11 @@ describe('ArtifactsPanelController', () => {
   it('toggles the active card off when it is reclicked', () => {
     const editor = createTestEditor(CONTENT)
     try {
-      renderPanel(editor)
+      renderPanel([[PATH, editor]])
       act(() => seed(editor))
 
-      // Target the card by id: once active, the proposal also renders its replacement as an editor
-      // decoration, so the card text alone is ambiguous.
+      // Target the card by its composite key: once active, the proposal also renders its replacement as an
+      // editor decoration, so the card text alone is ambiguous.
       const card = screen.getByTestId(`artifact-card:${PATH}::p_1`)
       fireEvent.click(card)
       expect(getActiveProposalId(editor)).toBe('p_1')
@@ -133,7 +161,7 @@ describe('ArtifactsPanelController', () => {
   it('applies a proposal on Accept and removes an annotation on Dismiss', () => {
     const editor = createTestEditor(CONTENT)
     try {
-      renderPanel(editor)
+      renderPanel([[PATH, editor]])
       act(() => seed(editor))
 
       fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
@@ -144,6 +172,33 @@ describe('ArtifactsPanelController', () => {
       expect(getAnnotations(editor)).toHaveLength(0)
     } finally {
       editor.destroy()
+    }
+  })
+})
+
+describe('ArtifactsPanelController cross-file', () => {
+  it('opens the file and activates in its editor when the card is for another file', () => {
+    const a = createTestEditor(CONTENT)
+    const b = createTestEditor(CONTENT)
+    const onOpen = vi.fn()
+    try {
+      renderPanel(
+        [
+          ['/a.md', a],
+          ['/b.md', b]
+        ],
+        onOpen
+      )
+      act(() => seed(b))
+
+      fireEvent.click(screen.getByText('Soften the threat.'))
+
+      expect(onOpen).toHaveBeenCalledWith('/b.md')
+      expect(getActiveAnnotationId(b)).toBe('a_1')
+      expect(getActiveAnnotationId(a)).toBeNull()
+    } finally {
+      a.destroy()
+      b.destroy()
     }
   })
 })

@@ -1,11 +1,14 @@
 // Wires the artifacts list to the open files' editors. Reads the produced artifacts + active keys across
 // every open editor via useOpenArtifacts, resolves i18n labels, and maps each card interaction to the
-// owning editor's own commands: it resolves the artifact's editor by `path`, then selecting activates its
-// annotation/proposal decoration and scrolls to it, accept applies the rewrite, reject removes it, dismiss
-// removes the annotation. All state lives in the editors — this controller holds none of its own.
+// owning editor's own commands. Selecting resolves the artifact's editor by `path` and activates its
+// decoration; when the artifact belongs to the active file it scrolls to the range immediately, and when
+// it belongs to another open file it asks the shell to make that file active, then reveals the range once
+// the editor is shown (a hidden editor cannot be scrolled). Accept/reject/dismiss act on the owning editor.
 
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useActiveEditor } from '../editor/ActiveEditorContext'
+import { useOpenFiles } from '../editor/OpenFilesContext'
 import { delAnnotation, setActiveAnnotation } from '../editor/extensions/annotations'
 import { acceptProposal, rejectProposal, setActiveProposal } from '../editor/extensions/proposals'
 import { useOpenArtifacts } from './useOpenArtifacts'
@@ -23,26 +26,53 @@ function reveal(editor: Editor, from: number): void {
   scrollTargetOf(node)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 
+// Make exactly one artifact active in its own editor across both kinds: clear the other kind, then toggle
+// this one (clicking the active card deselects it).
+function activate({
+  editor,
+  artifact,
+  wasActive
+}: {
+  readonly editor: Editor
+  readonly artifact: Artifact
+  readonly wasActive: boolean
+}): void {
+  if (artifact.kind === 'annotation') {
+    setActiveProposal({ editor, id: null })
+    setActiveAnnotation({ editor, id: wasActive ? null : artifact.id })
+  } else {
+    setActiveAnnotation({ editor, id: null })
+    setActiveProposal({ editor, id: wasActive ? null : artifact.id })
+  }
+}
+
 function ArtifactsPanelController(): React.JSX.Element {
   const { t } = useTranslation()
   const { editors } = useActiveEditor()
+  const { activePath, open } = useOpenFiles()
   const { artifacts, activeKeys } = useOpenArtifacts()
+  const pendingReveal = useRef<{ readonly path: string; readonly from: number } | null>(null)
 
-  // Selecting a card makes exactly one artifact active in its own editor across both kinds: clear the
-  // other kind, then toggle this one. Clicking the active card deselects it (and skips the scroll);
-  // selecting a new one reveals its range.
+  useEffect(() => {
+    const pending = pendingReveal.current
+    if (!pending || pending.path !== activePath) return
+    const editor = editors.get(pending.path)
+    if (editor) reveal(editor, pending.from)
+    pendingReveal.current = null
+  }, [activePath, editors])
+
   const select = (artifact: Artifact): void => {
     const editor = editors.get(artifact.path)
     if (!editor) return
     const wasActive = activeKeys.has(artifactKey(artifact))
-    if (artifact.kind === 'annotation') {
-      setActiveProposal({ editor, id: null })
-      setActiveAnnotation({ editor, id: wasActive ? null : artifact.id })
+    activate({ editor, artifact, wasActive })
+    if (wasActive) return
+    if (artifact.path === activePath) {
+      reveal(editor, artifact.from)
     } else {
-      setActiveAnnotation({ editor, id: null })
-      setActiveProposal({ editor, id: wasActive ? null : artifact.id })
+      pendingReveal.current = { path: artifact.path, from: artifact.from }
+      open(artifact.path)
     }
-    if (!wasActive) reveal(editor, artifact.from)
   }
 
   const accept = (artifact: Artifact): void => {
