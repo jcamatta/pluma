@@ -3,9 +3,10 @@
 // annotation on one word and a rewrite proposal on another. They land in the editor's plugin state; the
 // rail's Review tab lists them as cards. The spec switches to Review, sees both cards, accepts the
 // proposal, and asserts the manuscript text actually changed — the whole produce → review → apply loop a
-// writer sees. It then leaves the file for a second one and comes back through the card: the card stays in
-// the panel labeled with its file, and clicking it reopens that file and re-activates its highlight (the
-// regression where artifacts died after switching files, and a card for a non-active file did nothing).
+// writer sees. It then activates the annotation, leaves the file for a second one, and comes back through
+// the card: the card stays in the panel labeled with its file, and because leaving deactivated it a single
+// click reopens that file and re-activates its highlight (the regressions where artifacts died after
+// switching files, a card for a non-active file did nothing, and a stale-active card needed two clicks).
 // Nothing about the agent is mocked; only the native folder dialog is stubbed (the one sanctioned
 // human-gesture stub). The artifacts come from real Claude tool calls (this also exercises the
 // frontend-tool permission allow-list in build-options), so the prompt pins each edit and the assertions
@@ -77,19 +78,27 @@ test('shows the agent annotation and proposal in Review, and applies the proposa
           timeout: 30_000
         })
 
+        // Activate the annotation on its own file: clicking its card lights its highlight decoration in
+        // the visible editor. This is the active state we then expect leaving the file to clear.
+        const annotationCard = cards.filter({ hasText: ANNOTATION_LABEL })
+        await annotationCard.click()
+        await expect(
+          window.locator('.ProseMirror:visible [class*="annotation-"]').first()
+        ).toBeVisible()
+
         // Leave the manuscript for a second file: its editor stays mounted but hidden, so the visible
-        // editor now shows the other file. The annotation card survives in the panel, labeled with the file
-        // it belongs to (its basename) — it no longer lives on the active editor.
+        // editor now shows the other file. The card survives in the panel, labeled with the file it
+        // belongs to (its basename) — it no longer lives on the active editor.
         await window.getByText(SECOND_FILE, { exact: true }).click()
         await expect(window.locator('.ProseMirror:visible')).toContainText('research', {
           timeout: 30_000
         })
-        const annotationCard = cards.filter({ hasText: ANNOTATION_LABEL })
         await expect(annotationCard).toBeVisible()
         await expect(annotationCard).toContainText('chapter')
 
-        // Clicking the card for a non-active file reopens that file (its rewritten text is back) and
-        // re-activates its highlight decoration in the now-visible editor.
+        // Leaving deactivated the annotation, so a SINGLE click on its card reopens the file (its rewritten
+        // text is back) and re-activates its highlight — not a stale-active first click that would only
+        // toggle it off and never navigate.
         await annotationCard.click()
         await expect(window.locator('.ProseMirror:visible')).toContainText('rug', {
           timeout: 30_000

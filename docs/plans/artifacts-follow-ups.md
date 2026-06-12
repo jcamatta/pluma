@@ -29,7 +29,7 @@ branch (`feat/editor-per-file`) and the same PR, on top of the editor-per-file a
       controller test: activate an artifact on file A, switch to B, switch back to A, assert A's artifact is
       no longer active.
 
-- [ ] **Step 3 (e2e) — single click re-activates after a round trip.** Extend `artifacts.e2e.ts`: after
+- [x] **Step 3 (e2e) — single click re-activates after a round trip.** Extend `artifacts.e2e.ts`: after
       leaving the manuscript for the second file and coming back through the card, assert the highlight is
       active again after a **single** click (the deactivate-on-leave guarantee).
 
