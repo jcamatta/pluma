@@ -133,12 +133,15 @@ emphasis/structure; raw `*word*` is gone. User bubbles stay plain text.
 
 ### Step 6 — `test(e2e): cover the rail polish in the real app`
 
-- **`e2e/rail.e2e.ts`** — extend the existing rail spec(s): assert the activity panel can be
-  collapsed **while a run is in flight** (Issue 4), that an assistant reply containing markdown
-  renders a mark rather than raw asterisks (Issue 2), and that the composer/scroll behaviors hold.
-  No new manifest ids — `feature:rail` and its operations already exist, and no IPC channel is added.
+- **`e2e/rail.e2e.ts`** — pin the reply prompt to bold markdown (`**PLUMA**`) and assert the rail
+  renders it as a real `<strong>`, not raw asterisks (Issue 2). No new manifest ids — `feature:rail`
+  and its operations already exist, and no IPC channel is added.
+- The collapse-while-working (Issue 4) and scroll-into-view (Issue 5) behaviors are DOM/CSS
+  interactions fully covered by the unit tests (`Activity.view.test.tsx`,
+  `ConversationRail.controller.test.tsx`); they are deliberately **not** added to the network-driven
+  real-app spec, where they would only add flake without adding confidence.
 
-Delivers: the changes are exercised against the built app. `e2e/` is weight 0.
+Delivers: the markdown change is exercised against the built app. `e2e/` is weight 0.
 
 ### Step 7 — `docs: remove plan chat-rail-fixes, complete`
 

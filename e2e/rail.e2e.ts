@@ -14,9 +14,11 @@ import { launchApp } from './support/launch-app'
 import { stubFolderPicker } from './support/stub-folder-picker'
 import { withTempFolder } from './support/temp-folder'
 
-// A reply this constrained is deterministic enough to assert on without coupling to model phrasing.
+// A reply this constrained is deterministic enough to assert on without coupling to model phrasing. The
+// sentinel is wrapped in bold markdown so the reply also proves the rail renders markdown as marks (a
+// <strong>), not raw asterisks.
 const SENTINEL = 'PLUMA'
-const PROMPT = `Reply with exactly the single word ${SENTINEL} and nothing else.`
+const PROMPT = `Reply with exactly this and nothing else: **${SENTINEL}**`
 
 // A real Claude round-trip (network + streamed generation) needs well over Playwright's 30s default.
 test.setTimeout(120_000)
@@ -48,10 +50,12 @@ test('sends a message and shows the assistant reply in the rail', async () => {
       // The run settles: the activity header flips from the working spinner to "Worked".
       await expect(rail.getByText('Worked', { exact: true })).toBeVisible({ timeout: 60_000 })
 
-      // The streamed reply lands and contains the sentinel the prompt pinned.
+      // The streamed reply lands and contains the sentinel the prompt pinned, rendered as bold markdown
+      // (a real <strong>) rather than raw `**PLUMA**`.
       const reply = rail.getByTestId('assistant-reply')
       await expect(reply).toBeVisible({ timeout: 60_000 })
       await expect(reply).toContainText(SENTINEL, { ignoreCase: true })
+      await expect(reply.locator('strong')).toContainText(SENTINEL, { ignoreCase: true })
 
       // Multi-turn: a second message must NOT erase the first turn (the reported bug). Send a follow-up;
       // the first turn's reply settles into history above the new turn, so both user bubbles stay on
