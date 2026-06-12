@@ -3,6 +3,10 @@
   "editor": {
     "untitled": "Untitled",
     "settings": "Settings",
+    "empty": {
+      "heading": "No file open",
+      "hint": "Create a file from the explorer on the left to start writing."
+    },
     "placeholder": {
       "heading": "Heading {{level}}",
       "quote": "Quote",
