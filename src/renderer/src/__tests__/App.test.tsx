@@ -1,6 +1,9 @@
 // App shell: first asks for a folder, then mounts the explorer + editor for the picked root. Driven
 // through the real providers (QueryClient + RepositoriesProvider) over a faked window.api, so the IPC
-// adapter and the pick flow exercise their real code paths against the fake wire.
+// adapter and the pick flow exercise their real code paths against the fake wire. The shell mounts the
+// conversation rail, which reads the threads repository, so the test supplies the same in-memory fake the
+// rail's own tests use (the real ThreadsProvider lives in main.tsx, not App) — without it the rail throws
+// and the shell never renders.
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -11,6 +14,8 @@ import { i18n } from '../i18n'
 import { App } from '../App'
 import { RepositoriesProvider } from '../explorer/RepositoriesProvider'
 import { installFakeWindowApi } from '../explorer/__tests__/fake-window-api'
+import { ThreadsContext } from '../threads/ThreadsContext'
+import { createFakeThreadsRepository } from '../threads/__tests__/fake-threads-repository'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -20,7 +25,9 @@ const renderApp = (): void => {
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <RepositoriesProvider>
-          <App />
+          <ThreadsContext.Provider value={createFakeThreadsRepository({})}>
+            <App />
+          </ThreadsContext.Provider>
         </RepositoriesProvider>
       </I18nextProvider>
     </QueryClientProvider>
