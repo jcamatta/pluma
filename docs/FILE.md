@@ -92,6 +92,11 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/renderer/src/threads/__tests__/useRenameThread.test.tsx` — tests rename goes through the writer and refetches the listing on success but not on failure.
 - `src/renderer/src/threads/useDeleteThread.ts` — command hook deleting a thread through the writer port and invalidating ['threads', cwd] on success.
 - `src/renderer/src/threads/__tests__/useDeleteThread.test.tsx` — tests delete goes through the writer and refetches the listing on success but not on failure.
+- `src/renderer/src/threads/ThreadTitleInput.tsx` — stateful leaf: inline title field for renaming a thread (focus/select on mount, commit on Enter/blur, cancel on Escape).
+- `src/renderer/src/threads/__tests__/ThreadTitleInput.test.tsx` — tests the inline title field commits trimmed on Enter, cancels on Escape, and commits at most once.
+- `src/renderer/src/threads/ThreadDeleteDialog.tsx` — pure controlled delete-confirmation dialog (Base UI AlertDialog + Motion), confirm/cancel via props.
+- `src/renderer/src/threads/__tests__/ThreadDeleteDialog.test.tsx` — tests the dialog renders only when open and fires onConfirm/onCancel from its buttons.
+- `src/renderer/src/threads/useThreadCommands.ts` — owns the panel's inline-rename + delete-confirm state and drives the rename/delete command hooks; deleting the active thread bubbles onActiveDeleted.
 
 ### src/renderer/src/rail
 
