@@ -216,7 +216,17 @@ Add an `artifacts` block to `en.json`: panel title, `empty`, `dismiss`, `accept`
 card a11y labels, and the `Review` tab label + badge. No hardcoded strings. Component/integration test for
 tab switching.
 
-### 7. e2e
+### 7. e2e ✅ written (pending a green real-app run)
+
+Added `feature:artifacts` to the manifest and `e2e/artifacts.e2e.ts` (`@e2e feature:artifacts`): opens a
+seeded manuscript, prompts the real agent to `propose_edit` "cat" → "dog", switches to the Review tab,
+asserts the proposal card, accepts it, and asserts the manuscript text becomes "dog". The fast audit
+(`npm run test`) is green (the id is claimed), and `lint` + `typecheck:e2e` pass. **Determinism resolved
+the way `rail.e2e` does it** — a single fully-specified edit pins the tool call. Still to do: a green
+`npm run test:e2e` run (needs the built app + a real Claude key; note the pre-existing red abort spec is
+unrelated).
+
+> Original design notes:
 
 Add `feature:artifacts` to `e2e/coverage-manifest.ts` (**no new operation id** — annotations/proposals
 ride the existing `agent.run`/`agent.event` channels; the artifacts surface adds no IPC). Write

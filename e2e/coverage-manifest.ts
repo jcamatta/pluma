@@ -9,7 +9,15 @@
 // stays green incrementally, and nothing ships without a spec that drives the real desktop app.
 //
 // A shipped UI feature (a screen/region of the conversation layout).
-const FEATURES = ['launcher', 'explorer', 'editor', 'settings', 'rail', 'thread-history'] as const
+const FEATURES = [
+  'launcher',
+  'explorer',
+  'editor',
+  'settings',
+  'rail',
+  'thread-history',
+  'artifacts'
+] as const
 
 // A shipped user-facing operation, one per real IPC channel the UI exercises end to end.
 const OPERATIONS = [
