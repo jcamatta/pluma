@@ -11,6 +11,7 @@ import Gapcursor from '@tiptap/extension-gapcursor'
 import HardBreak from '@tiptap/extension-hard-break'
 import Heading from '@tiptap/extension-heading'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
+import Image from '@tiptap/extension-image'
 import Italic from '@tiptap/extension-italic'
 import { BulletList, ListItem, ListKeymap, OrderedList } from '@tiptap/extension-list'
 import Paragraph from '@tiptap/extension-paragraph'
@@ -21,6 +22,7 @@ import Underline from '@tiptap/extension-underline'
 import { Markdown } from '@tiptap/markdown'
 import { UndoRedo } from '@tiptap/extensions'
 import type { AnyExtension } from '@tiptap/core'
+import { FileHandlerExtension } from './file-handler'
 import { PlaceholderExtension } from './placeholder'
 import { RangesExtension } from './ranges'
 import { AnnotationsExtension } from './annotations'
@@ -39,6 +41,7 @@ export const editorExtensions: AnyExtension[] = [
   ListItem.configure(),
   ListKeymap,
   HorizontalRule.configure(),
+  Image.configure({ allowBase64: true }),
   HardBreak,
   Bold.configure(),
   Italic,
@@ -48,6 +51,7 @@ export const editorExtensions: AnyExtension[] = [
   CodeBlock.configure(),
   Dropcursor.configure(),
   Gapcursor,
+  FileHandlerExtension,
   UndoRedo,
   RangesExtension,
   AnnotationsExtension,
