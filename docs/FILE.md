@@ -31,3 +31,7 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/main/adapters/agent/claude/logic/__tests__/context-to-message.test.ts` — covers the empty case (no message), the SDK envelope shape, and the rendered description/value content.
 - `src/main/adapters/agent/claude/runtime/stream-input.ts` — builds the SDK streaming-input prompt: yields the folded context message first on a fresh run (gated on `threadId === undefined`), then the conversation mapped by `toSdkPrompt`.
 - `src/main/adapters/agent/claude/runtime/__tests__/stream-input.test.ts` — asserts the context message is yielded first on a fresh run, not re-injected on a resume, and absent when there is no context.
+### src/renderer/src/editor
+
+- `src/renderer/src/editor/useEditorTools.ts` — contributes the editor's five frontend tools (get_current_selection, get_current_document, get_ranges, create_annotation, propose_edit) to the agent tool registry for the lifetime of the editor column, binding each handler to the live `Editor` and returning a recoverable error when no document is open.
+- `src/renderer/src/editor/__tests__/useEditorTools.test.tsx` — tests that `useEditorTools` registers all five tools, dispatches a handler against the live editor (get_ranges → propose_edit lands a proposal), and reports a recoverable error when no editor is mounted.

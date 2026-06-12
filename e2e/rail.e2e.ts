@@ -7,7 +7,7 @@
 // the agent is mocked; only the native folder dialog is stubbed (the one sanctioned human-gesture stub).
 //
 // @e2e feature:rail
-// @e2e operation:agent.run operation:agent.event
+// @e2e operation:agent.run operation:agent.event operation:agent.abort
 
 import { test, expect } from '@playwright/test'
 import { launchApp } from './support/launch-app'
@@ -29,8 +29,10 @@ test('sends a message and shows the assistant reply in the rail', async () => {
       await stubFolderPicker(app, folder)
       await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
 
+      // Reaching the shell runs a real folder pick → list-folder → OS watcher, which on a cold launch
+      // can take longer than Playwright's 5s default; wait generously for the rail to mount.
       const rail = window.getByTestId('conversation-rail')
-      await expect(rail).toBeVisible()
+      await expect(rail).toBeVisible({ timeout: 30_000 })
 
       // Type the prompt and send it (the composer submits on the Send button).
       const composer = rail.locator('textarea[data-rail-composer]')
@@ -50,6 +52,43 @@ test('sends a message and shows the assistant reply in the rail', async () => {
       const reply = rail.getByTestId('assistant-reply')
       await expect(reply).toBeVisible({ timeout: 60_000 })
       await expect(reply).toContainText(SENTINEL, { ignoreCase: true })
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+// A prompt whose answer is long enough that the run is still streaming when we hit Stop, so the abort
+// has something live to cancel rather than racing a reply that already finished.
+const LONG_PROMPT = 'Write a detailed 2000-word essay about the history of the written word.'
+
+test('stops an in-flight run with the composer Stop button', async () => {
+  await withTempFolder([{ name: 'chapter-1.md', content: '# Chapter One' }], async (folder) => {
+    const { app, window } = await launchApp()
+    try {
+      await stubFolderPicker(app, folder)
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+
+      // Same cold-launch transition as the reply test — wait generously for the shell to mount.
+      const rail = window.getByTestId('conversation-rail')
+      await expect(rail).toBeVisible({ timeout: 30_000 })
+
+      const composer = rail.locator('textarea[data-rail-composer]')
+      await composer.click()
+      await composer.fill(LONG_PROMPT)
+      await rail.getByRole('button', { name: 'Send', exact: true }).click()
+
+      // While the run is in flight the composer swaps Send for Stop; its appearance confirms the run
+      // actually started (agent.run) and is still working, so there is something to abort.
+      const stop = rail.getByRole('button', { name: 'Stop', exact: true })
+      await expect(stop).toBeVisible({ timeout: 60_000 })
+
+      // Aborting the run (agent.abort over IPC) settles it: the Stop control gives way to Send again.
+      await stop.click()
+      await expect(rail.getByRole('button', { name: 'Send', exact: true })).toBeVisible({
+        timeout: 60_000
+      })
+      await expect(stop).toBeHidden()
     } finally {
       await app.close()
     }
