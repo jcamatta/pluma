@@ -84,6 +84,16 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/renderer/src/threads/__tests__/useThreadHistory.test.tsx` — tests for the useThreadHistory query hook against the fake.
 - `src/renderer/src/threads/ThreadsPanel.view.tsx` — pure threads (chats) panel: header (title/back/new) over a scrollable list of thread rows (title + relative-time subtitle), active row highlighted; all data and callbacks via props.
 - `src/renderer/src/threads/__tests__/ThreadsPanel.view.test.tsx` — tests the panel view's empty state, row rendering, and onSelect/onNewThread/onBack callbacks.
+- `src/renderer/src/threads/ThreadsPanel.controller.tsx` — wires the threads panel: reads useThreads(cwd), maps summaries to rows (localized untitled fallback + relative-time subtitle), renders the view; selection/new/back lifted to the caller via props.
+- `src/renderer/src/threads/__tests__/ThreadsPanel.controller.test.tsx` — tests the panel controller lists threads against the fake repo, shows the untitled fallback, and bubbles onSelect with the row id.
+- `src/renderer/src/threads/format-relative-time.ts` — pure calculation rendering how long ago an instant was (localized via Intl.RelativeTimeFormat), used for each thread row's subtitle.
+- `src/renderer/src/threads/__tests__/format-relative-time.test.ts` — tests the relative-time calculation across seconds/minutes/hours/days for the English locale.
+
+### src/renderer/src/rail
+
+- `src/renderer/src/rail/useThreadSession.ts` — owns the rail's thread-selection state (chat vs threads view, active thread) and seeds the agent to resume a selected thread or start a fresh one.
+- `src/renderer/src/rail/__tests__/useThreadSession.test.tsx` — tests select seeds the agent + tracks the active thread, new clears it, and the view toggles.
+- `src/renderer/src/rail/ChatRail.controller.tsx` — wires the chat half of the rail: composer value + current turn, runs a turn against the live agent, and folds its events into the rendered ConversationTurn.
 
 ### src/renderer/src/agent
 
