@@ -5,11 +5,11 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EditorController } from './editor/Editor.controller'
+import { EditorStack } from './editor/EditorStack'
+import { noOpenFiles, openFile } from './editor/open-files-logic'
 import { ActiveEditorProvider } from './editor/ActiveEditorProvider'
 import { EditorToolsBridge } from './editor/EditorToolsBridge'
 import { ExplorerController } from './explorer/Explorer.controller'
-import { useFileContent } from './explorer/useFileContent'
 import { LauncherController } from './launcher/Launcher.controller'
 import { MessagesSquare, PanelLeft } from 'lucide-react'
 import { EdgeTab } from './components/EdgeTab'
@@ -22,13 +22,11 @@ import { useSettings } from './settings/useSettings'
 export const App = (): React.JSX.Element => {
   const { t } = useTranslation()
   const [root, setRoot] = useState<string | null>(null)
-  const [selected, setSelected] = useState<string | null>(null)
+  const [open, setOpen] = useState(noOpenFiles)
   const [explorerOpen, setExplorerOpen] = useState(true)
   const [railOpen, setRailOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const settings = useSettings()
-  const fileContent = useFileContent(selected)
-  const content = fileContent && fileContent.ok ? fileContent.value : null
 
   if (root === null) {
     return <LauncherController onPicked={setRoot} />
@@ -44,19 +42,15 @@ export const App = (): React.JSX.Element => {
               <div className="flex-none" style={{ width: 'var(--explorer-w)' }}>
                 <ExplorerController
                   root={root}
-                  selected={selected}
-                  onSelect={setSelected}
+                  selected={open.active}
+                  onSelect={(path) => setOpen((current) => openFile(current, path))}
                   onClose={() => setExplorerOpen(false)}
                 />
               </div>
             )}
 
             <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-surface-3">
-              <EditorController
-                path={selected}
-                content={content}
-                onOpenSettings={() => setSettingsOpen(true)}
-              />
+              <EditorStack open={open} onOpenSettings={() => setSettingsOpen(true)} />
               {!explorerOpen && (
                 <EdgeTab
                   side="left"

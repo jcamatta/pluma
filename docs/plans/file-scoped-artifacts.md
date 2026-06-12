@@ -44,8 +44,23 @@ future **tabs** feature needs (open-set + active tab + per-file editor), so none
    mounted but hidden. Each `EditorController` loads **its own** content (`useFileContent(path)`
    moves into the column) and registers as the active editor only while active, so the existing
    single-active panel keeps working. Pure `open-files-logic.ts` (open/activate over the set) with
-   unit tests. → **fixes #2** at the editor layer. _(Watch the budget — if over ~300 weighted lines,
-   split into 1a "open-set + mount per path" and 1b "move content-loading into the column".)_
+   unit tests. → **fixes #2** at the editor layer.
+
+   **DONE**, split in two:
+   - **1a** — lifted `useEditorTools` out of the per-file controller into a shell-level
+     `EditorToolsBridge` bound to the active editor, so several mounted editors don't collide over
+     the same (name-keyed, last-wins) tool registry.
+   - **1b** — `open-files-logic.ts` (`noOpenFiles`/`openFile`, additive open-set keyed by path);
+     `EditorStack` mounts one `EditorController` per open path (active visible, others `hidden`) and
+     falls back to a single empty editor when nothing is open; the controller now loads its own file
+     via `useFileContent(path)` and gates its `ActiveEditorContext` registration on a new `isActive`
+     prop. `EditorStack` test proves two files' editors stay mounted at once with independent content
+     (the core of the #2 fix); `App`/`Editor.controller` tests updated for content-by-path.
+
+   _Note for step 2:_ the registration is still the single-slot `ActiveEditorContext` gated by
+   `isActive`. Step 2 replaces that with a path-keyed registry so the panel can read **all** open
+   editors (the controller will then register by path unconditionally, and `useActiveEditor()` will
+   derive the active editor from `editors.get(activePath)`).
 
 2. **Editor registry context.** Generalize the single-editor wiring into an `OpenEditorsContext`
    holding `editors: Map<path, Editor>` + `activePath`. Each `EditorController` registers/unregisters

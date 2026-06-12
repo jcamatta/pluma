@@ -1,12 +1,14 @@
 // Wires the editor hooks (instance + zoom) to the pure EditorView — the editor panel, which composes the
-// top bar (file name + settings) and the manuscript surface. useManuscriptEditor owns building the editor
-// and syncing it with the content prop — the markdown of the selected file (null when none is loaded).
-// useAutoSave persists edits back to the open file (path) with a debounce. The top bar's file name is
-// derived from path; onOpenSettings comes from the app shell, which owns the settings modal's open state.
-// The editor is null until it finishes initializing on the client, so this renders nothing until it is
-// ready. It registers the live editor into ActiveEditorContext so sibling columns (the rail's artifacts
-// panel) can read its annotations/proposals and drive its commands. The editor's frontend tools are
-// contributed once at the shell (EditorToolsBridge), not here, so multiple open editors don't collide.
+// top bar (file name + settings) and the manuscript surface. The controller loads this file's markdown
+// itself (useFileContent by path) and hands it to useManuscriptEditor; each open file has its own
+// editor instance, so its content is set once on load and never swapped underneath a live document —
+// that is what keeps a file's artifacts intact across switches. useAutoSave persists edits back to the
+// open file (path) with a debounce. The top bar's file name is derived from path; onOpenSettings comes
+// from the app shell, which owns the settings modal's open state. The editor is null until it finishes
+// initializing on the client, so this renders nothing until it is ready. It registers the live editor
+// into ActiveEditorContext as the active editor only while active (isActive), so the rail's artifacts
+// panel reads whichever file the user is editing without several mounted editors clobbering the slot.
+// The editor's frontend tools are contributed once at the shell (EditorToolsBridge), not here.
 
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -14,30 +16,34 @@ import { useEditorZoom } from './useEditorZoom'
 import { useManuscriptEditor } from './useManuscriptEditor'
 import { useActiveEditor } from './ActiveEditorContext'
 import { useAutoSave } from './useAutoSave'
+import { useFileContent } from '../explorer/useFileContent'
 import { EditorView } from './Editor.view'
 import { editorFileName } from './editor-file-name-logic'
 
 type EditorControllerProps = {
   readonly path: string | null
-  readonly content: string | null
+  readonly isActive: boolean
   readonly onOpenSettings: () => void
 }
 
 export function EditorController({
   path,
-  content,
+  isActive,
   onOpenSettings
 }: EditorControllerProps): React.JSX.Element | null {
   const { t } = useTranslation()
+  const fileContent = useFileContent(path)
+  const content = fileContent && fileContent.ok ? fileContent.value : null
   const editor = useManuscriptEditor(content)
   const { containerRef, zoom } = useEditorZoom()
   const { register } = useActiveEditor()
   useAutoSave(editor, path)
 
   useEffect(() => {
+    if (!editor || !isActive) return
     register(editor)
     return () => register(null)
-  }, [editor, register])
+  }, [editor, isActive, register])
 
   if (!editor) return null
 
