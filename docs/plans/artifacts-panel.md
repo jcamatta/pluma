@@ -216,15 +216,25 @@ Add an `artifacts` block to `en.json`: panel title, `empty`, `dismiss`, `accept`
 card a11y labels, and the `Review` tab label + badge. No hardcoded strings. Component/integration test for
 tab switching.
 
-### 7. e2e ✅ written (pending a green real-app run)
+### 7. e2e ✅ done (green real-app run)
 
 Added `feature:artifacts` to the manifest and `e2e/artifacts.e2e.ts` (`@e2e feature:artifacts`): opens a
-seeded manuscript, prompts the real agent to `propose_edit` "cat" → "dog", switches to the Review tab,
-asserts the proposal card, accepts it, and asserts the manuscript text becomes "dog". The fast audit
-(`npm run test`) is green (the id is claimed), and `lint` + `typecheck:e2e` pass. **Determinism resolved
-the way `rail.e2e` does it** — a single fully-specified edit pins the tool call. Still to do: a green
-`npm run test:e2e` run (needs the built app + a real Claude key; note the pre-existing red abort spec is
-unrelated).
+seeded manuscript, prompts the real agent to produce **both** artifacts (annotate "cat", propose "mat" →
+"rug"), switches to the Review tab, asserts **two** cards (annotation label + proposal replacement), accepts
+the proposal, and asserts the manuscript becomes "rug". **Ran green against the real built app** (real
+Claude tool calls). The card assertions are scoped to the cards (the header echoes the prompt).
+
+**Blocker found and fixed (step 7b).** The first real run revealed the agent could not use its editing
+tools at all: the Claude Agent SDK gates MCP tools behind permissions, and `build-options.ts` granted none
+(it only had the stream-holding `PreToolUse` hook). So the agent replied "I need permission to use
+get_ranges/propose_edit" and produced nothing — meaning annotations/proposals never worked end-to-end in
+the real app. Fix (mirroring the `write-write` reference): `build-options` now sets `allowedTools` to the
+frontend tools' namespaced names (`mcp__frontend__<name>`, derived from the run's tool specs via the new
+pure `frontendAllowedTools`), and `build-tool-server` tags the read tools
+(`get_current_selection`/`get_current_document`/`get_ranges`) with the SDK `readOnlyHint`. `ClaudeRunOptions`
+gained `allowedTools`; the runtime threads `input.tools` into `buildOptions`. Unit-tested in
+`build-options.test.ts` (allow-list built + namespaced, omitted when no server). These are our own
+first-party tools the user invokes by chatting — granting them is the intended behavior, not a bypass.
 
 > Original design notes:
 
