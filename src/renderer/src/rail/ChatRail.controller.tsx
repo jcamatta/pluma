@@ -8,10 +8,13 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { useAgent } from '../agent/useAgent'
+import { ArtifactsPanelController } from '../artifacts/ArtifactsPanel.controller'
 import { useAgentActivityLog } from './useAgentActivityLog'
 import { useThreadsRefresh } from './useThreadsRefresh'
-import { ConversationRailView } from './ConversationRail.view'
+import { useReviewTab } from './useReviewTab'
+import { ConversationRailView, type RailLabels } from './ConversationRail.view'
 import { TranscriptView } from './Transcript.view'
 import { ConversationTurnView } from './ConversationTurn.view'
 import { splitConversation } from './transcript-logic'
@@ -28,6 +31,21 @@ interface ChatRailControllerProps {
 // Prefer the thread's stored name so a rename shows in the header; fall back to the first message.
 function resolveTitle(threadTitle: string | null, messageTitle: string | null): string | null {
   return threadTitle !== null && threadTitle.length > 0 ? threadTitle : messageTitle
+}
+
+function railLabels(t: TFunction): RailLabels {
+  return {
+    chats: t('threads.open'),
+    newChat: t('rail.newChat'),
+    collapse: t('rail.collapse'),
+    newChatEmpty: t('rail.newChatEmpty'),
+    composerPlaceholder: t('rail.composerPlaceholder'),
+    send: t('rail.send'),
+    toSend: t('rail.toSend'),
+    stop: t('rail.stop'),
+    chatTab: t('rail.chat'),
+    reviewTab: t('rail.review')
+  }
 }
 
 export function ChatRailController({
@@ -49,11 +67,14 @@ export function ChatRailController({
   })
 
   useThreadsRefresh(agent, cwd)
+  const review = useReviewTab()
 
   const working = activity.status === 'working'
   const { history, currentPrompt } = splitConversation(agent.messages, activity.status !== 'idle')
-  const messageTitle = history.find((item) => item.role === 'user')?.text ?? currentPrompt
-  const title = resolveTitle(threadTitle, messageTitle)
+  const title = resolveTitle(
+    threadTitle,
+    history.find((item) => item.role === 'user')?.text ?? currentPrompt
+  )
 
   const submit = (): void => {
     const text = value.trim()
@@ -66,16 +87,7 @@ export function ChatRailController({
 
   return (
     <ConversationRailView
-      labels={{
-        chats: t('threads.open'),
-        newChat: t('rail.newChat'),
-        collapse: t('rail.collapse'),
-        newChatEmpty: t('rail.newChatEmpty'),
-        composerPlaceholder: t('rail.composerPlaceholder'),
-        send: t('rail.send'),
-        toSend: t('rail.toSend'),
-        stop: t('rail.stop')
-      }}
+      labels={railLabels(t)}
       title={title ?? t('rail.newChat')}
       hasTurn={history.length > 0 || currentPrompt !== null}
       working={working}
@@ -90,6 +102,10 @@ export function ChatRailController({
       }}
       onShowThreads={onShowThreads}
       onClose={onClose}
+      tab={review.tab}
+      onTab={review.setTab}
+      reviewCount={review.reviewCount}
+      review={<ArtifactsPanelController />}
     >
       <TranscriptView items={history} />
       {currentPrompt !== null && (

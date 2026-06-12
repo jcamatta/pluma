@@ -3,20 +3,33 @@
 // (`tools: []`), the default model/effort are applied when state is absent, the threadId becomes `resume`
 // when present, explicit effort/model from state override the defaults, the custom writing-assistant
 // system prompt is always set, and a provided tool server is registered under `mcpServers` with the
-// no-op PreToolUse hook that holds the stream open.
+// no-op PreToolUse hook that holds the stream open and the frontend tools on the permission allow-list.
 
 import { createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk'
+import type { Tool } from '@ag-ui/core'
 import { describe, expect, it } from 'vitest'
 import { AGENT_SYSTEM_PROMPT } from '../agent-system-prompt'
-import { buildOptions } from '../build-options'
+import { buildOptions, frontendAllowedTools } from '../build-options'
 
 // A real (empty) SDK server config; buildOptions only forwards it by reference under mcpServers.
 const toolServer = createSdkMcpServer({ name: 'pluma-frontend-tools', version: '1.0.0', tools: [] })
 
+const spec = (name: string): Tool => ({
+  name,
+  description: '',
+  parameters: { type: 'object', properties: {} }
+})
+
 describe('buildOptions', () => {
   it('disables built-in tools and applies default model/effort when nothing is given', () => {
     expect(
-      buildOptions({ threadId: undefined, cwd: undefined, state: undefined, toolServer: undefined })
+      buildOptions({
+        threadId: undefined,
+        cwd: undefined,
+        state: undefined,
+        toolServer: undefined,
+        tools: []
+      })
     ).toStrictEqual({
       includePartialMessages: true,
       tools: [],
@@ -32,7 +45,8 @@ describe('buildOptions', () => {
         threadId: 'thread-1',
         cwd: undefined,
         state: undefined,
-        toolServer: undefined
+        toolServer: undefined,
+        tools: []
       })
     ).toStrictEqual({
       includePartialMessages: true,
@@ -45,7 +59,7 @@ describe('buildOptions', () => {
   })
 
   it('forwards the cwd when present and omits it when absent', () => {
-    const base = { threadId: undefined, state: undefined, toolServer: undefined }
+    const base = { threadId: undefined, state: undefined, toolServer: undefined, tools: [] }
     expect(buildOptions({ ...base, cwd: '/work/space' }).cwd).toBe('/work/space')
     expect('cwd' in buildOptions({ ...base, cwd: undefined })).toBe(false)
   })
@@ -56,7 +70,8 @@ describe('buildOptions', () => {
         threadId: undefined,
         cwd: undefined,
         state: { effort: 'high', model: 'claude-opus-4-8' },
-        toolServer: undefined
+        toolServer: undefined,
+        tools: []
       })
     ).toStrictEqual({
       includePartialMessages: true,
@@ -66,16 +81,44 @@ describe('buildOptions', () => {
       effort: 'high'
     })
   })
+})
 
-  it('registers a provided tool server under mcpServers with the stream-holding hook', () => {
+describe('buildOptions · tool permissions', () => {
+  it('registers the tool server with the stream-holding hook and the frontend permission allow-list', () => {
     const options = buildOptions({
       threadId: undefined,
       cwd: undefined,
       state: undefined,
-      toolServer
+      toolServer,
+      tools: [spec('get_ranges'), spec('propose_edit')]
     })
 
     expect(options.mcpServers).toStrictEqual({ frontend: toolServer })
     expect(options.hooks?.PreToolUse).toHaveLength(1)
+    expect(options.allowedTools).toStrictEqual([
+      'mcp__frontend__get_ranges',
+      'mcp__frontend__propose_edit'
+    ])
+  })
+
+  it('omits the allow-list when no tool server is offered', () => {
+    const options = buildOptions({
+      threadId: undefined,
+      cwd: undefined,
+      state: undefined,
+      toolServer: undefined,
+      tools: [spec('get_ranges')]
+    })
+
+    expect('allowedTools' in options).toBe(false)
+  })
+})
+
+describe('frontendAllowedTools', () => {
+  it('namespaces each tool name under the frontend MCP server', () => {
+    expect(frontendAllowedTools([spec('get_ranges'), spec('create_annotation')])).toStrictEqual([
+      'mcp__frontend__get_ranges',
+      'mcp__frontend__create_annotation'
+    ])
   })
 })

@@ -16,6 +16,14 @@ import type { ToolBridge } from './tool-bridge'
 
 const TOOL_SERVER_NAME = 'pluma-frontend-tools'
 
+// The tools that only read the editor (no mutation). They carry the SDK's `readOnlyHint` so the model and
+// permission system know they are side-effect-free; the others (create_annotation, propose_edit) mutate.
+const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
+  'get_current_selection',
+  'get_current_document',
+  'get_ranges'
+])
+
 // What a generated tool handler needs to suspend on the renderer: the bridge to route the call through
 // and the runId to stamp on it.
 interface ToolContext {
@@ -40,7 +48,8 @@ const buildTool = (spec: Tool, context: ToolContext): ReturnType<typeof tool> =>
         args
       })
       return toCallToolResult(result)
-    }
+    },
+    { annotations: { readOnlyHint: READ_ONLY_TOOLS.has(spec.name) } }
   )
 
 const buildToolServer = (

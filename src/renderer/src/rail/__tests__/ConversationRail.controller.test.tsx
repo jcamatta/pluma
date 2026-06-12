@@ -16,6 +16,7 @@ import { AgentContext } from '../../agent/AgentContext'
 import { ThreadControlsContext } from '../../agent/ThreadControlsContext'
 import { ThreadsContext } from '../../threads/ThreadsContext'
 import { createFakeThreadsRepository } from '../../threads/__tests__/fake-threads-repository'
+import { ActiveEditorProvider } from '../../editor/ActiveEditorProvider'
 import { i18n } from '../../i18n'
 import { ConversationRailController } from '../ConversationRail.controller'
 
@@ -108,7 +109,9 @@ function renderRail(agent: FakeAgent = new FakeAgent()): { agent: FakeAgent } {
         <ThreadsContext.Provider value={createFakeThreadsRepository({})}>
           <AgentContext.Provider value={agent}>
             <ThreadControlsContext.Provider value={controls}>
-              <ConversationRailController cwd="/work" onClose={() => undefined} />
+              <ActiveEditorProvider>
+                <ConversationRailController cwd="/work" onClose={() => undefined} />
+              </ActiveEditorProvider>
             </ThreadControlsContext.Provider>
           </AgentContext.Provider>
         </ThreadsContext.Provider>

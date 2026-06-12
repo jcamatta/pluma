@@ -13,7 +13,9 @@ const labels: RailLabels = {
   composerPlaceholder: 'Ask anything…',
   send: 'Send',
   toSend: 'to send',
-  stop: 'Stop'
+  stop: 'Stop',
+  chatTab: 'Chat',
+  reviewTab: 'Review'
 }
 
 const noop = (): void => undefined
@@ -119,5 +121,23 @@ describe('ConversationRailView', () => {
     expect(onShowThreads).toHaveBeenCalledOnce()
     expect(onNewChat).toHaveBeenCalledOnce()
     expect(onClose).toHaveBeenCalledOnce()
+  })
+})
+
+describe('ConversationRailView · tabs', () => {
+  it('shows the review slot and hides the composer on the Review tab', () => {
+    render(<ConversationRailView {...baseProps} tab="review" review={<div>review content</div>} />)
+
+    expect(screen.getByText('review content')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Ask anything…')).not.toBeInTheDocument()
+  })
+
+  it('fires onTab when the Review tab is clicked, and badges the artifact count', () => {
+    const onTab = vi.fn()
+    render(<ConversationRailView {...baseProps} onTab={onTab} reviewCount={3} />)
+
+    expect(screen.getByText('3')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Review/ }))
+    expect(onTab).toHaveBeenCalledWith('review')
   })
 })

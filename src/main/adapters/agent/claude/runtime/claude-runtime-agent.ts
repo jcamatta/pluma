@@ -58,7 +58,8 @@ const startRun = (
             threadId: input.threadId,
             cwd: input.cwd,
             state: input.state,
-            toolServer
+            toolServer,
+            tools: input.tools
           })
         }),
       catch: () => new RunAgentFailed({ runId })

@@ -62,3 +62,9 @@ if (typeof Range !== 'undefined' && !Range.prototype.getClientRects) {
   Range.prototype.getClientRects = () => emptyRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 }
+
+// jsdom stubs scrollIntoView as "not implemented" (it logs noise on call); the artifacts panel scrolls
+// the manuscript to a selected card's range through it. A no-op keeps that path silent under test.
+if (typeof Element !== 'undefined') {
+  Element.prototype.scrollIntoView = () => undefined
+}
