@@ -1,15 +1,16 @@
 // IPC endpoint for watching a folder. Starts a recursive watcher through the FolderWatcher port and
 // forwards each FileEvent via the send callback. The watch+forward effect is forked onto the app scope,
 // so its watcher resources live until that scope is closed on quit. The FileEvent stream cannot cross
-// IPC, so the endpoint returns a plain ack Result reporting only whether the initial subscribe
-// succeeded. Never throws across IPC.
+// IPC, so the endpoint returns a plain ack Result reporting only whether the initial subscribe succeeded.
+// Observability covers that ack (subscribe outcome) through runIpc; the long-lived forwarding stream is
+// left uninstrumented for now. Never throws across IPC.
 
 import * as Deferred from 'effect/Deferred'
 import * as Effect from 'effect/Effect'
-import * as Exit from 'effect/Exit'
 import * as Scope from 'effect/Scope'
 import * as Stream from 'effect/Stream'
 import * as NodeContext from '@effect/platform-node/NodeContext'
+import { FOLDER_WATCH_CHANNEL } from '../../../shared/ipc/ipc-contract/folder'
 import type { FolderChange } from '../../../shared/ipc/ipc-event-contract/folder'
 import type { FolderWatchError } from '../../../shared/ipc/ipc-contract/folder'
 import type { Result } from '../../../shared/ipc/ipc-result'
@@ -17,6 +18,7 @@ import { FolderWatchFailed } from '../../application/folder/error/folder-watch-f
 import { FolderWatcher } from '../../application/folder/port/folder-watcher.port'
 import type { FolderWatcherPort } from '../../application/folder/port/folder-watcher.port'
 import { ParcelFolderWatcherLive } from '../../adapters/folder/parcel-folder-watcher'
+import { runIpc } from '../shared/run-ipc'
 
 export interface WatchFolderArgs {
   readonly path: string
@@ -43,7 +45,7 @@ const watchAndForward = (
 export const handleWatchFolder = (
   args: WatchFolderArgs
 ): Promise<Result<null, FolderWatchError>> => {
-  const program = Effect.gen(function* () {
+  const subscribe = Effect.gen(function* () {
     const ready = yield* Deferred.make<void, FolderWatchFailed>()
     Effect.runFork(
       watchAndForward({ path: args.path, send: args.send, ready }).pipe(
@@ -52,14 +54,14 @@ export const handleWatchFolder = (
         Effect.provideService(Scope.Scope, args.scope)
       )
     )
-    return yield* Deferred.await(ready)
+    yield* Deferred.await(ready)
   })
 
-  return Effect.runPromiseExit(program).then(
-    (exit): Result<null, FolderWatchError> =>
-      Exit.match(exit, {
-        onSuccess: () => ({ ok: true, value: null }),
-        onFailure: () => ({ ok: false, error: { _tag: 'FolderWatchFailed', path: args.path } })
-      })
-  )
+  return runIpc({
+    channel: FOLDER_WATCH_CHANNEL,
+    annotations: { path: args.path },
+    effect: subscribe.pipe(Effect.as(null)),
+    onError: () => ({ _tag: 'FolderWatchFailed', path: args.path }),
+    onDefect: () => ({ _tag: 'FolderWatchFailed', path: args.path })
+  })
 }

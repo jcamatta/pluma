@@ -105,7 +105,13 @@ The four non-streaming folder handlers, same mechanical swap; annotate `path` wh
   `pick-folder-handler.ts` (pick projects `{ _tag }` only — no path).
 - Update the corresponding tests under `src/main/ipc/folder/__tests__/`.
 
-### 4. Migrate the folder watch handler
+### 4. Migrate the folder watch handler — DONE
+
+The subscribe ack now runs through `runIpc` (channel `folder:watch`, annotated `path`), with the void
+success mapped to `null` via `Effect.as(null)` and any failure/defect mapped to the single
+`FolderWatchFailed` tag (matching the prior always-fallback behavior). The forked forwarding stream is
+unchanged. No unit test added: the handler had none (it is e2e-covered) and a real-watcher unit test is
+timing-flaky; the diff is under the commit-size test threshold.
 
 `watch-folder-handler.ts` is a streaming/forked ack: it forks the watch-and-forward effect and returns
 a `Result<null, FolderWatchError>` reporting only whether the **initial subscribe** succeeded. Wrap the
