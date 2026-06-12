@@ -145,7 +145,17 @@ Also wire **run-finished invalidation**: when a run completes, invalidate `threa
 new thread appears in the list (deferred from the data layer — do it where the run lifecycle is observed,
 e.g. the rail controller or a subscriber).
 
-### 10. e2e coverage
+### 10. e2e coverage — DONE
+
+**Landed.** Manifest gains `feature:thread-history` + operations `agent.list-threads`,
+`agent.thread-history`, `agent.rename-thread`, `agent.delete-thread` (dot convention, matching the
+existing agent ids). `e2e/agent-thread-history.e2e.ts` drives the real built app: runs a turn (creates a
+thread), opens the list, renames + asserts the new title, selects it and asserts the loaded transcript,
+sends a resumed follow-up, then deletes it and asserts it leaves the list — no `window.api` mocks, only the
+folder-picker stub. **Caught a real bug:** destructuring `seedThread` off the Agent in `useThreadSession`
+lost `this`, so selecting a thread threw before `setView('chat')` (the list never closed). Fixed by binding
+the controls to the agent in `AgentProvider` and guarded by a new renderer integration test
+(`rail/__tests__/ConversationRail.integration.test.tsx`). `npm run test:e2e` for this spec passes (~21s).
 
 Add to `e2e/coverage-manifest.ts`: `operation:agent-list-threads`, `operation:agent-thread-history`,
 `operation:agent-rename-thread`, `operation:agent-delete-thread`, and `feature:thread-history`. Write a
