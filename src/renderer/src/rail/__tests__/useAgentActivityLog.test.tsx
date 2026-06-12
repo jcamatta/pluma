@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest'
 import { act, render } from '@testing-library/react'
 import { AbstractAgent, type AgentSubscriber, type RunAgentInput } from '@ag-ui/client'
-import { EventType, type BaseEvent } from '@ag-ui/core'
+import { EventType, type BaseEvent, type Message } from '@ag-ui/core'
 import { Observable } from 'rxjs'
 import { useAgentActivityLog } from '../useAgentActivityLog'
 import type { ActivityLabels } from '../activity-log'
@@ -60,6 +60,11 @@ class FakeAgent extends AbstractAgent {
     })
   }
 
+  newMessage(role: 'user' | 'assistant'): void {
+    const message: Message = { id: 'm', role, content: 'x' }
+    void this.sub?.onNewMessage?.({ message, messages: [message], state: {}, agent: this })
+  }
+
   hasSubscriber(): boolean {
     return this.sub !== undefined
   }
@@ -102,6 +107,29 @@ describe('useAgentActivityLog', () => {
 
     act(() => agent.finishRunLifecycle())
     expect(getByTestId('status').textContent).toBe('done')
+  })
+
+  it('resets to idle when a new user message opens a turn, but not on assistant messages', () => {
+    const agent = new FakeAgent()
+
+    function Probe(): React.JSX.Element {
+      const activity = useAgentActivityLog(agent, labels)
+      return <span data-testid="status">{activity.status}</span>
+    }
+
+    const { getByTestId } = render(<Probe />)
+
+    act(() => agent.startRunLifecycle())
+    act(() => agent.finishRunLifecycle())
+    expect(getByTestId('status').textContent).toBe('done')
+
+    // A streamed assistant message mid-conversation must not wipe the settled activity.
+    act(() => agent.newMessage('assistant'))
+    expect(getByTestId('status').textContent).toBe('done')
+
+    // The next user message starts a new turn, clearing the previous turn's activity.
+    act(() => agent.newMessage('user'))
+    expect(getByTestId('status').textContent).toBe('idle')
   })
 
   it('unsubscribes on unmount', () => {

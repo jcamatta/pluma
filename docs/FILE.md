@@ -96,6 +96,13 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/main/adapters/agent/claude/runtime/stream-input.ts` — builds the SDK streaming-input prompt: yields the folded context message first on a fresh run (gated on `threadId === undefined`), then the conversation mapped by `toSdkPrompt`.
 - `src/main/adapters/agent/claude/runtime/__tests__/stream-input.test.ts` — asserts the context message is yielded first on a fresh run, not re-injected on a resume, and absent when there is no context.
 
+### src/renderer/src/rail — conversation transcript
+
+- `src/renderer/src/rail/transcript-logic.ts` — pure `splitConversation(messages, live)` separating the settled history (plain user + non-empty assistant bubbles, tool/system/empty turns dropped) from the current turn's prompt (the last user message onward, rendered by the live activity instead).
+- `src/renderer/src/rail/Transcript.view.tsx` — pure view rendering the settled history items as user bubbles and assistant reply blocks, each animated in on mount.
+- `src/renderer/src/rail/__tests__/transcript-logic.test.ts` — tests for the history/current-turn split (live vs idle, turn filtering, ordering, trimming).
+- `src/renderer/src/rail/__tests__/Transcript.view.test.tsx` — tests that the view renders every turn in order and nothing for an empty transcript.
+
 ### src/renderer/src/editor
 
 - `src/renderer/src/editor/useEditorTools.ts` — contributes the editor's five frontend tools (get_current_selection, get_current_document, get_ranges, create_annotation, propose_edit) to the agent tool registry for the lifetime of the editor column, binding each handler to the live `Editor` and returning a recoverable error when no document is open.

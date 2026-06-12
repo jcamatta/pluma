@@ -85,6 +85,42 @@ call `newThread()`. Map `error._tag` → a `t()` key per failure. Hook tests via
 `QueryClientProvider` + fake writer asserting mutation + invalidation; extend the controller test for
 rename/delete. Add i18n keys. Update `FILE.md`.
 
+### 9a. Render the in-session transcript from `agent.messages` (done)
+
+**Landed ahead of 7/8** to fix a standalone bug: the rail rendered a single local `prompt` string, so
+each new turn overwrote the previous one (the first message visibly vanished on the second send) and the
+header title jumped to the latest prompt — even though `agent.messages` held the whole conversation and
+the backend resumed correctly. O5 is **settled here as a scrollable transcript**.
+
+The rail now renders `agent.messages` (the AbstractAgent transcript: user `addMessage` + the apply
+pipeline's streamed assistant/tool messages) as the source of truth, with **settled history stacked above
+the current turn** (O5's "latest turn with history above" — the existing live-turn UX is unchanged, prior
+turns simply pile up above it):
+
+- `rail/transcript-logic.ts` — pure `splitConversation(messages, live)`: peels the current turn (from the
+  last user message onward) off the settled history. While a run is live (working/done/error) the current
+  turn's streamed reply is owned by the activity, so it is excluded from the history; with no live run the
+  whole conversation is history (e.g. a freshly loaded thread). User + non-empty assistant turns are kept;
+  tool/system/empty turns dropped.
+- `rail/Transcript.view.tsx` — pure view mapping the settled-history items to `UserMessage` / a plain
+  assistant reply bubble.
+- `ConversationRail.controller.tsx` — reads `agent.messages` instead of `prompt`: renders `TranscriptView`
+  (history) above the existing `ConversationTurnView` (current turn = last user message + live activity,
+  keeping the "Worked ✓ · N steps" + reply UX). Title derives from the first user message; `newChat` clears
+  via `agent.setMessages([])`.
+- `rail/useAgentActivityLog.ts` — resets the activity to idle on a new **user** message (`onNewMessage`), so
+  the previous turn's settled activity stops being shown/mis-attributed the moment the next turn is sent
+  (assistant/tool messages mid-run do not reset).
+- `rail/RailComposer.view.tsx` — composer textarea now auto-grows (`field-sizing-content`) inside a
+  `Scrollable`, so long drafts scroll with the Base UI scrollbar instead of the native one (capped at
+  `max-h-40`).
+
+Proven end-to-end: `e2e/rail.e2e.ts` sends two turns and asserts both user bubbles + the first reply
+remain visible. **Pre-existing, out of scope:** the Stop button does not abort (its `agent.abortRun()` is a
+no-op in `@ag-ui/client` 0.0.55) — fails on a clean tree too, tracked separately. **Still deferred to step
+7/8:** true "new thread" session reset (`newThread()` resetting the SDK session id) and seeding a _selected_
+thread's loaded history — those rejoin below.
+
 ### 9. Load + render history in the turn view
 
 When a thread is selected, render its loaded history above the live turn (reuse/extend
