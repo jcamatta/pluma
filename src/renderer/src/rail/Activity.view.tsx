@@ -1,7 +1,8 @@
 // The run's activity: a collapsible header (spinner + current step while working, "Worked"/"Run failed"
-// + step count + chevron once settled) over the timeline of LogRows. Pure props — the Stop control lives
-// with the composer, since interrupting is a run-control, not a per-message action. The timeline rail
-// offset is sub-scale, so it goes through `style`.
+// + step count + chevron) over the timeline of LogRows. The header collapses at any time, including
+// mid-run, so the steps can be hidden while the agent is still working. Pure props — the Stop control
+// lives with the composer, since interrupting is a run-control, not a per-message action. The timeline
+// rail offset is sub-scale, so it goes through `style`.
 
 import { Button } from '@base-ui/react'
 import { Check, ChevronDown, X } from 'lucide-react'
@@ -63,25 +64,18 @@ function Header({
   readonly onToggleExpand: () => void
 }): React.JSX.Element {
   return (
-    <Button
-      type="button"
-      onClick={onToggleExpand}
-      disabled={working}
-      className="flex w-full items-center gap-2 py-px"
-    >
+    <Button type="button" onClick={onToggleExpand} className="flex w-full items-center gap-2 py-px">
       <StatusIcon working={working} failed={failed} />
       <span className="min-w-0 flex-1 truncate text-left text-xs font-semibold text-text-secondary">
         {label}
       </span>
       <span className="flex-none whitespace-nowrap text-xs text-text-muted">{stepLabel}</span>
-      {!working && (
-        <span
-          className="flex flex-none text-text-muted transition-transform duration-200"
-          style={{ transform: expanded ? 'rotate(180deg)' : 'none' }}
-        >
-          <ChevronDown size={13} />
-        </span>
-      )}
+      <span
+        className="flex flex-none text-text-muted transition-transform duration-200"
+        style={{ transform: expanded ? 'rotate(180deg)' : 'none' }}
+      >
+        <ChevronDown size={13} />
+      </span>
     </Button>
   )
 }

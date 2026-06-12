@@ -86,10 +86,19 @@ describe('ActivityView', () => {
     expect(screen.queryByText('propose_edit')).not.toBeInTheDocument()
   })
 
-  it('toggles expansion through the header (enabled only once the run finishes)', () => {
+  it('toggles expansion through the header when settled', () => {
     const { onToggleExpand } = renderActivity(done)
 
     fireEvent.click(screen.getByRole('button', { name: /Worked/ }))
+    expect(onToggleExpand).toHaveBeenCalledOnce()
+  })
+
+  it('toggles expansion through the header while still working', () => {
+    const { onToggleExpand } = renderActivity(working)
+
+    const header = screen.getByRole('button', { name: /Calling propose_edit…/ })
+    expect(header).toBeEnabled()
+    fireEvent.click(header)
     expect(onToggleExpand).toHaveBeenCalledOnce()
   })
 })
