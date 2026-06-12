@@ -1,4 +1,4 @@
-// toRunInput: messages and tools pass through; threadId is included only when present.
+// toRunInput: messages, tools, and context pass through; threadId is included only when present.
 
 import { describe, expect, it } from 'vitest'
 import type { RunAgentInput } from '@ag-ui/client'
@@ -19,6 +19,11 @@ describe('toRunInput', () => {
     const result = toRunInput(base)
     expect(result.messages).toEqual(base.messages)
     expect(result.tools).toEqual(base.tools)
+  })
+
+  it('passes the AG-UI context through', () => {
+    const context = [{ description: 'About Pluma', value: 'A writing app.' }]
+    expect(toRunInput({ ...base, context }).context).toEqual(context)
   })
 
   it('omits threadId when empty', () => {
