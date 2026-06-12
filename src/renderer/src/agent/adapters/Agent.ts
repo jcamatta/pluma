@@ -12,7 +12,7 @@ import {
   type RunAgentResult
 } from '@ag-ui/client'
 import type { AgentSubscriber } from '@ag-ui/client'
-import { EventType, type BaseEvent, type Tool } from '@ag-ui/core'
+import { EventType, type BaseEvent, type Message, type Tool } from '@ag-ui/core'
 import { Observable, type Subscriber } from 'rxjs'
 import { AGENT_ABORT_CHANNEL, AGENT_RUN_CHANNEL } from '../../../../shared/ipc/ipc-contract/agent'
 import { AGENT_EVENT_CHANNEL } from '../../../../shared/ipc/ipc-event-contract/agent'
@@ -50,6 +50,19 @@ export class Agent extends AbstractAgent {
   // provider as the picked folder changes.
   setCwd(cwd: string | undefined): void {
     this.workspaceCwd = cwd
+  }
+
+  // Adopt a selected thread: resume its SDK session on the next run and show its stored history
+  // immediately. setMessages notifies subscribers, so useAgent re-renders with the loaded transcript.
+  seedThread(id: string, messages: readonly Message[]): void {
+    this.sessionId = id
+    this.setMessages([...messages])
+  }
+
+  // Start a fresh thread: drop the resume id (next run opens a new session) and clear the transcript.
+  newThread(): void {
+    this.sessionId = undefined
+    this.setMessages([])
   }
 
   override runAgent(

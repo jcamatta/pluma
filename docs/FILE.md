@@ -83,6 +83,11 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/renderer/src/threads/__tests__/useThreads.test.tsx` — tests for the useThreads query hook against the fake.
 - `src/renderer/src/threads/__tests__/useThreadHistory.test.tsx` — tests for the useThreadHistory query hook against the fake.
 
+### src/renderer/src/agent
+
+- `src/renderer/src/agent/ThreadControlsContext.ts` — React context carrying the Agent's thread-lifecycle controls (seedThread / newThread); default is a no-op so trees mounting only AgentContext still render.
+- `src/renderer/src/agent/__tests__/Agent.test.ts` — tests that seedThread adopts a selected thread's id + history for the next run and newThread clears both.
+
 ### src/main/application/agent
 
 - `src/main/application/agent/data/agent-context-entry.ts` — plain data type for one entry of the per-session AG-UI context channel (`description` + `value`), folded into a fresh run's opening message.

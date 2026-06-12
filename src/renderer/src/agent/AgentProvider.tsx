@@ -7,6 +7,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { AgentContext } from './AgentContext'
+import { ThreadControlsContext } from './ThreadControlsContext'
 import { useToolRegistry } from './AgentToolsContext'
 import { createApiAgent } from './adapters/create-api-agent'
 import { useToolBridge } from './useToolBridge'
@@ -26,5 +27,9 @@ export function AgentProvider({ cwd, children }: AgentProviderProps): React.JSX.
 
   useToolBridge(registry)
 
-  return <AgentContext.Provider value={agent}>{children}</AgentContext.Provider>
+  return (
+    <AgentContext.Provider value={agent}>
+      <ThreadControlsContext.Provider value={agent}>{children}</ThreadControlsContext.Provider>
+    </AgentContext.Provider>
+  )
 }

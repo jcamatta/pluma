@@ -43,7 +43,16 @@ threads UI. The rail (`src/renderer/src/rail/`) still renders a single ephemeral
 
 ## Remaining steps (each a small, committable unit; checks green at the end)
 
-### 7. Seed the agent on select
+### 7. Seed the agent on select — DONE
+
+**Landed.** `Agent.seedThread(id, messages)` sets `sessionId = id` + `setMessages([...messages])`;
+`Agent.newThread()` clears both. Resolved the typing open-point with option (b): a `ThreadControls`
+interface (seedThread/newThread) on its own context (`agent/ThreadControlsContext.ts`) with a **no-op
+default**, so fake-agent tests that mount only `AgentContext` keep working. `AgentProvider` supplies the
+concrete `Agent` (which satisfies `ThreadControls`) via the new context; `useAgent` now returns
+`{ agent, selectThread, newThread }` (selectThread = seedThread). Tested in
+`agent/__tests__/Agent.test.ts` via a probe subclass reading the protected `resumeThreadId()`. Next:
+step 8 (threads list view + panel) consumes `useThreads(cwd)` + `selectThread`/`newThread`.
 
 Extend `Agent.ts` to accept an **initial thread id + initial message list** so a selected thread resumes
 its session and shows its history; "new thread" = no id. Concretely add two methods to `Agent`:
