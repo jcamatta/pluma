@@ -7,7 +7,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { AgentContext } from './AgentContext'
-import { ThreadControlsContext } from './ThreadControlsContext'
+import { ThreadControlsContext, type ThreadControls } from './ThreadControlsContext'
 import { useToolRegistry } from './AgentToolsContext'
 import { createApiAgent } from './adapters/create-api-agent'
 import { useToolBridge } from './useToolBridge'
@@ -20,6 +20,12 @@ interface AgentProviderProps {
 export function AgentProvider({ cwd, children }: AgentProviderProps): React.JSX.Element {
   const registry = useToolRegistry()
   const [agent] = useState(() => createApiAgent(() => registry.snapshot()))
+  // Bind the controls to the agent so consumers may destructure seedThread/newThread without losing
+  // the `this` that the Agent methods rely on. Held in state so the context value stays stable.
+  const [controls] = useState<ThreadControls>(() => ({
+    seedThread: (id, messages) => agent.seedThread(id, messages),
+    newThread: () => agent.newThread()
+  }))
 
   useEffect(() => {
     agent.setCwd(cwd)
@@ -29,7 +35,7 @@ export function AgentProvider({ cwd, children }: AgentProviderProps): React.JSX.
 
   return (
     <AgentContext.Provider value={agent}>
-      <ThreadControlsContext.Provider value={agent}>{children}</ThreadControlsContext.Provider>
+      <ThreadControlsContext.Provider value={controls}>{children}</ThreadControlsContext.Provider>
     </AgentContext.Provider>
   )
 }

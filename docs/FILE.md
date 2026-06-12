@@ -111,6 +111,7 @@ The index is populated incrementally as files are touched, so it starts mostly e
 - `src/renderer/src/rail/__tests__/ConversationHistory.controller.test.tsx` — tests the history controller renders the loaded transcript and the error state against the fake repo.
 - `src/renderer/src/rail/useThreadsRefresh.ts` — subscribes to the agent's run-finalized signal and invalidates ['threads', cwd] so a new thread appears in the list.
 - `src/renderer/src/rail/__tests__/useThreadsRefresh.test.tsx` — tests a finalized run invalidates the threads query for the workspace.
+- `src/renderer/src/rail/__tests__/ConversationRail.integration.test.tsx` — integration test (real AgentProvider + fake threads repo) that selecting a thread switches to chat and renders its transcript, guarding the ThreadControls binding.
 
 ### src/renderer/src/agent
 
