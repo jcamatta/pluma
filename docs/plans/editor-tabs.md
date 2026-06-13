@@ -40,12 +40,14 @@ Delivers the data the strip renders, unit-tested in isolation. Tiny, green on it
 
 _Landed: `buildEditorTabs` + `EditorTab` type and its test; 4 tests green, lint clean._
 
-### 2. Horizontal orientation for `Scrollable`
+### 2. Horizontal orientation for `Scrollable` — DONE
 
 - **Edit** `src/renderer/src/components/Scrollable.tsx` — add an optional `orientation?: 'vertical' | 'horizontal'` prop (default `'vertical'`, so every current caller is unchanged). When `'horizontal'`, render `ScrollArea.Scrollbar orientation="horizontal"` with horizontal sizing (`h-2` instead of `w-2`) and a horizontally-sized thumb, and let the content lay out in a row that can exceed the viewport width.
 - **Add/Edit** `src/renderer/src/components/__tests__/Scrollable.test.tsx` — assert the default stays vertical and that `orientation="horizontal"` renders a horizontal scrollbar. (Add the test file if none exists.)
 
 Delivers the shared primitive the strip needs for overflow, without touching existing usages. Green on its own.
+
+_Landed: `orientation` prop on `Scrollable` (default `vertical`); the axis-class choice extracted to a pure `scrollbar-axis.ts` (`scrollbarAxis`) and unit-tested, since the Base UI scrollbar only mounts under real layout (not jsdom). `Scrollable.test.tsx` keeps a thin children-render test. Lint clean, tests green._
 
 ### 3. Tab strip view (Base UI Tabs.List)
 
