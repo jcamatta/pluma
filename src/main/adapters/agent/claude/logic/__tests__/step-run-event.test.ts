@@ -102,22 +102,40 @@ describe('stepRunEvent message routing', () => {
     expect(events).toStrictEqual([])
   })
 
-  it('turns a stream_event into a text-message-start event', () => {
-    const acc = newRunAccumulator()
-    const streamEvent = {
-      type: 'stream_event',
-      event: {
-        type: 'content_block_start',
-        index: 0,
-        content_block: { type: 'text', text: '', citations: null }
-      }
+  it('adopts the message id from message_start and mints text ids that do not collide across messages', () => {
+    const messageStart = (id: string): SDKMessage => {
+      const literal = { type: 'stream_event', event: { type: 'message_start', message: { id } } }
+      asSdkMessage(literal)
+      return literal
     }
-    asSdkMessage(streamEvent)
-    const [next, events] = stepRunEvent('run-1')(acc, streamEvent)
+    const textBlock = (): SDKMessage => {
+      const literal = {
+        type: 'stream_event',
+        event: {
+          type: 'content_block_start',
+          index: 0,
+          content_block: { type: 'text', text: '', citations: null }
+        }
+      }
+      asSdkMessage(literal)
+      return literal
+    }
+    const step = stepRunEvent('run-1')
 
-    expect(next).toBe(acc)
-    expect(events).toStrictEqual([
-      { type: EventType.TEXT_MESSAGE_START, messageId: 'block-0', role: 'assistant' }
+    // First assistant message: its text block is keyed by msg_a.
+    const [acc1, started] = step(newRunAccumulator(), messageStart('msg_a'))
+    expect(started).toStrictEqual([])
+    const [acc2, first] = step(acc1, textBlock())
+    expect(first).toStrictEqual([
+      { type: EventType.TEXT_MESSAGE_START, messageId: 'msg_a-block-0', role: 'assistant' }
+    ])
+
+    // A second assistant message in the same run restarts at index 0 but, keyed by msg_b, gets a
+    // distinct id — the collision that previously bled text into the prior message.
+    const [acc3] = step(acc2, messageStart('msg_b'))
+    const [, second] = step(acc3, textBlock())
+    expect(second).toStrictEqual([
+      { type: EventType.TEXT_MESSAGE_START, messageId: 'msg_b-block-0', role: 'assistant' }
     ])
   })
 })

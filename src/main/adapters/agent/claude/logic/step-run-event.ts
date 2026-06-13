@@ -5,16 +5,37 @@
 
 import { EventType, type BaseEvent } from '@ag-ui/core'
 import type { SDKMessage, SDKResultMessage } from '@anthropic-ai/claude-agent-sdk'
-import type { OpenBlock } from '../data/sdk-types'
+import type { OpenBlock, StreamEvent } from '../data/sdk-types'
 import { toolResultEvents } from './tool-result-events'
 import { transformStreamEvent } from './transform-stream-event'
 
 export interface RunAccumulator {
   readonly threadId: string
   readonly blocks: Map<number, OpenBlock>
+  // The id of the assistant message currently streaming, taken from each `message_start`. Text message
+  // ids are minted from it so two assistant messages in the same or successive runs — which both restart
+  // their content-block index at 0 — never collide.
+  readonly currentMessageId: string
 }
 
-const newRunAccumulator = (): RunAccumulator => ({ threadId: '', blocks: new Map() })
+const newRunAccumulator = (): RunAccumulator => ({
+  threadId: '',
+  blocks: new Map(),
+  currentMessageId: ''
+})
+
+// A `message_start` opens a new assistant message: adopt its id so later text blocks key off it. Every
+// other stream event maps through transformStreamEvent against the open-block map and current message id.
+const onStreamEvent = (
+  acc: RunAccumulator,
+  inner: StreamEvent
+): readonly [RunAccumulator, readonly BaseEvent[]] => {
+  if (inner.type === 'message_start') {
+    return [{ ...acc, currentMessageId: inner.message.id }, []]
+  }
+  const event = transformStreamEvent(inner, { blocks: acc.blocks, messageId: acc.currentMessageId })
+  return [acc, event ? [event] : []]
+}
 
 // The closing event for a result message. A result can close the run as a failure (e.g. resuming a
 // session the SDK never opened): the SDK sets `is_error` and reports the reason in `subtype`. Surface
@@ -43,10 +64,7 @@ const stepRunEvent =
       const threadId = message.session_id
       return [{ ...acc, threadId }, [{ type: EventType.RUN_STARTED, threadId, runId }]]
     }
-    if (message.type === 'stream_event') {
-      const event = transformStreamEvent(message.event, acc.blocks)
-      return [acc, event ? [event] : []]
-    }
+    if (message.type === 'stream_event') return onStreamEvent(acc, message.event)
     if (message.type === 'user') return [acc, toolResultEvents(message.message.content)]
     if (message.type === 'result') return [acc, [resultEvent(message, { ...acc, runId })]]
     return [acc, []]
