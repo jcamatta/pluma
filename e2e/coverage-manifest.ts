@@ -32,6 +32,7 @@ const OPERATIONS = [
   'folder.changed',
   'file.create',
   'file.delete',
+  'file.rename',
   'file.read',
   'file.write',
   'agent.run',
