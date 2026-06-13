@@ -27,6 +27,7 @@ const OPERATIONS = [
   'folder.list',
   'folder.create',
   'folder.delete',
+  'folder.rename',
   'folder.watch',
   'folder.changed',
   'file.create',
