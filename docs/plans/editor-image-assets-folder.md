@@ -220,3 +220,26 @@ case (delete the asset, reopen, assert the placeholder).
    the app-managed `assets/` directory. The alternative is to leave it visible (and later
    teach the explorer to show image files inside it) — but that is a broader "show media in
    the explorer" feature, out of scope here. **Recommendation:** hide it for now. _Open._
+
+## Progress
+
+Naming decided during implementation: the channel is **`asset:create`** (a dedicated
+`asset` domain under `application/asset/`), success value is the relative-path **string**
+(mirroring `file:create`), and the wire error is a discriminated union
+(`UnsupportedImageType` carries `mimeType`; `AssetWriteFailed` carries `path`). The
+manifest operation id in step 14 will be `asset.create` (not `file.copy-asset`).
+
+- **Step 1 — DONE** (`feat(asset): add asset:create contract and supported-image-type
+rule`). Shared `asset:create` contract + registry union entry; `imageExtensionForMime`
+  business rule (png/jpeg/gif/webp → ext, null otherwise) + test. Supported types
+  deliberately mirror the renderer's current paste/drop set; broadening to svg/avif/bmp is
+  a later, isolated change.
+- **Step 2+3 — DONE** (`copyImageToAssets` use case). `UnsupportedImageType` +
+  `AssetWriteFailed` tagged errors; `AssetWriterPort` (`writeImageAsset` →
+  workspace-relative path); `copyImageToAssets` use case + test against an in-memory fake.
+  Refined the wire error to a per-tag discriminated union here. The port's adapter computes
+  the content hash and owns the physical `assets/<hash>.<ext>` layout (decided against a
+  separate `Hasher` port — YAGNI, single caller).
+- **Next: Step 4 — fs adapter** `adapters/asset/fs-asset-writer.ts`: sha256 the bytes
+  (Node `crypto`), `makeDirectory(assets, { recursive: true })`, `writeFile` the bytes,
+  return `assets/<hash>.<ext>`; pure storage-path helper + adapter test against a temp dir.

@@ -14,10 +14,9 @@ interface AssetCreateRequest {
   readonly mimeType: string
 }
 
-interface AssetCreateError {
-  readonly _tag: 'InvalidPath' | 'UnsupportedImageType' | 'AssetWriteFailed'
-  readonly path: string
-}
+type AssetCreateError =
+  | { readonly _tag: 'UnsupportedImageType'; readonly mimeType: string }
+  | { readonly _tag: 'AssetWriteFailed'; readonly path: string }
 
 type AssetCreateContract = IpcContractDefinition<
   typeof ASSET_CREATE_CHANNEL,
