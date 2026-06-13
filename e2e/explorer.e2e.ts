@@ -5,7 +5,7 @@
 // @e2e feature:explorer
 // @e2e operation:folder.pick operation:folder.list operation:folder.create operation:folder.delete
 // @e2e operation:folder.rename operation:folder.watch operation:folder.changed
-// @e2e operation:file.create operation:file.delete operation:file.read
+// @e2e operation:file.create operation:file.delete operation:file.rename operation:file.read
 
 import { join } from 'node:path'
 import { access, readdir, writeFile, rm } from 'node:fs/promises'
@@ -156,6 +156,38 @@ test('renames a folder in place through the UI', async () => {
       // The row re-renders under the new path, the old one is gone, and the directory moved on disk.
       await expect(window.getByTestId(`folder-row:${newPath}`)).toBeVisible()
       await expect(window.getByTestId(`folder-row:${oldPath}`)).toHaveCount(0)
+      await expect.poll(() => onDisk(newPath)).toBe(true)
+      await expect.poll(() => onDisk(oldPath)).toBe(false)
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+test('renames a file in place through the UI', async () => {
+  await withTempFolder([{ name: 'old.md', content: '# Old' }], async (folder) => {
+    const { app, window } = await launchApp()
+    try {
+      await stubFolderPicker(app, folder)
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+      await expect(window.getByTestId('explorer')).toBeVisible()
+
+      const oldPath = join(folder, 'old.md')
+      const newPath = join(folder, 'new.md')
+      const oldRow = window.getByTestId(`file-row:${oldPath}`)
+      await expect(oldRow).toBeVisible()
+      await expect.poll(() => onDisk(oldPath)).toBe(true)
+
+      // Rename it in place via the inline field, driving the real file:rename IPC.
+      await oldRow.hover()
+      await oldRow.getByRole('button', { name: 'Rename file' }).click()
+      const input = oldRow.getByRole('textbox')
+      await input.fill('new.md')
+      await input.press('Enter')
+
+      // The row re-renders under the new path, the old one is gone, and the file moved on disk.
+      await expect(window.getByTestId(`file-row:${newPath}`)).toBeVisible()
+      await expect(window.getByTestId(`file-row:${oldPath}`)).toHaveCount(0)
       await expect.poll(() => onDisk(newPath)).toBe(true)
       await expect.poll(() => onDisk(oldPath)).toBe(false)
     } finally {

@@ -42,6 +42,7 @@ export function ExplorerController({
         newFolder: t('explorer.newFolder'),
         deleteFile: t('explorer.deleteFile'),
         deleteFolder: t('explorer.deleteFolder'),
+        renameFile: t('explorer.renameFile'),
         renameFolder: t('explorer.renameFolder'),
         collapse: t('explorer.collapse'),
         untitled: t('explorer.untitled'),

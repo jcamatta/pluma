@@ -26,8 +26,10 @@ import {
 import {
   FILE_CREATE_CHANNEL,
   FILE_DELETE_CHANNEL,
+  FILE_RENAME_CHANNEL,
   FILE_WRITE_CHANNEL,
-  FILE_READ_CHANNEL
+  FILE_READ_CHANNEL,
+  type FileRenameRequest
 } from '../../shared/ipc/ipc-contract/file'
 import {
   FOLDER_CREATE_CHANNEL,
@@ -56,6 +58,7 @@ import { handleSubmitToolResult } from './agent/submit-tool-result-handler'
 import { handleThreadHistory } from './agent/thread-history-handler'
 import { handleCreateFile } from './file/create-file-handler'
 import { handleDeleteFile } from './file/delete-file-handler'
+import { handleRenameFile } from './file/rename-file-handler'
 import { handleWriteFile } from './file/write-file-handler'
 import { handleReadFile } from './file/read-file-handler'
 import { handleCreateFolder } from './folder/create-folder-handler'
@@ -80,13 +83,20 @@ const registerThreadChannels = (): void => {
   )
 }
 
-const registerIpc = (): void => {
+const registerFileChannels = (): void => {
   ipcMain.handle(FILE_CREATE_CHANNEL, (_event, path: string) => handleCreateFile(path))
   ipcMain.handle(FILE_DELETE_CHANNEL, (_event, path: string) => handleDeleteFile(path))
+  ipcMain.handle(FILE_RENAME_CHANNEL, (_event, request: FileRenameRequest) =>
+    handleRenameFile(request)
+  )
   ipcMain.handle(FILE_WRITE_CHANNEL, (_event, payload: { path: string; content: string }) =>
     handleWriteFile(payload.path, payload.content)
   )
   ipcMain.handle(FILE_READ_CHANNEL, (_event, path: string) => handleReadFile(path))
+}
+
+const registerIpc = (): void => {
+  registerFileChannels()
   ipcMain.handle(FOLDER_CREATE_CHANNEL, (_event, path: string) => handleCreateFolder(path))
   ipcMain.handle(FOLDER_DELETE_CHANNEL, (_event, path: string) => handleDeleteFolder(path))
   ipcMain.handle(FOLDER_RENAME_CHANNEL, (_event, request: FolderRenameRequest) =>

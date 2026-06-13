@@ -11,13 +11,21 @@ import type {
   FolderRenameError,
   FolderWatchError
 } from '../../../../shared/ipc/ipc-contract/folder'
-import type { FileCreateError, FileDeleteError } from '../../../../shared/ipc/ipc-contract/file'
+import type {
+  FileCreateError,
+  FileDeleteError,
+  FileRenameError
+} from '../../../../shared/ipc/ipc-contract/file'
 
 interface FolderWriterPort {
   readonly createFile: (path: string) => Promise<Result<string, FileCreateError>>
   readonly createFolder: (path: string) => Promise<Result<string, FolderCreateError>>
   readonly deleteFile: (path: string) => Promise<Result<string, FileDeleteError>>
   readonly deleteFolder: (path: string) => Promise<Result<string, FolderDeleteError>>
+  readonly renameFile: (
+    oldPath: string,
+    newPath: string
+  ) => Promise<Result<string, FileRenameError>>
   readonly renameFolder: (
     oldPath: string,
     newPath: string

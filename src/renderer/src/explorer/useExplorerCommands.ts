@@ -24,6 +24,7 @@ type ExplorerCommands = {
     readonly parent: string
   }) => Promise<boolean>
   readonly rename: (args: {
+    readonly type: 'file' | 'directory'
     readonly oldPath: string
     readonly newPath: string
     readonly parent: string

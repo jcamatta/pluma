@@ -21,6 +21,7 @@ const writerThatSucceeds = (created: string[]): Layer.Layer<FileWriterPort> =>
           created.push(path)
         }),
       deleteFile: () => Effect.void,
+      renameFile: () => Effect.void,
       writeFile: () => Effect.void
     })
   )
@@ -33,6 +34,7 @@ const writerThatFails = (
     FileWriter.of({
       createEmptyFile: () => Effect.fail(error),
       deleteFile: () => Effect.void,
+      renameFile: () => Effect.void,
       writeFile: () => Effect.void
     })
   )

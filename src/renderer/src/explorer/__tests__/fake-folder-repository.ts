@@ -70,6 +70,10 @@ function createFakeFolderRepository(
     createFolder: (path) => record(created, path),
     deleteFile: (path) => record(deleted, path),
     deleteFolder: (path) => record(deleted, path),
+    renameFile: (oldPath, newPath) => {
+      renamed.push({ from: oldPath, to: newPath })
+      return Promise.resolve({ ok: true, value: newPath })
+    },
     renameFolder: (oldPath, newPath) => {
       renamed.push({ from: oldPath, to: newPath })
       return Promise.resolve({ ok: true, value: newPath })

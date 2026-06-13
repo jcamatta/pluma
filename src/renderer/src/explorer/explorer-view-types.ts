@@ -24,6 +24,7 @@ type ExplorerLabels = {
   readonly newFolder: string
   readonly deleteFile: string
   readonly deleteFolder: string
+  readonly renameFile: string
   readonly renameFolder: string
   readonly collapse: string
   readonly untitled: string

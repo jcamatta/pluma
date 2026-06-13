@@ -6,8 +6,14 @@ import type { IpcContractDefinition } from './types'
 
 const FILE_CREATE_CHANNEL = 'file:create'
 const FILE_DELETE_CHANNEL = 'file:delete'
+const FILE_RENAME_CHANNEL = 'file:rename'
 const FILE_WRITE_CHANNEL = 'file:write'
 const FILE_READ_CHANNEL = 'file:read'
+
+interface FileRenameRequest {
+  readonly oldPath: string
+  readonly newPath: string
+}
 
 interface FileCreateError {
   readonly _tag: 'InvalidPath' | 'FileAlreadyExists' | 'DirectoryNotFound' | 'FileWriteFailed'
@@ -16,6 +22,11 @@ interface FileCreateError {
 
 interface FileDeleteError {
   readonly _tag: 'InvalidPath' | 'FileNotFound' | 'FileDeleteFailed'
+  readonly path: string
+}
+
+interface FileRenameError {
+  readonly _tag: 'InvalidPath' | 'FileNotFound' | 'FileAlreadyExists' | 'FileRenameFailed'
   readonly path: string
 }
 
@@ -43,6 +54,13 @@ type FileDeleteContract = IpcContractDefinition<
   FileDeleteError
 >
 
+type FileRenameContract = IpcContractDefinition<
+  typeof FILE_RENAME_CHANNEL,
+  FileRenameRequest,
+  string,
+  FileRenameError
+>
+
 type FileWriteContract = IpcContractDefinition<
   typeof FILE_WRITE_CHANNEL,
   { readonly path: string; readonly content: string },
@@ -60,14 +78,18 @@ type FileReadContract = IpcContractDefinition<
 export {
   FILE_CREATE_CHANNEL,
   FILE_DELETE_CHANNEL,
+  FILE_RENAME_CHANNEL,
   FILE_WRITE_CHANNEL,
   FILE_READ_CHANNEL,
+  type FileRenameRequest,
   type FileCreateError,
   type FileDeleteError,
+  type FileRenameError,
   type FileWriteError,
   type FileReadError,
   type FileCreateContract,
   type FileDeleteContract,
+  type FileRenameContract,
   type FileWriteContract,
   type FileReadContract
 }
