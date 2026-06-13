@@ -32,6 +32,10 @@ function treeNames(tree: ReturnType<typeof useExplorerTree>['tree']): readonly s
   return tree.map((node) => node.name)
 }
 
+function isOpen(tree: ReturnType<typeof useExplorerTree>['tree'], path: string): boolean {
+  return tree.find((node) => node.path === path)?.open === true
+}
+
 describe('useExplorerTree read side', () => {
   it('builds the root listing into the tree', async () => {
     const repos = createFakeFolderRepository({
@@ -111,6 +115,20 @@ describe('useExplorerTree draft → create', () => {
 
     await waitFor(() => expect(repos.created()).toEqual(['/root/sub']))
     expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('opens a closed folder so its draft row is visible', async () => {
+    const repos = createFakeFolderRepository({
+      '/root': [{ name: 'sub', type: 'directory' }],
+      '/root/sub': [{ name: 'inner.md', type: 'file' }]
+    })
+    const { result } = renderTree({ repos })
+    await waitFor(() => expect(result.current.tree).toHaveLength(1))
+
+    act(() => result.current.beginCreate('file', '/root/sub'))
+
+    expect(result.current.draft).toEqual({ parentPath: '/root/sub', type: 'file' })
+    await waitFor(() => expect(isOpen(result.current.tree, '/root/sub')).toBe(true))
   })
 
   it('cancels an empty draft name without creating', async () => {

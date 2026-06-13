@@ -109,6 +109,39 @@ test('creates a file when the name is typed without the .md extension', async ()
   })
 })
 
+test('opens a collapsed folder when creating inside it, revealing the name input', async () => {
+  await withTempFolder([], async (folder) => {
+    const { app, window } = await launchApp()
+    try {
+      await stubFolderPicker(app, folder)
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+      await expect(window.getByTestId('explorer')).toBeVisible()
+
+      // Create a subfolder through the root toolbar; it lands collapsed.
+      await window.getByRole('button', { name: 'New folder' }).first().click()
+      await window.getByPlaceholder('Untitled').fill('sub')
+      await window.getByPlaceholder('Untitled').press('Enter')
+
+      const subRow = window.getByTestId(`folder-row:${join(folder, 'sub')}`)
+      await expect(subRow).toBeVisible()
+
+      // Creating a file inside the collapsed folder must open it so its draft input is visible.
+      await subRow.hover()
+      await subRow.getByRole('button', { name: 'New file' }).click()
+      await expect(window.getByPlaceholder('Untitled')).toBeVisible()
+
+      await window.getByPlaceholder('Untitled').fill('inside.md')
+      await window.getByPlaceholder('Untitled').press('Enter')
+
+      const path = join(folder, 'sub', 'inside.md')
+      await expect(window.getByTestId(`file-row:${path}`)).toBeVisible()
+      await expect.poll(() => onDisk(path)).toBe(true)
+    } finally {
+      await app.close()
+    }
+  })
+})
+
 test('reads a selected file into the editor', async () => {
   await withTempFolder(
     [{ name: 'chapter-1.md', content: '# Chapter One\n\nOnce upon a time.' }],
