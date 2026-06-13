@@ -84,7 +84,8 @@ export function useExplorerTree(root: string, selection: Selection): ExplorerTre
       const scopedParent = parent && parent.startsWith(root) ? parent : root
       const newPath = joinPath(scopedParent, name)
       if (name === '' || newPath === path) return
-      void rename({ oldPath: path, newPath, parent: scopedParent }).then((ok) => {
+      const type = findType(tree, path) ?? 'file'
+      void rename({ type, oldPath: path, newPath, parent: scopedParent }).then((ok) => {
         if (!ok) return
         const remap = { from: path, to: newPath }
         setOpenPaths((prev) => remapOpenPaths(prev, remap))
@@ -92,7 +93,7 @@ export function useExplorerTree(root: string, selection: Selection): ExplorerTre
         if (sel && isUnderOrEqual(sel, path)) selection.onSelect(remapPath(sel, remap))
       })
     },
-    [renamingPath, root, rename, selection]
+    [renamingPath, tree, root, rename, selection]
   )
 
   return {

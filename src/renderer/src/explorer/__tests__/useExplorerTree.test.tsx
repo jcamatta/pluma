@@ -166,8 +166,27 @@ describe('useExplorerTree rename', () => {
       result.current.commitRename('final')
     })
 
-    await waitFor(() => expect(repos.renamed()).toEqual([{ from: '/root/draft', to: '/root/final' }]))
+    await waitFor(() =>
+      expect(repos.renamed()).toEqual([{ from: '/root/draft', to: '/root/final' }])
+    )
     expect(renameSpy).toHaveBeenCalledWith('/root/draft', '/root/final')
+    expect(result.current.renamingPath).toBeNull()
+  })
+
+  it('renames a file with the type resolved from the tree and follows the selection', async () => {
+    const repos = createFakeFolderRepository({ '/root': [{ name: 'old.md', type: 'file' }] })
+    const renameFileSpy = vi.spyOn(repos.writer, 'renameFile')
+    const onSelect = vi.fn()
+    const { result } = renderTree({ repos, selected: '/root/old.md', onSelect })
+    await waitFor(() => expect(result.current.tree).toHaveLength(1))
+
+    act(() => result.current.beginRename('/root/old.md'))
+    await act(async () => {
+      result.current.commitRename('new.md')
+    })
+
+    expect(renameFileSpy).toHaveBeenCalledWith('/root/old.md', '/root/new.md')
+    await waitFor(() => expect(onSelect).toHaveBeenCalledWith('/root/new.md'))
     expect(result.current.renamingPath).toBeNull()
   })
 

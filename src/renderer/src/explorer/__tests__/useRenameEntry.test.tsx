@@ -53,6 +53,7 @@ describe('useRenameEntry', () => {
     const { result } = renderWithListing(repos)
 
     const outcome = await result.current.ren.rename({
+      type: 'directory',
       oldPath: '/root/draft',
       newPath: '/root/final',
       parent: '/root'
@@ -63,6 +64,24 @@ describe('useRenameEntry', () => {
     expect(repos.renamed()).toEqual([{ from: '/root/draft', to: '/root/final' }])
   })
 
+  it('renames a file through the writer port and returns the new path', async () => {
+    const repos = createFakeFolderRepository({ '/root': [] })
+    const renameFileSpy = vi.spyOn(repos.writer, 'renameFile')
+    const renameFolderSpy = vi.spyOn(repos.writer, 'renameFolder')
+    const { result } = renderWithListing(repos)
+
+    const outcome = await result.current.ren.rename({
+      type: 'file',
+      oldPath: '/root/old.md',
+      newPath: '/root/new.md',
+      parent: '/root'
+    })
+
+    expect(outcome).toEqual({ ok: true, value: '/root/new.md' })
+    expect(renameFileSpy).toHaveBeenCalledWith('/root/old.md', '/root/new.md')
+    expect(renameFolderSpy).not.toHaveBeenCalled()
+  })
+
   it('invalidates the parent folder listing after a successful rename', async () => {
     const repos = createFakeFolderRepository({ '/root': [] })
     const { result, listSpy } = renderWithListing(repos)
@@ -70,6 +89,7 @@ describe('useRenameEntry', () => {
     await waitFor(() => expect(listSpy).toHaveBeenCalledTimes(1))
 
     await result.current.ren.rename({
+      type: 'directory',
       oldPath: '/root/draft',
       newPath: '/root/final',
       parent: '/root'
@@ -89,12 +109,16 @@ describe('useRenameEntry', () => {
     await waitFor(() => expect(listSpy).toHaveBeenCalledTimes(1))
 
     const outcome = await result.current.ren.rename({
+      type: 'directory',
       oldPath: '/root/draft',
       newPath: '/root/final',
       parent: '/root'
     })
 
-    expect(outcome).toEqual({ ok: false, error: { _tag: 'FolderAlreadyExists', path: '/root/final' } })
+    expect(outcome).toEqual({
+      ok: false,
+      error: { _tag: 'FolderAlreadyExists', path: '/root/final' }
+    })
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(listSpy).toHaveBeenCalledTimes(1)
   })
