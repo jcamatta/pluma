@@ -28,7 +28,7 @@ test('edits a file and autosaves it back to disk', async () => {
         await expect(row).toBeVisible()
         await row.click()
 
-        const surface = window.locator('.ProseMirror')
+        const surface = window.locator('.ProseMirror:visible')
         await expect(surface.locator('h1')).toHaveText('Chapter One')
 
         // The top bar shows the open file's name (basename without the .md extension).
@@ -62,7 +62,7 @@ test('drops an image into the editor and persists it as markdown', async () => {
         const path = join(folder, 'chapter-1.md')
         await window.getByTestId(`file-row:${path}`).click()
 
-        const surface = window.locator('.ProseMirror')
+        const surface = window.locator('.ProseMirror:visible')
         await expect(surface.locator('h1')).toHaveText('Chapter One')
 
         await dropImage(surface, 'pic.png')
