@@ -101,7 +101,10 @@ export function useExplorerTree(root: string, selection: Selection): ExplorerTre
     draft,
     renamingPath,
     toggle,
-    beginCreate: (type, parent) => setDraft({ parentPath: parent, type }),
+    beginCreate: (type, parent) => {
+      if (parent !== null) setOpenPaths((prev) => withPath(prev, parent))
+      setDraft({ parentPath: parent, type })
+    },
     commitDraft,
     cancelDraft: () => setDraft(null),
     remove,
@@ -115,6 +118,13 @@ function toggleInSet(set: ReadonlySet<string>, path: string): ReadonlySet<string
   const next = new Set(set)
   if (next.has(path)) next.delete(path)
   else next.add(path)
+  return next
+}
+
+function withPath(set: ReadonlySet<string>, path: string): ReadonlySet<string> {
+  if (set.has(path)) return set
+  const next = new Set(set)
+  next.add(path)
   return next
 }
 
