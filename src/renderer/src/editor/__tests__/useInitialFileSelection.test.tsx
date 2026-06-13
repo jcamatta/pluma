@@ -18,7 +18,9 @@ function Providers({
 }): React.JSX.Element {
   return (
     <ReposHarness repos={repos}>
-      <OpenFilesContext.Provider value={{ activePath: null, open: (path) => opened.push(path) }}>
+      <OpenFilesContext.Provider
+        value={{ activePath: null, open: (path) => opened.push(path), close: () => undefined }}
+      >
         {children}
       </OpenFilesContext.Provider>
     </ReposHarness>

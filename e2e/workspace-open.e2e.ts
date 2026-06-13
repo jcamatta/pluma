@@ -4,14 +4,20 @@
 // native folder chooser is stubbed; the real folder/file IPC and the OS watcher run.
 //
 // @e2e feature:workspace-open
-// @e2e operation:file.create operation:file.write
+// @e2e operation:file.create operation:file.write operation:file.delete
 
 import { join } from 'node:path'
-import { readFile } from 'node:fs/promises'
+import { access, readFile } from 'node:fs/promises'
 import { test, expect } from '@playwright/test'
 import { launchApp } from './support/launch-app'
 import { stubFolderPicker } from './support/stub-folder-picker'
 import { withTempFolder } from './support/temp-folder'
+
+const onDisk = async (path: string): Promise<boolean> =>
+  access(path).then(
+    () => true,
+    () => false
+  )
 
 test('opens the first markdown file on project open', async () => {
   await withTempFolder(
@@ -64,6 +70,35 @@ test('shows the empty state for a project with no markdown file, then opens a cr
       await expect(window.getByTestId(`file-row:${join(folder, 'draft.md')}`)).toBeVisible()
       await expect(window.getByText('No file open')).toHaveCount(0)
       await expect(window.locator('.ProseMirror')).toBeVisible()
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+test('closes the editor and returns to the empty state when the open file is deleted', async () => {
+  await withTempFolder([{ name: 'only.md', content: '# Only Chapter' }], async (folder) => {
+    const { app, window } = await launchApp()
+    try {
+      await stubFolderPicker(app, folder)
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+
+      // The single markdown file auto-opens, so the editor is mounted on it.
+      await expect(window.locator('.ProseMirror h1')).toHaveText('Only Chapter')
+
+      // Deleting it through the explorer must close it in the editor, not leave a writable surface that
+      // would resurrect the file on the next autosave.
+      const path = join(folder, 'only.md')
+      const row = window.getByTestId(`file-row:${path}`)
+      await row.hover()
+      await row.getByRole('button', { name: 'Delete file' }).click()
+
+      // The close is driven by the OS watcher's delete event, which can lag under load.
+      await expect(window.getByText('No file open')).toBeVisible({ timeout: 15000 })
+      await expect(window.locator('.ProseMirror')).toHaveCount(0)
+
+      // The deleted file stays gone: no lingering editor wrote it back to disk.
+      await expect.poll(() => onDisk(path)).toBe(false)
     } finally {
       await app.close()
     }
