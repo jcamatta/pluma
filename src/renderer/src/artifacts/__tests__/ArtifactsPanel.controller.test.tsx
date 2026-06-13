@@ -55,7 +55,8 @@ function Shell({
       open: (path: string): void => {
         onOpen?.(path)
         setActivePath(path)
-      }
+      },
+      close: (): void => undefined
     }),
     [activePath, onOpen]
   )
