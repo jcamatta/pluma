@@ -3,6 +3,9 @@
   "editor": {
     "untitled": "Untitled",
     "settings": "Settings",
+    "tabs": {
+      "close": "Close {{name}}"
+    },
     "empty": {
       "heading": "No file open",
       "hint": "Create a file from the explorer on the left to start writing."

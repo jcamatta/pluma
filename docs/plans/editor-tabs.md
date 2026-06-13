@@ -49,7 +49,7 @@ Delivers the shared primitive the strip needs for overflow, without touching exi
 
 _Landed: `orientation` prop on `Scrollable` (default `vertical`); the axis-class choice extracted to a pure `scrollbar-axis.ts` (`scrollbarAxis`) and unit-tested, since the Base UI scrollbar only mounts under real layout (not jsdom). `Scrollable.test.tsx` keeps a thin children-render test. Lint clean, tests green._
 
-### 3. Tab strip view (Base UI Tabs.List)
+### 3. Tab strip view (Base UI Tabs.List) — DONE
 
 - **Add** `src/renderer/src/editor/EditorTabStrip.view.tsx` — a pure `*.view.tsx` (no hooks, no `window.api`) rendering the strip's contents to be composed **inside** a `Tabs.Root` (provided by `EditorStack` in step 4). Props: `tabs: readonly EditorTab[]`, `activePath: string`, `settingsLabel`, `closeLabel: (name: string) => string`, `onClose: (path) => void`, `onOpenSettings: () => void`. It renders:
   - A horizontal `Scrollable` wrapping `Tabs.List`, which contains, per tab, a relatively-positioned wrapper holding a `Tabs.Tab value={path}` (rendered via `render={<motion.button …/>}` for hover/tap; lucide `FileText` + `name`, muted by default, accent text when `data-selected`) and a sibling close `IconButton` (lucide `X`, `stopPropagation`, `aria-label={closeLabel(name)}`) overlaying the tab's right edge.
@@ -61,6 +61,8 @@ _Landed: `orientation` prop on `Scrollable` (default `vertical`); the axis-class
 - **Edit** `src/renderer/src/i18n/locales/en.json` — add `editor.tabs.close` (`"Close {{name}}"`). (`editor.settings` already exists.)
 
 Delivers the strip's presentation, tested against the real Base UI Tabs context. Unused by the app shell at this point (imported only by its test) — green.
+
+_Landed: `EditorTabStrip.view.tsx` (Tabs.List + per-tab close overlay + Tabs.Indicator underline + horizontal Scrollable + settings gear), its test (4 cases, against a real `Tabs.Root`), and the `editor.tabs.close` key. Deviation from the sketch: no `activePath` prop — Base UI surfaces selection as `data-selected` from the controlling `Tabs.Root`, so the view styles off that and never needs the active value. 4 tests green, lint clean._
 
 ### 4. Compose Tabs in the panel; retire the per-editor top bar
 
