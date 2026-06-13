@@ -20,7 +20,9 @@ function wrapper({ children }: { readonly children: ReactNode }): React.JSX.Elem
   return (
     <AgentToolsProvider>
       <ActiveEditorProvider>
-        <OpenFilesContext.Provider value={{ activePath: PATH, open: () => undefined }}>
+        <OpenFilesContext.Provider
+          value={{ activePath: PATH, open: () => undefined, close: () => undefined }}
+        >
           <EditorToolsBridge />
           {children}
         </OpenFilesContext.Provider>
