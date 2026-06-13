@@ -15,5 +15,21 @@ function openFile(state: OpenFiles, path: string): OpenFiles {
   return { paths, active: path }
 }
 
-export { noOpenFiles, openFile }
+// A path is within an ancestor when it is the ancestor itself or sits below it, regardless of which
+// separator the native paths use — so closing a deleted folder also closes the files under it.
+function isWithin(path: string, ancestor: string): boolean {
+  return path === ancestor || path.startsWith(`${ancestor}/`) || path.startsWith(`${ancestor}\\`)
+}
+
+function closeFile(state: OpenFiles, path: string): OpenFiles {
+  const paths = state.paths.filter((open) => !isWithin(open, path))
+  if (paths.length === state.paths.length) return state
+  const active =
+    state.active !== null && paths.includes(state.active)
+      ? state.active
+      : (paths[paths.length - 1] ?? null)
+  return { paths, active }
+}
+
+export { noOpenFiles, openFile, closeFile }
 export type { OpenFiles }
