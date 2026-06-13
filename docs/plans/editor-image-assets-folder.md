@@ -87,10 +87,16 @@ access, no custom scheme, and main holds no protocol handler today (confirmed: z
 ## Steps
 
 Each step is one small, green, independently reviewable commit. Only `src/` carries commit
-weight. **This is a large feature — Steps 1–9 (backend + protocol) and Steps 10–15
-(renderer + e2e) are intended to ship as two separate PRs** (per our split-PR practice);
-the backend PR omits the e2e manifest id, which lands with the renderer PR that exercises
-it.
+weight. **This ships as two PRs:**
+
+- **PR 1 — backend write-path (Steps 1–5).** The `asset:create` contract, use case, port,
+  fs adapter, and IPC endpoint. Self-contained and fully tested against a real temp dir;
+  the channel is registered but not yet called from the renderer (the normal backend-first
+  pattern). No e2e manifest id here.
+- **PR 2 — the render story (Steps 6b, 7–15).** The `pluma-asset://` protocol (moved here
+  from the original PR-1 grouping, since a handler nothing requests is dead code on its
+  own), the customized Image node, the insertion wiring, the missing-asset placeholder, the
+  explorer-filter hide (6b), the e2e (manifest id + real-app spec), and the plan's removal.
 
 ### Shared contract
 
@@ -252,6 +258,14 @@ rule`). Shared `asset:create` contract + registry union entry; `imageExtensionFo
   to `register.test.ts`. Handler test covers ok:true (file on disk) and ok:false
   (UnsupportedImageType). **PR 1 backend write-path is complete** (use case → adapter →
   IPC).
-- **Next: Step 6b** — hide the managed `assets/` directory from the explorer
-  (`keep-markdown-entries.ts`). Then **Steps 7–9** (privileged scheme + resolver logic +
-  protocol handler) finish PR 1.
+  **PR 1 (backend write-path) is complete — Steps 1–5 all green, opened as its own PR.** The
+  `asset:create` channel is registered and tested but not yet invoked; the renderer wiring
+  that calls it lands in PR 2.
+
+- **PR 2 — remaining work** (new branch off `main` after PR 1 merges): the
+  `pluma-asset://` protocol (Steps 7–9), the customized Image node + insertion wiring +
+  missing-asset placeholder (Steps 10–13b), the explorer-filter hide (6b — note: the simple
+  version hides any directory named `assets`, since `keepMarkdownEntries` has no root-path
+  context), the e2e + `asset.create` manifest id (Step 14), and this plan's removal
+  (Step 15). Confirm the protocol's path-confinement model (Open Q2) and run
+  `security-review` before opening PR 2.
