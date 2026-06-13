@@ -13,6 +13,7 @@ import {
 import {
   FILE_CREATE_CHANNEL,
   FILE_DELETE_CHANNEL,
+  FILE_RENAME_CHANNEL,
   FILE_READ_CHANNEL,
   FILE_WRITE_CHANNEL
 } from '../../../../shared/ipc/ipc-contract/file'
@@ -45,6 +46,7 @@ function createFolderRepository(): {
     createFolder: (path) => window.api.invoke(FOLDER_CREATE_CHANNEL, path),
     deleteFile: (path) => window.api.invoke(FILE_DELETE_CHANNEL, path),
     deleteFolder: (path) => window.api.invoke(FOLDER_DELETE_CHANNEL, path),
+    renameFile: (oldPath, newPath) => window.api.invoke(FILE_RENAME_CHANNEL, { oldPath, newPath }),
     renameFolder: (oldPath, newPath) =>
       window.api.invoke(FOLDER_RENAME_CHANNEL, { oldPath, newPath }),
     watch: (path) => window.api.invoke(FOLDER_WATCH_CHANNEL, path),
