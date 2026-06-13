@@ -1,6 +1,6 @@
-// EditorToolsBridge contributes the editor tools from the shell, bound to the active editor: with no
-// active editor the tools are still registered but report no document; once an editor is registered
-// into ActiveEditorContext the handlers dispatch against it.
+// EditorToolsBridge contributes the editor tools from the shell, bound through the open-editor registry
+// to the editor open at the active path: with nothing registered at that path the tools are still
+// registered but report no document; once an editor is registered there the handlers dispatch against it.
 
 import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
@@ -10,22 +10,27 @@ import { useToolRegistry } from '../../agent/AgentToolsContext'
 import { agentToolSpecs, getRangesTool } from '../../agent/tools/specs'
 import { ActiveEditorProvider } from '../ActiveEditorProvider'
 import { useActiveEditor } from '../ActiveEditorContext'
+import { OpenFilesContext } from '../OpenFilesContext'
 import { EditorToolsBridge } from '../EditorToolsBridge'
 import { createTestEditor } from '../extensions/__tests__/editor-test-harness'
+
+const PATH = '/test.md'
 
 function wrapper({ children }: { readonly children: ReactNode }): React.JSX.Element {
   return (
     <AgentToolsProvider>
       <ActiveEditorProvider>
-        <EditorToolsBridge />
-        {children}
+        <OpenFilesContext.Provider value={{ activePath: PATH, open: () => undefined }}>
+          <EditorToolsBridge />
+          {children}
+        </OpenFilesContext.Provider>
       </ActiveEditorProvider>
     </AgentToolsProvider>
   )
 }
 
 describe('EditorToolsBridge', () => {
-  it('registers the editor tools and binds their handlers to the active editor', async () => {
+  it('registers the editor tools and binds their handlers to the editor at the active path', async () => {
     const editor = createTestEditor('hello world')
     try {
       const { result } = renderHook(
@@ -38,13 +43,15 @@ describe('EditorToolsBridge', () => {
       )
 
       const before = await result.current.registry.byName(getRangesTool.name)?.handler({
+        path: PATH,
         text: 'world'
       })
-      expect(before).toEqual({ ok: false, error: 'No document is open in the editor.' })
+      expect(before).toEqual({ ok: false, error: `no_open_editor:${PATH}` })
 
-      act(() => result.current.active.register(editor))
+      act(() => result.current.active.registerEditor(PATH, editor))
 
       const after = await result.current.registry.byName(getRangesTool.name)?.handler({
+        path: PATH,
         text: 'world'
       })
       expect(after?.ok).toBe(true)

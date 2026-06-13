@@ -8,6 +8,20 @@
 import type { Tool } from '@ag-ui/core'
 import { annotationSeverities } from '../../editor/extensions/annotations'
 
+const filePathDescription =
+  'Absolute path of the open file to act on, taken from list_open_files or a read-tool result.'
+
+const listOpenFilesTool: Tool = {
+  name: 'list_open_files',
+  description:
+    'List the files currently open in the editor — each with its absolute path, display name, and whether it is the file the user is active in. Use a returned path to address the acting tools; the set can change between turns, so check it again if a path is rejected.',
+  parameters: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {}
+  }
+}
+
 const getCurrentSelectionTool: Tool = {
   name: 'get_current_selection',
   description: 'Return the current editor selection as text or Markdown.',
@@ -18,13 +32,17 @@ const getCurrentSelectionTool: Tool = {
   }
 }
 
-const getCurrentDocumentTool: Tool = {
-  name: 'get_current_document',
-  description: 'Return the current editor document as Markdown.',
+const getContentTool: Tool = {
+  name: 'get_content',
+  description:
+    "Return an open file's full content as Markdown. Pass the path of the file to read, taken from list_open_files.",
   parameters: {
     type: 'object',
     additionalProperties: false,
-    properties: {}
+    required: ['path'],
+    properties: {
+      path: { type: 'string', description: filePathDescription }
+    }
   }
 }
 
@@ -35,8 +53,9 @@ const getRangesTool: Tool = {
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['text'],
+    required: ['path', 'text'],
     properties: {
+      path: { type: 'string', description: filePathDescription },
       text: { type: 'string' }
     }
   }
@@ -49,8 +68,9 @@ const createAnnotationTool: Tool = {
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['rangeId', 'label', 'description'],
+    required: ['path', 'rangeId', 'label', 'description'],
     properties: {
+      path: { type: 'string', description: filePathDescription },
       rangeId: { type: 'string' },
       label: { type: 'string' },
       description: { type: 'string' },
@@ -71,8 +91,9 @@ const proposeEditTool: Tool = {
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['rangeId', 'replacementText'],
+    required: ['path', 'rangeId', 'replacementText'],
     properties: {
+      path: { type: 'string', description: filePathDescription },
       rangeId: { type: 'string' },
       replacementText: { type: 'string' }
     }
@@ -80,16 +101,18 @@ const proposeEditTool: Tool = {
 }
 
 const agentToolSpecs: readonly Tool[] = [
+  listOpenFilesTool,
   getCurrentSelectionTool,
-  getCurrentDocumentTool,
+  getContentTool,
   getRangesTool,
   createAnnotationTool,
   proposeEditTool
 ]
 
 export {
+  listOpenFilesTool,
   getCurrentSelectionTool,
-  getCurrentDocumentTool,
+  getContentTool,
   getRangesTool,
   createAnnotationTool,
   proposeEditTool,

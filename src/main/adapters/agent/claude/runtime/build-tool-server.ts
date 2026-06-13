@@ -20,7 +20,7 @@ const TOOL_SERVER_NAME = 'pluma-frontend-tools'
 // permission system know they are side-effect-free; the others (create_annotation, propose_edit) mutate.
 const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
   'get_current_selection',
-  'get_current_document',
+  'get_content',
   'get_ranges'
 ])
 
