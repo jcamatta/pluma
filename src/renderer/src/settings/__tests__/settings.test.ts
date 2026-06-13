@@ -3,7 +3,15 @@
 // override, and that initSettings applies the stored choice.
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { applyTheme, initSettings, loadSettings, saveTheme } from '../settings'
+import {
+  applyTheme,
+  initSettings,
+  isLanguage,
+  loadLanguage,
+  loadSettings,
+  saveLanguage,
+  saveTheme
+} from '../settings'
 
 beforeEach(() => {
   localStorage.clear()
@@ -43,5 +51,32 @@ describe('settings', () => {
     localStorage.setItem('pluma.theme', 'light')
     expect(initSettings()).toEqual({ theme: 'light' })
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+  })
+})
+
+describe('language settings', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('defaults to en when nothing is stored', () => {
+    expect(loadLanguage()).toBe('en')
+  })
+
+  it('round-trips a saved language', () => {
+    saveLanguage('es')
+    expect(localStorage.getItem('pluma.language')).toBe('es')
+    expect(loadLanguage()).toBe('es')
+  })
+
+  it('falls back to en for an unknown stored value', () => {
+    localStorage.setItem('pluma.language', 'fr')
+    expect(loadLanguage()).toBe('en')
+  })
+
+  it('guards the Language union', () => {
+    expect(isLanguage('es')).toBe(true)
+    expect(isLanguage('fr')).toBe(false)
+    expect(isLanguage(null)).toBe(false)
   })
 })

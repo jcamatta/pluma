@@ -34,7 +34,9 @@ _Landed: `es.json` (neutral LatAm Spanish, via a dedicated Opus translation agen
 - No wiring yet → app behavior unchanged; commit is self-contained and green.
 - _Budget:_ `es.json` ≈ 123 weighted lines; the parity test is weight 0. One source file + one test file.
 
-### Step 2 — Language persistence + i18n registration
+### Step 2 — Language persistence + i18n registration ✅ done
+
+_Landed: `settings.ts` gained `Language`, `isLanguage`, `loadLanguage`, `saveLanguage` (localStorage `pluma.language`, default `en`, framework-free). `i18n/index.ts` now registers the `es` resource and seeds `lng: loadLanguage()` (fallback `en`) so the stored language applies before first paint. Tests added to `settings/__tests__/settings.test.ts`. Green._
 
 - `src/renderer/src/settings/settings.ts`: add, alongside the theme helpers, `type Language = 'en' | 'es'`, `LANGUAGE_KEY = 'pluma.language'`, `isLanguage` (typed guard), `loadLanguage()` (localStorage → default `'en'`), `saveLanguage()` (localStorage write). Keep it framework-free (no React, no i18n import) so it can run at startup.
 - `src/renderer/src/i18n/index.ts`: register the `es` resource and set `lng: loadLanguage()` (keep `fallbackLng: 'en'`). This applies the persisted language before first paint, with no English flash — mirroring how `initSettings()` applies the theme.
