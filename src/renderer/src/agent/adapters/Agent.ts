@@ -101,6 +101,15 @@ export class Agent extends AbstractAgent {
     })
   }
 
+  // AbstractAgent.abortRun() is a no-op (only HttpAgent overrides it), so Stop did nothing. Our run is
+  // interrupted by the Observable's teardown above, which only fires when the run's subscription is torn
+  // down. detachActiveRun() completes the base class's takeUntil(activeRunDetach$) pipe, unsubscribing
+  // run() so its teardown sends agent:abort, and settling isRunning back to false.
+  override abortRun(): void {
+    void this.detachActiveRun()
+    super.abortRun()
+  }
+
   // The three IPC operations the run bridges, as protected seams: production talks to window.api; tests
   // subclass and override these, so no fake of the channel-generic WindowApi is needed.
   // Records the real SDK session id the first RUN_STARTED reports, so the next turn resumes it. Reading

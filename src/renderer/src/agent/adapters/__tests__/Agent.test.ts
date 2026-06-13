@@ -106,4 +106,24 @@ describe('Agent.run', () => {
 
     expect(agent.aborted).toHaveBeenCalledWith('run-1')
   })
+
+  // Stop calls abortRun(). The base class's abortRun() is a no-op, so without our override the run keeps
+  // streaming. The override stops it through the base class's documented teardown trigger,
+  // detachActiveRun(), which completes the run's takeUntil pipe — unsubscribing run() so its teardown
+  // fires the abort (the unsubscribe path covered above) and settles isRunning.
+  it('stops the active run by detaching it when abortRun is called', () => {
+    const agent = new TestAgent()
+    const detach = vi.spyOn(agent, 'detachActiveRun').mockResolvedValue(undefined)
+
+    agent.abortRun()
+
+    expect(detach).toHaveBeenCalledOnce()
+  })
+
+  it('abortRun with no active run is a no-op that does not throw or abort', () => {
+    const agent = new TestAgent()
+
+    expect(() => agent.abortRun()).not.toThrow()
+    expect(agent.aborted).not.toHaveBeenCalled()
+  })
 })
