@@ -240,6 +240,11 @@ rule`). Shared `asset:create` contract + registry union entry; `imageExtensionFo
   Refined the wire error to a per-tag discriminated union here. The port's adapter computes
   the content hash and owns the physical `assets/<hash>.<ext>` layout (decided against a
   separate `Hasher` port — YAGNI, single caller).
-- **Next: Step 4 — fs adapter** `adapters/asset/fs-asset-writer.ts`: sha256 the bytes
-  (Node `crypto`), `makeDirectory(assets, { recursive: true })`, `writeFile` the bytes,
-  return `assets/<hash>.<ext>`; pure storage-path helper + adapter test against a temp dir.
+- **Step 4 — DONE** (`FsAssetWriterLive` adapter). `content-hash.ts` (sha256 hex of bytes,
+  Node `crypto`); `asset-storage-path.ts` (pure `assets/<hash>.<ext>` layout, forward
+  slashes) + test; `fs-asset-writer.ts` — `makeDirectory(recursive)` + `writeFile(bytes)`,
+  any fs failure (incl. `assets` existing as a file) → `AssetWriteFailed`; temp-dir adapter
+  test proves create+write, content-hashed path, and dedup.
+- **Next: Step 5 — IPC endpoint** `ipc/asset/create-asset-handler.ts` runs
+  `copyImageToAssets` with `FsAssetWriterLive`, serializes the `Result`; register in
+  `ipc/register.ts`. Then **Step 6b** (hide `assets/` from the explorer).
