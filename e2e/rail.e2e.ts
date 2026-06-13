@@ -1,10 +1,12 @@
 // Real-app e2e for the conversation rail. Drives the actual built desktop app: opens a real folder to
 // reach the shell, types a prompt into the rail's composer, starts a real agent run (agent.run over IPC),
-// and asserts the live AG-UI event stream (agent.event) folds into a visible user bubble, a settled
-// "Worked" activity, and a streamed assistant reply — exactly as a writer chatting with the assistant
-// would see it. The reply comes from a real Claude call, so the prompt pins the answer to a sentinel word
-// and the assertion is case-insensitive with a generous timeout for the network round-trip. Nothing about
-// the agent is mocked; only the native folder dialog is stubbed (the one sanctioned human-gesture stub).
+// and asserts the live AG-UI event stream (agent.event) folds into a visible user bubble and a streamed
+// assistant reply — exactly as a writer chatting with the assistant would see it. The conversation is
+// rendered directly from agent.messages, so every turn (current and prior) keeps its own reply; a
+// text-only reply renders clean with no step timeline (the timeline appears only when the turn used a
+// tool). The reply comes from a real Claude call, so the prompt pins the answer to a sentinel word and the
+// assertion is case-insensitive with a generous timeout for the network round-trip. Nothing about the
+// agent is mocked; only the native folder dialog is stubbed (the one sanctioned human-gesture stub).
 //
 // @e2e feature:rail
 // @e2e operation:agent.run operation:agent.event operation:agent.abort
@@ -47,11 +49,9 @@ test('sends a message and shows the assistant reply in the rail', async () => {
       const bubble = rail.locator('.bg-action-primary.text-text-on-accent', { hasText: PROMPT })
       await expect(bubble).toBeVisible()
 
-      // The run settles: the activity header flips from the working spinner to "Worked".
-      await expect(rail.getByText('Worked', { exact: true })).toBeVisible({ timeout: 60_000 })
-
       // The streamed reply lands and contains the sentinel the prompt pinned, rendered as bold markdown
-      // (a real <strong>) rather than raw `**PLUMA**`.
+      // (a real <strong>) rather than raw `**PLUMA**`. A text-only turn shows no "Worked" step header —
+      // the timeline appears only when the turn actually called a tool.
       const reply = rail.getByTestId('assistant-reply')
       await expect(reply).toBeVisible({ timeout: 60_000 })
       await expect(reply).toContainText(SENTINEL, { ignoreCase: true })
