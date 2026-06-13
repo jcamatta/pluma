@@ -30,7 +30,7 @@ Order follows the dependency direction (shared contract → backend inner-to-out
 e2e), so each step lands green on what came before. Backend mirrors the matching `rename-folder`
 file noted in parentheses.
 
-### 1. Shared IPC contract for `file:rename`
+### 1. Shared IPC contract for `file:rename` — done
 
 - `src/shared/ipc/ipc-contract/file.ts` (edit) — add `FILE_RENAME_CHANNEL = 'file:rename'`, a
   `FileRenameRequest { oldPath; newPath }`, a `FileRenameError` with
@@ -42,7 +42,7 @@ file noted in parentheses.
 
 Type-only, no test (mirrors the untested folder contract types).
 
-### 2. Application: rename-file use case (+ error + port)
+### 2. Application: rename-file use case (+ error + port) — done (committed with step 3)
 
 - `src/main/application/file/error/file-rename-failed.ts` (new) — `FileRenameFailed` tagged error
   with `{ path }` (mirror `folder-rename-failed.ts`).
@@ -59,7 +59,11 @@ Type-only, no test (mirrors the untested folder contract types).
 - `src/main/application/file/usecase/__tests__/rename-file.test.ts` (new) — success plus each typed
   failure, against an in-memory `FileWriter`.
 
-### 3. Adapter: `fs-file-writer.renameFile`
+### 3. Adapter: `fs-file-writer.renameFile` — done
+
+> Note: steps 2 and 3 landed in one commit — adding `renameFile` to `FileWriterPort` breaks every
+> implementer (the adapter and the existing create/delete/write use-case test fakes), so the port,
+> the use case, the adapter, and the test-fake stubs had to land together to stay green.
 
 - `src/main/adapters/file/fs-file-writer.ts` (edit) — add `renameFile(source, destination)`: source
   must be an existing **File** else `FileNotFound`; an occupied destination → `FileAlreadyExists`;
@@ -70,7 +74,10 @@ Type-only, no test (mirrors the untested folder contract types).
   renames a file, reports a missing/non-file source, refuses an existing destination (mirror
   `fs-folder-writer.rename.test.ts`).
 
-### 4. IPC endpoint + registration
+### 4. IPC endpoint + registration — done
+
+> Note: registering the new handler pushed `registerIpc` to 13 statements (max 12), so the file
+> channels were extracted into a `registerFileChannels` helper (mirroring `registerThreadChannels`).
 
 - `src/main/ipc/file/rename-file-handler.ts` (new) — `handleRenameFile({ oldPath, newPath })` runs
   the `rename-file` use case with `FsFileWriterLive` and serializes the outcome to
