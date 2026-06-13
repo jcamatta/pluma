@@ -3,7 +3,9 @@
 // parent directory -> DirectoryNotFound, any other write failure -> FileWriteFailed; for deletion,
 // a target that is not an existing regular file -> FileNotFound, any other removal failure ->
 // FileDeleteFailed; for writing content, a target that is not an existing regular file -> FileNotFound,
-// any other write failure -> FileWriteFailed. Deletion and writing only ever touch regular files.
+// any other write failure -> FileWriteFailed; for renaming, a source that is not an existing regular
+// file -> FileNotFound, an already-occupied destination -> FileAlreadyExists, any other move failure
+// -> FileRenameFailed. Deletion, writing, and renaming only ever touch regular files.
 
 import { FileSystem } from '@effect/platform/FileSystem'
 import { Path } from '@effect/platform/Path'
@@ -14,6 +16,7 @@ import { DirectoryNotFound } from '../../application/file/error/directory-not-fo
 import { FileWriteFailed } from '../../application/file/error/file-write-failed'
 import { FileNotFound } from '../../application/file/error/file-not-found'
 import { FileDeleteFailed } from '../../application/file/error/file-delete-failed'
+import { FileRenameFailed } from '../../application/file/error/file-rename-failed'
 import { FileWriter } from '../../application/file/port/file-writer.port'
 
 const make = Effect.gen(function* () {
@@ -67,7 +70,29 @@ const make = Effect.gen(function* () {
         .pipe(Effect.mapError(() => new FileWriteFailed({ path: target })))
     })
 
-  return FileWriter.of({ createEmptyFile, deleteFile, writeFile })
+  const renameFile = (
+    source: string,
+    destination: string
+  ): Effect.Effect<void, FileNotFound | FileAlreadyExists | FileRenameFailed> =>
+    Effect.gen(function* () {
+      const info = yield* fs.stat(source).pipe(Effect.orElseSucceed(() => undefined))
+      if (info === undefined || info.type !== 'File') {
+        return yield* new FileNotFound({ path: source })
+      }
+
+      const destinationExists = yield* fs
+        .exists(destination)
+        .pipe(Effect.orElseSucceed(() => false))
+      if (destinationExists) {
+        return yield* new FileAlreadyExists({ path: destination })
+      }
+
+      return yield* fs
+        .rename(source, destination)
+        .pipe(Effect.mapError(() => new FileRenameFailed({ path: destination })))
+    })
+
+  return FileWriter.of({ createEmptyFile, deleteFile, renameFile, writeFile })
 })
 
 export const FsFileWriterLive = Layer.effect(FileWriter, make)

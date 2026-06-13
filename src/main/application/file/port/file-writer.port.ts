@@ -8,12 +8,17 @@ import type { DirectoryNotFound } from '../error/directory-not-found'
 import type { FileWriteFailed } from '../error/file-write-failed'
 import type { FileNotFound } from '../error/file-not-found'
 import type { FileDeleteFailed } from '../error/file-delete-failed'
+import type { FileRenameFailed } from '../error/file-rename-failed'
 
 export interface FileWriterPort {
   readonly createEmptyFile: (
     path: string
   ) => Effect.Effect<void, FileAlreadyExists | DirectoryNotFound | FileWriteFailed>
   readonly deleteFile: (path: string) => Effect.Effect<void, FileNotFound | FileDeleteFailed>
+  readonly renameFile: (
+    oldPath: string,
+    newPath: string
+  ) => Effect.Effect<void, FileNotFound | FileAlreadyExists | FileRenameFailed>
   readonly writeFile: (
     path: string,
     content: string

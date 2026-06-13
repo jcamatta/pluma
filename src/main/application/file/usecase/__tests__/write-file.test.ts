@@ -17,6 +17,7 @@ const writerThatSucceeds = (written: Array<[string, string]>): Layer.Layer<FileW
     FileWriter.of({
       createEmptyFile: () => Effect.void,
       deleteFile: () => Effect.void,
+      renameFile: () => Effect.void,
       writeFile: (path, content) =>
         Effect.sync(() => {
           written.push([path, content])
@@ -30,6 +31,7 @@ const writerThatFails = (error: FileNotFound | FileWriteFailed): Layer.Layer<Fil
     FileWriter.of({
       createEmptyFile: () => Effect.void,
       deleteFile: () => Effect.void,
+      renameFile: () => Effect.void,
       writeFile: () => Effect.fail(error)
     })
   )

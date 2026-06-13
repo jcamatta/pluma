@@ -20,6 +20,7 @@ const writerThatSucceeds = (deleted: string[]): Layer.Layer<FileWriterPort> =>
         Effect.sync(() => {
           deleted.push(path)
         }),
+      renameFile: () => Effect.void,
       writeFile: () => Effect.void
     })
   )
@@ -30,6 +31,7 @@ const writerThatFails = (error: FileNotFound | FileDeleteFailed): Layer.Layer<Fi
     FileWriter.of({
       createEmptyFile: () => Effect.void,
       deleteFile: () => Effect.fail(error),
+      renameFile: () => Effect.void,
       writeFile: () => Effect.void
     })
   )
