@@ -25,19 +25,19 @@ afterEach(() => {
 
 describe('settings', () => {
   it('defaults to the system theme when nothing is stored', () => {
-    expect(loadSettings()).toEqual({ theme: 'system' })
+    expect(loadSettings()).toEqual({ theme: 'system', language: 'en' })
   })
 
   it('falls back to system when an invalid theme is stored', () => {
     localStorage.setItem('pluma.theme', 'sepia')
-    expect(loadSettings()).toEqual({ theme: 'system' })
+    expect(loadSettings()).toEqual({ theme: 'system', language: 'en' })
   })
 
   it('persists and applies an explicit theme', () => {
     saveTheme('dark')
     expect(localStorage.getItem('pluma.theme')).toBe('dark')
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
-    expect(loadSettings()).toEqual({ theme: 'dark' })
+    expect(loadSettings()).toEqual({ theme: 'dark', language: 'en' })
   })
 
   it('clears the data-theme override for the system theme', () => {
@@ -49,7 +49,7 @@ describe('settings', () => {
 
   it('applies the stored theme on init', () => {
     localStorage.setItem('pluma.theme', 'light')
-    expect(initSettings()).toEqual({ theme: 'light' })
+    expect(initSettings()).toEqual({ theme: 'light', language: 'en' })
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
   })
 })

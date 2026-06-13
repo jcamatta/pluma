@@ -10,6 +10,7 @@ type Language = 'en' | 'es'
 
 type Settings = {
   readonly theme: Theme
+  readonly language: Language
 }
 
 const THEME_KEY = 'pluma.theme'
@@ -39,7 +40,7 @@ function saveLanguage(language: Language): void {
 
 function loadSettings(): Settings {
   const stored = localStorage.getItem(THEME_KEY)
-  return { theme: isTheme(stored) ? stored : 'system' }
+  return { theme: isTheme(stored) ? stored : 'system', language: loadLanguage() }
 }
 
 function applyTheme(theme: Theme): void {

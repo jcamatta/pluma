@@ -43,7 +43,9 @@ _Landed: `settings.ts` gained `Language`, `isLanguage`, `loadLanguage`, `saveLan
 - Tests: extend the settings logic test (or add `settings/__tests__/settings.test.ts` if none) to cover `loadLanguage` default + round-trip and `isLanguage` guard.
 - _Budget:_ ~20 weighted src lines + test.
 
-### Step 3 — Expose language in the settings hook
+### Step 3 — Expose language in the settings hook ✅ done
+
+_Landed: `Settings`/`loadSettings` now carry `language` (seeded via `loadLanguage`); `useSettings` exposes `language` + `setLanguage`, which persists and calls `i18n.changeLanguage`. Added `useSettings.test.ts`; updated the theme tests' exact-shape assertions to include `language: 'en'`. Green._
 
 - `src/renderer/src/settings/useSettings.ts`: add `language: Language` to `UseSettings`, seed it from `loadSettings`/`loadLanguage`, and add `setLanguage(language)` that calls `saveLanguage(language)` **and** `i18n.changeLanguage(language)`, then mirrors it into local state so controls re-render. (`i18n.changeLanguage` is the language equivalent of `applyTheme` — the action lives in the hook, the persistence stays pure in `settings.ts`.)
 - `loadSettings()` in `settings.ts` returns `{ theme, language }` so the shell seeds both from one read.

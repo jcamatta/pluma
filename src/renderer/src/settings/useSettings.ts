@@ -3,11 +3,14 @@
 // state so the controls re-render. The app shell owns one instance and hands it to the SettingsDialog.
 
 import { useState } from 'react'
-import { loadSettings, saveTheme, type Theme } from './settings'
+import { i18n } from '../i18n'
+import { loadSettings, saveLanguage, saveTheme, type Language, type Theme } from './settings'
 
 export type UseSettings = {
   readonly theme: Theme
   readonly setTheme: (theme: Theme) => void
+  readonly language: Language
+  readonly setLanguage: (language: Language) => void
 }
 
 export function useSettings(): UseSettings {
@@ -18,5 +21,11 @@ export function useSettings(): UseSettings {
     setSettings((current) => ({ ...current, theme }))
   }
 
-  return { ...settings, setTheme }
+  const setLanguage = (language: Language): void => {
+    saveLanguage(language)
+    void i18n.changeLanguage(language)
+    setSettings((current) => ({ ...current, language }))
+  }
+
+  return { ...settings, setTheme, setLanguage }
 }
