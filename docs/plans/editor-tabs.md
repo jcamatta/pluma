@@ -64,7 +64,7 @@ Delivers the strip's presentation, tested against the real Base UI Tabs context.
 
 _Landed: `EditorTabStrip.view.tsx` (Tabs.List + per-tab close overlay + Tabs.Indicator underline + horizontal Scrollable + settings gear), its test (4 cases, against a real `Tabs.Root`), and the `editor.tabs.close` key. Deviation from the sketch: no `activePath` prop — Base UI surfaces selection as `data-selected` from the controlling `Tabs.Root`, so the view styles off that and never needs the active value. 4 tests green, lint clean._
 
-### 4. Compose Tabs in the panel; retire the per-editor top bar
+### 4. Compose Tabs in the panel; retire the per-editor top bar — DONE
 
 - **Edit** `src/renderer/src/editor/EditorStack.tsx` — when a file is open, render a single `Tabs.Root value={open.active} onValueChange={onActivate}` containing: the `EditorTabStrip` view (fed by `buildEditorTabs(open, t('editor.untitled'))`, the `activePath`, and the close/settings callbacks), and one `Tabs.Panel value={path} keepMounted` per open file wrapping its `EditorController` — replacing the hand-rolled `className={… ? 'flex …' : 'hidden'}` mapping. New props: `onActivate`, `onClose` (alongside the existing `onOpenSettings`). The empty-state branch is unchanged. `EditorController` no longer receives `onOpenSettings`.
 - **Edit** `src/renderer/src/editor/Editor.view.tsx` — drop `EditorTopBar`; the view renders only `EditorManuscript`. Remove the `fileName` / `settingsLabel` / `onOpenSettings` props.
@@ -73,7 +73,14 @@ _Landed: `EditorTabStrip.view.tsx` (Tabs.List + per-tab close overlay + Tabs.Ind
 - **Delete** `src/renderer/src/editor/EditorTopBar.tsx` and `src/renderer/src/editor/__tests__/EditorTopBar.test.tsx` — no remaining users.
 - **Edit** the affected tests: `__tests__/EditorStack.test.tsx` (the existing "keeps an editor mounted for every open file" still holds under `keepMounted`; add: a tab per open file renders, selecting a tab switches the visible surface, closing a tab removes it / activates a neighbour, settings fires), `__tests__/Editor.view.test.tsx` and `__tests__/Editor.controller.test.tsx` (drop the top-bar assertions/props).
 
-Delivers the working feature: one Base UI `Tabs` strip drives switching, `keepMounted` panels hold the editors, the per-editor bar is gone and settings lives on the strip. Sized to one commit (≈4 source edits + 1 source deletion + test updates ≪ 300 weighted lines, ≤ 15 files), green at the end.
+Delivers the working feature: one Base UI `Tabs` strip drives switching, the per-editor bar is gone and settings lives on the strip. Green at the end.
+
+_Landed. Deviations from the sketch, all deliberate:_
+
+- _**Kept the conditional-mount divs, did not adopt `Tabs.Panel`.** Base UI hides an inactive panel with the HTML `hidden` attribute, which a `display:flex` class (needed to make the editor surface fill height) overrides — so a `Tabs.Panel` would not actually hide. The proven `className={active ? 'flex …' : 'hidden'}` mapping is what `keepMounted` would only have reproduced, so the stack stays as conditional divs inside `Tabs.Root`._
+- _**Deleted `Editor.view` (+ test) entirely**, not just emptied it: with the top bar gone it was a pure passthrough to `EditorManuscript`, so the controller now renders `EditorManuscript` directly. `EditorTopBar` (+ test) removed too._
+- _**`EditorStack` reads activate/close from `useOpenFiles()`** (the existing `OpenFilesNav` seam, which already carries `open`/`close`) instead of new `App` props — so `App` is unchanged. This also kept `App`'s render function under the 75-line limit._
+- _All checks green: typecheck, build, full unit suite (659), type-coverage, lint (the repo-wide `␍` warnings are this worktree's `autocrlf=true` checkout, not these files)._
 
 ### 5. End-to-end coverage
 

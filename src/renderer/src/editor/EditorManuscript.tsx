@@ -1,6 +1,6 @@
 // The manuscript surface: the zoom container plus the scrollable editor body. Pure — it receives the
 // editor instance, the current zoom, and the container ref from the controller and holds no hooks of its
-// own. It is the body of the editor panel; the panel chrome (top bar) sits above it in Editor.view.
+// own. It is the body of the editor panel; the panel chrome (the file tab strip) sits above the stack.
 
 import { EditorContent, EditorContext, type Editor as TiptapEditor } from '@tiptap/react'
 import { type CSSProperties } from 'react'

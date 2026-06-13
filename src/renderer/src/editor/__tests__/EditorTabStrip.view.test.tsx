@@ -2,7 +2,7 @@
 // clicking another tab activates it through the root, the per-tab close button fires onClose without
 // activating, and the settings button fires onOpenSettings.
 
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, type Mock } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { Tabs } from '@base-ui/react/tabs'
 import { EditorTabStrip } from '../EditorTabStrip.view'
@@ -14,9 +14,9 @@ const tabs: readonly EditorTab[] = [
 ]
 
 function makeSpies(): {
-  onValueChange: ReturnType<typeof vi.fn>
-  onClose: ReturnType<typeof vi.fn>
-  onOpenSettings: ReturnType<typeof vi.fn>
+  onValueChange: Mock<(value: unknown, details: unknown) => void>
+  onClose: Mock<(path: string) => void>
+  onOpenSettings: Mock<() => void>
 } {
   return { onValueChange: vi.fn(), onClose: vi.fn(), onOpenSettings: vi.fn() }
 }
