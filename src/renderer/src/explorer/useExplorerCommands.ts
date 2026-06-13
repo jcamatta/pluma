@@ -17,7 +17,7 @@ type ExplorerCommands = {
     readonly type: 'file' | 'directory'
     readonly path: string
     readonly parent: string
-  }) => Promise<boolean>
+  }) => Promise<string | null>
   readonly remove: (args: {
     readonly type: 'file' | 'directory'
     readonly path: string
@@ -50,7 +50,7 @@ function useExplorerCommands(root: string): ExplorerCommands {
 
   const create = useCallback(
     (args: Parameters<ExplorerCommands['create']>[0]) =>
-      createEntry(args).then((result) => result.ok),
+      createEntry(args).then((result) => (result.ok ? result.value : null)),
     [createEntry]
   )
 
