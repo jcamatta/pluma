@@ -15,4 +15,12 @@ type OpenBlock =
   | { readonly kind: 'text'; readonly messageId: string }
   | { readonly kind: 'tool'; readonly toolCallId: string }
 
-export type { StreamEvent, UserContent, ToolResultContent, OpenBlock }
+// What transformStreamEvent needs to map one block event: the open-block map plus the id of the
+// assistant message currently streaming. Text message ids are minted from `messageId` so blocks from
+// different assistant messages (which both restart their content-block index at 0) never collide.
+interface TransformContext {
+  readonly blocks: Map<number, OpenBlock>
+  readonly messageId: string
+}
+
+export type { StreamEvent, UserContent, ToolResultContent, OpenBlock, TransformContext }
