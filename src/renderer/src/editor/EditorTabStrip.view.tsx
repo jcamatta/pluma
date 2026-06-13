@@ -1,9 +1,12 @@
-// The editor panel's tab strip: one Base UI tab per open file, the active one tracked by Tabs.Indicator
-// (the sliding accent underline). Pure layout — it is composed inside the Tabs.Root that EditorStack
-// owns, so it neither holds the active value nor calls onValueChange; selection arrives as data-selected
-// on each Tab. Each tab carries a close button rendered as a sibling overlaying its right edge (a button
-// cannot nest inside the Tab's button), and the strip scrolls horizontally when the tabs outgrow the
-// panel width. The settings gear sits outside the scroll region at the right edge.
+// The editor panel's tab strip: one Base UI tab per open file. Pure layout — it is composed inside the
+// Tabs.Root that EditorStack owns, so it neither holds the active value nor calls onValueChange; selection
+// arrives as data-selected on each Tab. The active tab is marked by an accent bottom border on the Tab
+// itself rather than a floating Tabs.Indicator: the indicator is positioned from measured pixel offsets
+// that go stale on a relayout which does not change the selection (closing the explorer widens the panel),
+// leaving the underline stranded; a border in normal flow always tracks its tab. Each tab carries a close
+// button rendered as a sibling overlaying its right edge (a button cannot nest inside the Tab's button)
+// and closes on a middle-click anywhere on it (the browser-tab convention). The strip scrolls horizontally
+// when the tabs outgrow the panel width. The settings gear sits outside the scroll region at the right edge.
 
 import { Tabs } from '@base-ui/react/tabs'
 import { AnimatePresence, motion } from 'motion/react'
@@ -30,7 +33,7 @@ export function EditorTabStrip({
   return (
     <div className="flex h-12 flex-none items-stretch border-b border-(--line)">
       <Scrollable orientation="horizontal" className="h-full flex-1" contentClassName="h-full">
-        <Tabs.List className="relative flex h-full items-stretch">
+        <Tabs.List className="flex h-full items-stretch">
           <AnimatePresence initial={false}>
             {tabs.map((tab) => (
               <motion.div
@@ -39,12 +42,15 @@ export function EditorTabStrip({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                onAuxClick={(event) => {
+                  if (event.button === 1) onClose(tab.path)
+                }}
                 className="relative flex items-stretch"
               >
                 <Tabs.Tab
                   value={tab.path}
                   render={<motion.button whileTap={{ scale: 0.97 }} />}
-                  className="group flex h-full items-center gap-2 whitespace-nowrap pr-9 pl-4 text-sm font-semibold text-text-muted outline-none data-[selected]:text-text-primary"
+                  className="group flex h-full items-center gap-2 whitespace-nowrap border-b-2 border-transparent pr-9 pl-4 text-sm font-semibold text-text-muted outline-none data-[selected]:border-action-primary data-[selected]:text-text-primary"
                 >
                   <FileText
                     size={15}
@@ -63,14 +69,6 @@ export function EditorTabStrip({
               </motion.div>
             ))}
           </AnimatePresence>
-          <Tabs.Indicator
-            className="absolute bottom-0 border-b-2 border-action-primary"
-            style={{
-              left: 'var(--active-tab-left)',
-              width: 'var(--active-tab-width)',
-              transition: 'left 150ms ease, width 150ms ease'
-            }}
-          />
         </Tabs.List>
       </Scrollable>
       <div className="flex flex-none items-center pr-3">

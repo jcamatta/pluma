@@ -57,6 +57,26 @@ describe('EditorTabStrip', () => {
     expect(spies.onValueChange).not.toHaveBeenCalled()
   })
 
+  it('closes a tab on a middle-click anywhere on it', () => {
+    const spies = makeSpies()
+    renderStrip('/a/alpha.md', spies)
+    fireEvent(
+      screen.getByRole('tab', { name: 'Beta' }),
+      new MouseEvent('auxclick', { bubbles: true, button: 1 })
+    )
+    expect(spies.onClose).toHaveBeenCalledWith('/b/beta.md')
+  })
+
+  it('ignores a non-middle aux-click on a tab', () => {
+    const spies = makeSpies()
+    renderStrip('/a/alpha.md', spies)
+    fireEvent(
+      screen.getByRole('tab', { name: 'Beta' }),
+      new MouseEvent('auxclick', { bubbles: true, button: 2 })
+    )
+    expect(spies.onClose).not.toHaveBeenCalled()
+  })
+
   it('opens settings from the strip', () => {
     const spies = makeSpies()
     renderStrip('/a/alpha.md', spies)
