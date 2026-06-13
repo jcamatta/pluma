@@ -140,6 +140,55 @@ function FolderRow({
   )
 }
 
+function FileRowContent({
+  node,
+  selected,
+  ctx
+}: {
+  readonly node: TreeNodeModel
+  readonly selected: boolean
+  readonly ctx: RowContext
+}): React.JSX.Element {
+  if (ctx.renamingPath === node.path) {
+    return (
+      <NameInput
+        type="file"
+        placeholder={node.name}
+        initialValue={node.name}
+        onCommit={ctx.onCommitRename}
+        onCancel={ctx.onCancelRename}
+      />
+    )
+  }
+  return (
+    <>
+      <span
+        className={`min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm ${
+          selected ? 'font-semibold' : 'font-medium'
+        }`}
+      >
+        {node.name}
+      </span>
+      <RowActions>
+        <IconButton
+          label={ctx.labels.renameFile}
+          onClick={() => ctx.onStartRename(node.path)}
+          stopPropagation
+        >
+          <Pencil size={15} />
+        </IconButton>
+        <IconButton
+          label={ctx.labels.deleteFile}
+          onClick={() => ctx.onDelete(node.path)}
+          stopPropagation
+        >
+          <Trash2 size={15} />
+        </IconButton>
+      </RowActions>
+    </>
+  )
+}
+
 function FileRow({
   node,
   depth,
@@ -150,11 +199,12 @@ function FileRow({
   readonly ctx: RowContext
 }): React.JSX.Element {
   const selected = ctx.selected === node.path
+  const renaming = ctx.renamingPath === node.path
   return (
     <div
       data-row
       data-testid={`file-row:${node.path}`}
-      onClick={() => ctx.onSelect(node.path)}
+      onClick={renaming ? undefined : () => ctx.onSelect(node.path)}
       style={{ paddingLeft: 11 + depth * 15 }}
       className={`mb-px flex w-full cursor-pointer items-center gap-2 rounded-xl border py-2 pr-2 transition-colors ${
         selected
@@ -165,22 +215,7 @@ function FileRow({
       <span className={`flex flex-none ${selected ? 'text-action-primary' : 'text-text-muted'}`}>
         <FileText size={16} />
       </span>
-      <span
-        className={`min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm ${
-          selected ? 'font-semibold' : 'font-medium'
-        }`}
-      >
-        {node.name}
-      </span>
-      <RowActions>
-        <IconButton
-          label={ctx.labels.deleteFile}
-          onClick={() => ctx.onDelete(node.path)}
-          stopPropagation
-        >
-          <Trash2 size={15} />
-        </IconButton>
-      </RowActions>
+      <FileRowContent node={node} selected={selected} ctx={ctx} />
     </div>
   )
 }

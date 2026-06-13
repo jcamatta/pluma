@@ -11,6 +11,7 @@ const labels: ExplorerLabels = {
   newFolder: 'New folder',
   deleteFile: 'Delete file',
   deleteFolder: 'Delete folder',
+  renameFile: 'Rename file',
   renameFolder: 'Rename folder',
   collapse: 'Collapse files',
   untitled: 'Untitled',
@@ -148,5 +149,32 @@ describe('ExplorerView rename', () => {
     fireEvent.change(input, { target: { value: 'renamed' } })
     fireEvent.keyDown(input, { key: 'Enter' })
     expect(onCommitRename).toHaveBeenCalledWith('renamed')
+  })
+
+  it('starts a file rename from the row action', () => {
+    const onStartRename = vi.fn()
+    const tree: readonly TreeNodeModel[] = [{ path: '/r/a.md', name: 'a.md', type: 'file' }]
+    render(<ExplorerView {...baseProps} tree={tree} onStartRename={onStartRename} />)
+
+    fireEvent.click(screen.getByLabelText('Rename file'))
+    expect(onStartRename).toHaveBeenCalledWith('/r/a.md')
+  })
+
+  it('shows the inline name field pre-filled with the file name while renaming', () => {
+    const onCommitRename = vi.fn()
+    const tree: readonly TreeNodeModel[] = [{ path: '/r/a.md', name: 'a.md', type: 'file' }]
+    render(
+      <ExplorerView
+        {...baseProps}
+        tree={tree}
+        renamingPath="/r/a.md"
+        onCommitRename={onCommitRename}
+      />
+    )
+
+    const input = screen.getByDisplayValue('a.md')
+    fireEvent.change(input, { target: { value: 'b.md' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(onCommitRename).toHaveBeenCalledWith('b.md')
   })
 })

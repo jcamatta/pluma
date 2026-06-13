@@ -53,6 +53,7 @@
     "newFolder": "New folder",
     "deleteFile": "Delete file",
     "deleteFolder": "Delete folder",
+    "renameFile": "Rename file",
     "renameFolder": "Rename folder",
     "collapse": "Collapse files",
     "open": "Open files",
