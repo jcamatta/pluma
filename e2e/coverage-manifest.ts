@@ -13,6 +13,7 @@ const FEATURES = [
   'launcher',
   'explorer',
   'editor',
+  'workspace-open',
   'settings',
   'rail',
   'thread-history',

@@ -11,6 +11,7 @@ import { ActiveEditorProvider } from './editor/ActiveEditorProvider'
 import { OpenFilesContext } from './editor/OpenFilesContext'
 import type { OpenFilesNav } from './editor/OpenFilesContext'
 import { EditorToolsBridge } from './editor/EditorToolsBridge'
+import { InitialFileBridge } from './editor/InitialFileBridge'
 import { ExplorerController } from './explorer/Explorer.controller'
 import { LauncherController } from './launcher/Launcher.controller'
 import { MessagesSquare, PanelLeft } from 'lucide-react'
@@ -47,6 +48,7 @@ export const App = (): React.JSX.Element => {
         <ActiveEditorProvider>
           <OpenFilesContext.Provider value={openFiles}>
             <EditorToolsBridge />
+            <InitialFileBridge root={root} />
             <main className="flex h-screen gap-3 bg-surface-1 p-4 font-ui text-text-primary">
               {explorerOpen && (
                 <div className="flex-none" style={{ width: 'var(--explorer-w)' }}>

@@ -3,14 +3,31 @@
 // inactive editor is kept mounted, not torn down and rebuilt).
 
 import { describe, expect, it } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { AgentToolsProvider } from '../../agent/AgentToolsProvider'
 import { ActiveEditorProvider } from '../ActiveEditorProvider'
 import { EditorStack } from '../EditorStack'
+import { noOpenFiles } from '../open-files-logic'
 import { createFakeFolderRepository } from '../../explorer/__tests__/fake-folder-repository'
 import { ReposHarness } from '../../explorer/__tests__/render-with-repos'
 
 describe('EditorStack', () => {
+  it('shows the empty state when no file is open', () => {
+    const repos = createFakeFolderRepository({})
+    render(
+      <ReposHarness repos={repos}>
+        <AgentToolsProvider>
+          <ActiveEditorProvider>
+            <EditorStack open={noOpenFiles} onOpenSettings={() => undefined} />
+          </ActiveEditorProvider>
+        </AgentToolsProvider>
+      </ReposHarness>
+    )
+
+    expect(screen.getByText('No file open')).toBeInTheDocument()
+    expect(document.querySelector('.ProseMirror')).toBeNull()
+  })
+
   it('keeps an editor mounted for every open file', async () => {
     const repos = createFakeFolderRepository({}, { '/a.md': '# Alpha', '/b.md': '# Beta' })
     const { container } = render(
