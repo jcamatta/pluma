@@ -17,6 +17,7 @@ type FakeRepository = Repositories & {
   readonly emit: (change: FolderChange) => void
   readonly created: () => readonly string[]
   readonly deleted: () => readonly string[]
+  readonly renamed: () => readonly { readonly from: string; readonly to: string }[]
   readonly written: () => readonly { readonly path: string; readonly content: string }[]
 }
 
@@ -27,6 +28,7 @@ function createFakeFolderRepository(
   const subscribers = new Set<(change: FolderChange) => void>()
   const created: string[] = []
   const deleted: string[] = []
+  const renamed: { from: string; to: string }[] = []
   const written: { path: string; content: string }[] = []
 
   const reader: FolderReaderPort = {
@@ -68,6 +70,10 @@ function createFakeFolderRepository(
     createFolder: (path) => record(created, path),
     deleteFile: (path) => record(deleted, path),
     deleteFolder: (path) => record(deleted, path),
+    renameFolder: (oldPath, newPath) => {
+      renamed.push({ from: oldPath, to: newPath })
+      return Promise.resolve({ ok: true, value: newPath })
+    },
     watch: () => Promise.resolve({ ok: true, value: null }),
     onChange: (callback) => {
       subscribers.add(callback)
@@ -83,6 +89,7 @@ function createFakeFolderRepository(
     emit: (change) => subscribers.forEach((cb) => cb(change)),
     created: () => created,
     deleted: () => deleted,
+    renamed: () => renamed,
     written: () => written
   }
 }
