@@ -31,12 +31,14 @@ When shipped, with a folder open and at least one file opened:
 
 ## Steps
 
-### 1. Tab-model calculation
+### 1. Tab-model calculation — DONE
 
 - **Add** `src/renderer/src/editor/editor-tabs-logic.ts` — a pure calculation `buildEditorTabs(open, fallback)` mapping `OpenFiles` to an ordered `readonly EditorTab[]`, where `EditorTab = { path; name }` and `name` reuses `editorFileName(path, fallback)`. (No `isActive`: Base UI derives the active tab from `Tabs.Root` `value`.) No React, no editor — data over data.
 - **Add** `src/renderer/src/editor/__tests__/editor-tabs-logic.test.ts` — covers order preserved from `paths`, `.md`-stripped labels, the fallback label, and the empty-set case.
 
 Delivers the data the strip renders, unit-tested in isolation. Tiny, green on its own.
+
+_Landed: `buildEditorTabs` + `EditorTab` type and its test; 4 tests green, lint clean._
 
 ### 2. Horizontal orientation for `Scrollable`
 
