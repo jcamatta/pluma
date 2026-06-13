@@ -39,7 +39,7 @@ export function RunControlSelect({
     >
       <Select.Trigger
         aria-label={ariaLabel}
-        className="flex items-center gap-1 rounded-lg border border-(--line2) bg-surface-3 px-2 py-1 text-xs font-semibold text-text-secondary outline-none hover:bg-(--hover) focus-visible:ring-1 focus-visible:ring-(--line2)"
+        className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-(--line2) bg-surface-3 px-2 py-1 text-xs font-semibold text-text-secondary outline-none hover:bg-(--hover) focus-visible:ring-1 focus-visible:ring-(--line2)"
         render={<motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} />}
       >
         <Select.Value />

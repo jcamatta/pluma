@@ -44,7 +44,6 @@ function railLabels(t: TFunction): RailLabels {
     newChatEmpty: t('rail.newChatEmpty'),
     composerPlaceholder: t('rail.composerPlaceholder'),
     send: t('rail.send'),
-    toSend: t('rail.toSend'),
     stop: t('rail.stop'),
     chatTab: t('rail.chat'),
     reviewTab: t('rail.review')

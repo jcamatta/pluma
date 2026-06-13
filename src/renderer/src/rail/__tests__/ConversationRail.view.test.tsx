@@ -12,7 +12,6 @@ const labels: RailLabels = {
   newChatEmpty: 'Ask the assistant.',
   composerPlaceholder: 'Ask anything…',
   send: 'Send',
-  toSend: 'to send',
   stop: 'Stop',
   chatTab: 'Chat',
   reviewTab: 'Review'

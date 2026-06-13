@@ -74,7 +74,6 @@
     "newChatEmpty": "Ask the assistant to read, review, or revise your manuscript.",
     "composerPlaceholder": "Ask anything about your manuscript…",
     "send": "Send",
-    "toSend": "to send",
     "stop": "Stop",
     "model": {
       "label": "Model",

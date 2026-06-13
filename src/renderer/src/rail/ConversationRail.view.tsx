@@ -24,7 +24,6 @@ interface RailLabels {
   readonly newChatEmpty: string
   readonly composerPlaceholder: string
   readonly send: string
-  readonly toSend: string
   readonly stop: string
   readonly chatTab: string
   readonly reviewTab: string
@@ -128,7 +127,6 @@ function ChatPane({
 
       <RailComposer
         placeholder={labels.composerPlaceholder}
-        toSend={labels.toSend}
         send={labels.send}
         stop={labels.stop}
         working={working}
