@@ -1,10 +1,11 @@
-// Wires the chat half of the rail: resolves i18n labels, owns the composer's local value, and runs a
-// turn against the live agent. The conversation is agent.messages (the AbstractAgent transcript):
-// splitConversation peels the current turn (the last user message onward) from the settled history, which
-// renders above as plain bubbles (TranscriptView). The current turn renders as a ConversationTurn whose
-// assistant side is the live AgentActivity. Submitting adds the user message and starts a run; Stop aborts
-// it. Opening the threads list and starting a new thread are lifted to the parent rail switch; a finished
-// run refreshes the thread list. Before the first message the rail shows its empty state.
+// Wires the chat half of the rail: resolves i18n labels, owns the composer's local value and the per-row
+// step-expand overrides, and runs a turn against the live agent. The conversation is rendered directly
+// from agent.messages (the single source of truth) via useRailConversation, which projects every turn —
+// current and prior — into a row carrying its reply text and derived step timeline. "Working" is driven by
+// agent.isRunning and a failed run by the run-error flag, so steps show live and on reload alike.
+// Submitting adds the user message and starts a run; Stop aborts it. Opening the threads list and starting
+// a new thread are lifted to the parent rail switch; a finished run refreshes the thread list. Before the
+// first message the rail shows its empty state.
 
 import type { TFunction } from 'i18next'
 import { useState } from 'react'
@@ -12,16 +13,14 @@ import { useTranslation } from 'react-i18next'
 import { useAgent } from '../agent/useAgent'
 import { ArtifactsPanelController } from '../artifacts/ArtifactsPanel.controller'
 import { ContextMeterController } from './ContextMeter.controller'
-import { useAgentActivityLog } from './useAgentActivityLog'
-import { useScrollSentMessageIntoView } from './useScrollSentMessageIntoView'
 import { useThreadsRefresh } from './useThreadsRefresh'
 import { useReviewTab } from './useReviewTab'
 import { useRunControls } from './useRunControls'
+import { useRailConversation } from './useRailConversation'
 import type { ActivityLabels } from './Activity.view'
+import type { StepLabels } from './conversation-rows'
 import { ConversationRailView, type RailLabels } from './ConversationRail.view'
-import { TranscriptView } from './Transcript.view'
-import { ConversationTurnView } from './ConversationTurn.view'
-import { splitConversation } from './transcript-logic'
+import { ConversationView } from './Conversation.view'
 
 interface ChatRailControllerProps {
   readonly cwd: string
@@ -60,6 +59,13 @@ function activityLabels(t: TFunction): ActivityLabels {
   }
 }
 
+function stepLabels(t: TFunction): StepLabels {
+  return {
+    calling: (tool) => t('rail.calling', { tool }),
+    done: (tool) => t('rail.done', { tool })
+  }
+}
+
 export function ChatRailController({
   cwd,
   threadTitle,
@@ -70,27 +76,17 @@ export function ChatRailController({
   const { t } = useTranslation()
   const { agent } = useAgent()
   const runControls = useRunControls()
-  const [value, setValue] = useState('')
-  const [expandOverride, setExpandOverride] = useState<boolean | null>(null)
-
-  const activity = useAgentActivityLog(agent, {
-    calling: (tool) => t('rail.calling', { tool }),
-    done: (tool) => t('rail.done', { tool }),
-    failed: (tool) => t('rail.toolFailed', { tool }),
-    runError: (message) => t('rail.runError', { message })
-  })
-
-  useThreadsRefresh(agent, cwd)
   const review = useReviewTab()
-
-  const { history, currentPrompt } = splitConversation(agent.messages, activity.status !== 'idle')
-  const userBubbleRef = useScrollSentMessageIntoView(currentPrompt)
+  const [value, setValue] = useState('')
+  const [overrides, setOverrides] = useState<ReadonlyMap<string, boolean>>(new Map())
+  const convo = useRailConversation(agent, stepLabels(t))
+  useThreadsRefresh(agent, cwd)
 
   const submit = (): void => {
     const text = value.trim()
-    if (text.length === 0 || activity.status === 'working') return
+    if (text.length === 0 || agent.isRunning) return
     setValue('')
-    setExpandOverride(null)
+    setOverrides(new Map())
     agent.addMessage({ id: crypto.randomUUID(), role: 'user', content: text })
     void agent.runAgent({ forwardedProps: { state: runControls.runState } })
   }
@@ -98,14 +94,9 @@ export function ChatRailController({
   return (
     <ConversationRailView
       labels={railLabels(t)}
-      title={
-        resolveTitle(
-          threadTitle,
-          history.find((item) => item.role === 'user')?.text ?? currentPrompt
-        ) ?? t('rail.newChat')
-      }
-      hasTurn={history.length > 0 || currentPrompt !== null}
-      working={activity.status === 'working'}
+      title={resolveTitle(threadTitle, convo.firstUserText) ?? t('rail.newChat')}
+      hasTurn={convo.rows.length > 0}
+      working={agent.isRunning}
       value={value}
       model={runControls.model}
       effort={runControls.effort}
@@ -115,7 +106,7 @@ export function ChatRailController({
       onStop={() => agent.abortRun()}
       onNewChat={() => {
         setValue('')
-        setExpandOverride(null)
+        setOverrides(new Map())
         onNewThread()
       }}
       onShowThreads={onShowThreads}
@@ -125,19 +116,14 @@ export function ChatRailController({
       reviewCount={review.reviewCount}
       review={<ArtifactsPanelController />}
     >
-      <TranscriptView items={history} />
-      {currentPrompt !== null && (
-        <ConversationTurnView
-          ref={userBubbleRef}
-          prompt={currentPrompt}
-          activity={activity}
-          labels={activityLabels(t)}
-          expanded={expandOverride ?? activity.status === 'working'}
-          onToggleExpand={() =>
-            setExpandOverride(!(expandOverride ?? activity.status === 'working'))
-          }
-        />
-      )}
+      <ConversationView
+        rows={convo.rows}
+        labels={activityLabels(t)}
+        overrides={overrides}
+        onSetExpanded={(id, expanded) => setOverrides((prev) => new Map(prev).set(id, expanded))}
+        scrollRefId={convo.lastUserId}
+        scrollRef={convo.scrollRef}
+      />
     </ConversationRailView>
   )
 }

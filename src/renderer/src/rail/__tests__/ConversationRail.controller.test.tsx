@@ -1,16 +1,17 @@
-// ConversationRailController is the rail switch; in the chat view it renders agent.messages as the
-// conversation: settled turns stack as history above the current turn, whose assistant side is the live
-// activity. Submitting adds the user message and starts a run; new chat clears the conversation. A fake
-// AbstractAgent holds real messages (addMessage fires onNewMessage so the activity resets per turn;
-// setMessages clears) and lets the test drive AG-UI events and settle replies. The threads repository is
-// the in-memory fake and the thread controls are bound to the fake agent — no IPC.
+// ConversationRailController is the rail switch; in the chat view it renders the whole conversation
+// directly from agent.messages — every turn (current and prior) becomes a user bubble and a grouped
+// assistant row carrying its reply and derived step timeline. "Working" is driven by agent.isRunning, a
+// failed run by onRunFailed; neither adds a message. A fake AbstractAgent holds real messages (addMessage
+// fires onMessagesChanged; setMessages clears) and lets the test drive run status, settle messages, and
+// fail a run. The threads repository is the in-memory fake and the thread controls are bound to the fake
+// agent — no IPC.
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AbstractAgent, type AgentSubscriber, type RunAgentInput } from '@ag-ui/client'
-import { EventType, type BaseEvent, type Message, type State } from '@ag-ui/core'
+import { type BaseEvent, type Message, type State } from '@ag-ui/core'
 import { Observable } from 'rxjs'
 import { AgentContext } from '../../agent/AgentContext'
 import { ThreadControlsContext } from '../../agent/ThreadControlsContext'
@@ -29,10 +30,6 @@ const BLANK_INPUT: RunAgentInput = {
   forwardedProps: {},
   state: {}
 }
-
-// Events arrive as full AGUIEvents at runtime; the test builds terse literals carrying only the fields
-// the reducer reads. BaseEvent is a passthrough object, so these literals type as BaseEvent — no cast.
-const event = (literal: BaseEvent): BaseEvent => literal
 
 class FakeAgent extends AbstractAgent {
   private subs: readonly AgentSubscriber[] = []
@@ -71,16 +68,25 @@ class FakeAgent extends AbstractAgent {
     this.aborts += 1
   }
 
-  // Simulate the run pipeline folding the streamed assistant reply into agent.messages.
+  // The run pipeline folds streamed text and tool activity into agent.messages; the test appends those
+  // settled messages directly (an assistant turn, a tool result) to mirror that.
   settle(message: Message): void {
     this.messages = [...this.messages, message]
     this.notifyMessages()
   }
 
-  emit(payload: BaseEvent): void {
+  // agent.isRunning drives "working"; flipping it notifies onStateChanged so the rail re-renders.
+  setRunning(running: boolean): void {
+    this.isRunning = running
     for (const sub of this.subs) {
-      void sub.onEvent?.({
-        event: payload,
+      void sub.onStateChanged?.({ messages: this.messages, state: {}, agent: this })
+    }
+  }
+
+  fail(): void {
+    for (const sub of this.subs) {
+      void sub.onRunFailed?.({
+        error: new Error('boom'),
         messages: this.messages,
         state: {},
         agent: this,
@@ -135,19 +141,18 @@ function send(text: string): void {
   fireEvent.click(screen.getByRole('button', { name: /send/i }))
 }
 
-// A full turn: open the run, stream the reply into the activity, settle it into agent.messages, finish.
+// A full text turn: open the run, settle the assistant reply into agent.messages, finish.
 function runTurn(agent: FakeAgent, reply: string): void {
   act(() => {
-    agent.emit(event({ type: EventType.RUN_STARTED }))
-    agent.emit(event({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: 'm', delta: reply }))
+    agent.setRunning(true)
     agent.settle({ id: `a-${agent.runs}`, role: 'assistant', content: reply })
-    agent.emit(event({ type: EventType.RUN_FINISHED }))
+    agent.setRunning(false)
   })
 }
 
-describe('ConversationRailController', () => {
-  afterEach(() => vi.restoreAllMocks())
+afterEach(() => vi.restoreAllMocks())
 
+describe('ConversationRailController rendering', () => {
   it('shows the empty state before the first message', () => {
     renderRail()
     expect(screen.getByText(i18n.t('rail.newChatEmpty'))).toBeInTheDocument()
@@ -184,53 +189,67 @@ describe('ConversationRailController', () => {
 
     send('another message')
 
-    // The first turn's question and answer survive the second send as history; the title stays the
-    // first message ('what is my name?' shows in its history bubble and in the header).
+    // The first turn's question and answer survive the second send as a prior row; the title stays the
+    // first message ('what is my name?' shows in its bubble and in the header).
     expect(screen.getByText('Your name is Joel.')).toBeInTheDocument()
     expect(screen.getAllByText('what is my name?')).toHaveLength(2)
     expect(screen.getByText('another message')).toBeInTheDocument()
   })
+})
 
-  it('folds the run events into the current turn and aborts on Stop', () => {
+describe('ConversationRailController run lifecycle', () => {
+  it('renders a tool turn with its step timeline and reply, and aborts on Stop', () => {
     const { agent } = renderRail()
     send('revise')
 
-    act(() => {
-      agent.emit(event({ type: EventType.RUN_STARTED }))
-      agent.emit(
-        event({ type: EventType.TOOL_CALL_START, toolCallId: 't1', toolCallName: 'propose_edit' })
-      )
-    })
-
-    // The in-turn Stop button is present while the run works; clicking it aborts.
+    // While the run works the composer offers Stop; clicking it aborts.
+    act(() => agent.setRunning(true))
     fireEvent.click(screen.getByRole('button', { name: i18n.t('rail.stop') }))
     expect(agent.aborts).toBe(1)
 
+    // The turn settles into messages: a tool call, its result, then the reply.
     act(() => {
-      agent.emit(event({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: 'm1', delta: 'Done.' }))
-      agent.emit(event({ type: EventType.RUN_FINISHED }))
+      agent.settle({
+        id: 'a1',
+        role: 'assistant',
+        content: '',
+        toolCalls: [
+          { id: 't1', type: 'function', function: { name: 'propose_edit', arguments: '{}' } }
+        ]
+      })
+      agent.settle({ id: 'r1', role: 'tool', toolCallId: 't1', content: 'ok' })
+      agent.settle({ id: 'a2', role: 'assistant', content: 'Done.' })
+      agent.setRunning(false)
     })
 
+    // The grouped row shows the settled "Worked" header (the turn used a tool) and the streamed reply.
     expect(screen.getByText('Done.')).toBeInTheDocument()
     expect(screen.getByText(i18n.t('rail.worked'))).toBeInTheDocument()
   })
 
-  it('scrolls the sent message into view as the turn goes live, but not on assistant streaming', () => {
+  it('shows the run-failed affordance when a run fails', () => {
+    const { agent } = renderRail()
+    send('revise')
+
+    act(() => {
+      agent.setRunning(true)
+      agent.fail()
+      agent.setRunning(false)
+    })
+
+    expect(screen.getByText(i18n.t('rail.runFailed'))).toBeInTheDocument()
+  })
+
+  it('scrolls the sent message into view, but not on assistant streaming', () => {
     const scrollIntoView = vi.spyOn(Element.prototype, 'scrollIntoView')
     const { agent } = renderRail()
 
-    // The turn becomes the live current prompt on RUN_STARTED — that is when the user bubble mounts
-    // and is scrolled into view.
-    act(() => {
-      send('revise')
-      agent.emit(event({ type: EventType.RUN_STARTED }))
-    })
+    // The user bubble mounts when the message is sent — that is when it is scrolled into view.
+    act(() => send('revise'))
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
 
-    // Assistant deltas (the live reply streaming in) leave currentPrompt unchanged → no re-scroll.
-    act(() => {
-      agent.emit(event({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: 'm', delta: 'Done.' }))
-    })
+    // A settled assistant reply does not move the last user message → no re-scroll.
+    act(() => agent.settle({ id: 'a1', role: 'assistant', content: 'Done.' }))
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
   })
 
