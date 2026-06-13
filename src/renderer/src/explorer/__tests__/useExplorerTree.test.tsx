@@ -83,6 +83,20 @@ describe('useExplorerTree draft → create', () => {
     expect(result.current.draft).toBeNull()
   })
 
+  it('appends .md to a file name typed without an extension and selects it', async () => {
+    const repos = createFakeFolderRepository({ '/root': [] })
+    const onSelect = vi.fn()
+    const { result } = renderTree({ repos, onSelect })
+
+    act(() => result.current.beginCreate('file', null))
+    await act(async () => {
+      result.current.commitDraft('draft')
+    })
+
+    await waitFor(() => expect(repos.created()).toEqual(['/root/draft.md']))
+    expect(onSelect).toHaveBeenCalledWith('/root/draft.md')
+  })
+
   it('creates a folder without selecting it', async () => {
     const repos = createFakeFolderRepository({ '/root': [] })
     const onSelect = vi.fn()

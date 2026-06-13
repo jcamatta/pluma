@@ -11,6 +11,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { DraftNode, TreeNodeModel } from './explorer-view-types'
 import { joinPath, parentPath } from './explorer-tree'
+import { ensureMarkdownExtension } from './ensure-markdown-extension'
 import { buildTree } from './explorer-tree-build'
 import { isUnderOrEqual, remapOpenPaths, remapPath } from './explorer-subtree-remap'
 import { useFolderListings } from './useFolderListings'
@@ -55,7 +56,8 @@ export function useExplorerTree(root: string, selection: Selection): ExplorerTre
       setDraft(null)
       if (!current || name === '') return
       const parent = current.parentPath ?? root
-      const path = joinPath(parent, name)
+      const finalName = current.type === 'file' ? ensureMarkdownExtension(name) : name
+      const path = joinPath(parent, finalName)
       void create({ type: current.type, path, parent }).then((ok) => {
         if (ok && current.type === 'file') selection.onSelect(path)
       })
