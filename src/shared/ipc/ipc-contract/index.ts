@@ -4,6 +4,7 @@
 // the preload bridge then see it automatically.
 
 import type { Result } from '../ipc-result'
+import type { AssetCreateContract } from './asset'
 import type {
   AgentAbortContract,
   AgentDeleteThreadContract,
@@ -30,6 +31,7 @@ import type {
 } from './folder'
 
 type IpcContract =
+  | AssetCreateContract
   | FileCreateContract
   | FileDeleteContract
   | FileRenameContract
