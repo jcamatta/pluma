@@ -1,0 +1,129 @@
+{
+  "appTitle": "Pluma",
+  "editor": {
+    "untitled": "Sin título",
+    "settings": "Configuración",
+    "tabs": {
+      "close": "Cerrar {{name}}"
+    },
+    "empty": {
+      "heading": "No hay ningún archivo abierto",
+      "hint": "Crea un archivo desde el explorador de la izquierda para empezar a escribir."
+    },
+    "placeholder": {
+      "heading": "Encabezado {{level}}",
+      "quote": "Cita",
+      "code": "Código",
+      "default": "Empieza a escribir o escribe ‘/’ para ver los comandos…"
+    },
+    "slash": {
+      "heading": "Bloques básicos",
+      "empty": "Sin resultados",
+      "text": "Texto",
+      "heading1": "Encabezado 1",
+      "heading2": "Encabezado 2",
+      "heading3": "Encabezado 3",
+      "bulletList": "Lista con viñetas",
+      "orderedList": "Lista numerada",
+      "quote": "Cita",
+      "codeBlock": "Código",
+      "divider": "Divisor"
+    }
+  },
+  "launcher": {
+    "wordmark": "Pluma",
+    "heading": "Abre una carpeta.\nEmpieza a escribir.",
+    "description": "Apunta Pluma a cualquier carpeta y se convertirá en tu espacio de trabajo: sus archivos aparecen en el explorador de la izquierda, listos para abrir y editar.",
+    "openFolder": "Abrir carpeta…",
+    "previewBadge": "Un vistazo a tu espacio de trabajo",
+    "previewHeading": "La página en blanco\nte espera.",
+    "preview": "Vista previa del espacio de trabajo de Pluma"
+  },
+  "settings": {
+    "title": "Configuración",
+    "close": "Cerrar configuración",
+    "theme": {
+      "title": "Apariencia",
+      "description": "Elige cómo se ve Pluma.",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema"
+    },
+    "language": {
+      "title": "Idioma",
+      "description": "Elige el idioma de la interfaz de Pluma.",
+      "en": "English",
+      "es": "Español"
+    }
+  },
+  "explorer": {
+    "title": "Archivos",
+    "newFile": "Nuevo archivo",
+    "newFolder": "Nueva carpeta",
+    "deleteFile": "Eliminar archivo",
+    "deleteFolder": "Eliminar carpeta",
+    "renameFile": "Renombrar archivo",
+    "renameFolder": "Renombrar carpeta",
+    "collapse": "Contraer archivos",
+    "open": "Abrir archivos",
+    "untitled": "Sin título",
+    "empty": "Aún no hay archivos. Usa los botones de arriba para agregar un archivo o una carpeta.",
+    "noFolder": "No hay ninguna carpeta abierta. Elige una para empezar.",
+    "pickFolder": "Abrir carpeta"
+  },
+  "artifacts": {
+    "empty": "Aún no hay sugerencias. Cuando el asistente anote un pasaje o redacte una reescritura, aparecerá aquí y subrayará el punto en tu manuscrito.",
+    "dismiss": "Descartar",
+    "proposedRewrite": "Reescritura propuesta",
+    "conflicted": "En conflicto",
+    "accept": "Aceptar",
+    "reject": "Rechazar"
+  },
+  "rail": {
+    "chats": "Chats",
+    "chat": "Chat",
+    "review": "Revisión",
+    "newChat": "Nuevo chat",
+    "open": "Abrir chat",
+    "collapse": "Contraer panel",
+    "newChatEmpty": "Pídele al asistente que lea, revise o corrija tu manuscrito.",
+    "composerPlaceholder": "Pregunta lo que quieras sobre tu manuscrito…",
+    "send": "Enviar",
+    "stop": "Detener",
+    "model": {
+      "label": "Modelo",
+      "opus": "Opus 4.8",
+      "sonnet": "Sonnet 4.6"
+    },
+    "effort": {
+      "label": "Esfuerzo",
+      "low": "Bajo",
+      "medium": "Medio",
+      "high": "Alto"
+    },
+    "thinking": "Pensando…",
+    "worked": "Listo",
+    "runFailed": "La ejecución falló",
+    "step_one": "{{count}} paso",
+    "step_other": "{{count}} pasos",
+    "calling": "Llamando a {{tool}}…",
+    "done": "{{tool}}",
+    "runError": "La ejecución falló: {{message}}"
+  },
+  "threads": {
+    "title": "Chats",
+    "open": "Mostrar chats",
+    "newThread": "Nuevo chat",
+    "back": "Volver al chat",
+    "untitled": "Chat sin título",
+    "empty": "Aún no hay chats. Inicia uno para verlo aquí.",
+    "rename": "Renombrar chat",
+    "delete": "Eliminar chat",
+    "deleteTitle": "¿Eliminar chat?",
+    "deleteMessage": "“{{title}}” se eliminará de forma permanente. Esto no se puede deshacer.",
+    "deleteConfirm": "Eliminar",
+    "deleteCancel": "Cancelar",
+    "historyLoading": "Cargando este chat…",
+    "historyError": "No se pudo cargar este chat."
+  }
+}

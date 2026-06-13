@@ -48,6 +48,12 @@
       "light": "Light",
       "dark": "Dark",
       "system": "System"
+    },
+    "language": {
+      "title": "Language",
+      "description": "Choose the language for Pluma's interface.",
+      "en": "English",
+      "es": "Español"
     }
   },
   "explorer": {

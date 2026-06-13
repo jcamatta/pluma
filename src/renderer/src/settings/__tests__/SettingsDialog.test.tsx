@@ -10,17 +10,23 @@ import { SettingsDialog } from '../SettingsDialog'
 import type { UseSettings } from '../useSettings'
 
 const renderDialog = (
-  theme: UseSettings['theme'] = 'system'
-): { setTheme: ReturnType<typeof vi.fn>; onOpenChange: ReturnType<typeof vi.fn> } => {
+  theme: UseSettings['theme'] = 'system',
+  language: UseSettings['language'] = 'en'
+): {
+  setTheme: ReturnType<typeof vi.fn>
+  setLanguage: ReturnType<typeof vi.fn>
+  onOpenChange: ReturnType<typeof vi.fn>
+} => {
   const setTheme = vi.fn()
+  const setLanguage = vi.fn()
   const onOpenChange = vi.fn()
-  const settings: UseSettings = { theme, setTheme }
+  const settings: UseSettings = { theme, setTheme, language, setLanguage }
   render(
     <I18nextProvider i18n={i18n}>
       <SettingsDialog open onOpenChange={onOpenChange} settings={settings} />
     </I18nextProvider>
   )
-  return { onOpenChange, setTheme }
+  return { onOpenChange, setTheme, setLanguage }
 }
 
 describe('SettingsDialog', () => {
@@ -37,6 +43,19 @@ describe('SettingsDialog', () => {
     const { setTheme } = renderDialog('system')
     fireEvent.click(screen.getByRole('radio', { name: 'Dark' }))
     expect(setTheme).toHaveBeenCalledWith('dark')
+  })
+
+  it('renders the language field when open', () => {
+    renderDialog()
+    expect(screen.getByText('Language')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'English' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Español' })).toBeInTheDocument()
+  })
+
+  it('calls setLanguage when a language option is selected', () => {
+    const { setLanguage } = renderDialog()
+    fireEvent.click(screen.getByRole('radio', { name: 'Español' }))
+    expect(setLanguage).toHaveBeenCalledWith('es')
   })
 
   it('requests close when the close button is clicked', () => {

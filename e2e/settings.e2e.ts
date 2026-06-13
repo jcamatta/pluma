@@ -38,3 +38,30 @@ test('opens settings and applies the chosen theme', async () => {
     }
   })
 })
+
+test('switches the interface language to Spanish and back', async () => {
+  await withTempFolder([{ name: 'chapter-1.md', content: '# Chapter One' }], async (folder) => {
+    const { app, window } = await launchApp()
+    try {
+      await stubFolderPicker(app, folder)
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+
+      await window.getByRole('button', { name: 'Settings', exact: true }).click()
+      const dialog = window.getByRole('dialog')
+      await expect(dialog).toBeVisible()
+
+      // Picking Español re-renders the whole UI in Spanish immediately — the dialog title switches.
+      await dialog.getByRole('radio', { name: 'Español', exact: true }).click()
+      await expect(dialog.getByText('Configuración', { exact: true })).toBeVisible()
+      await expect
+        .poll(() => window.evaluate(() => localStorage.getItem('pluma.language')))
+        .toBe('es')
+
+      // Switch back to English so the shared userData store is left clean for other specs.
+      await dialog.getByRole('radio', { name: 'English', exact: true }).click()
+      await expect(dialog.getByText('Settings', { exact: true })).toBeVisible()
+    } finally {
+      await app.close()
+    }
+  })
+})

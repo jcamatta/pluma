@@ -6,21 +6,41 @@
 
 type Theme = 'light' | 'dark' | 'system'
 
+type Language = 'en' | 'es'
+
 type Settings = {
   readonly theme: Theme
+  readonly language: Language
 }
 
 const THEME_KEY = 'pluma.theme'
 
+const LANGUAGE_KEY = 'pluma.language'
+
 const THEMES: ReadonlySet<string> = new Set(['light', 'dark', 'system'])
+
+const LANGUAGES: ReadonlySet<string> = new Set(['en', 'es'])
 
 function isTheme(value: string | null): value is Theme {
   return value !== null && THEMES.has(value)
 }
 
+function isLanguage(value: string | null): value is Language {
+  return value !== null && LANGUAGES.has(value)
+}
+
+function loadLanguage(): Language {
+  const stored = localStorage.getItem(LANGUAGE_KEY)
+  return isLanguage(stored) ? stored : 'en'
+}
+
+function saveLanguage(language: Language): void {
+  localStorage.setItem(LANGUAGE_KEY, language)
+}
+
 function loadSettings(): Settings {
   const stored = localStorage.getItem(THEME_KEY)
-  return { theme: isTheme(stored) ? stored : 'system' }
+  return { theme: isTheme(stored) ? stored : 'system', language: loadLanguage() }
 }
 
 function applyTheme(theme: Theme): void {
@@ -45,5 +65,14 @@ function initSettings(): Settings {
   return settings
 }
 
-export { applyTheme, initSettings, isTheme, loadSettings, saveTheme }
-export type { Settings, Theme }
+export {
+  applyTheme,
+  initSettings,
+  isLanguage,
+  isTheme,
+  loadLanguage,
+  loadSettings,
+  saveLanguage,
+  saveTheme
+}
+export type { Language, Settings, Theme }
