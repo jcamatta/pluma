@@ -5,7 +5,7 @@
   "main": "./out/main/index.js",
   "author": "jcamatta",
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky && node scripts/set-husky-hookspath.mjs",
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "test": "vitest run --passWithNoTests",
