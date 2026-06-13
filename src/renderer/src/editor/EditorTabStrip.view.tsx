@@ -1,6 +1,6 @@
 // The editor panel's tab strip: one Base UI tab per open file. Pure layout — it is composed inside the
 // Tabs.Root that EditorStack owns, so it neither holds the active value nor calls onValueChange; selection
-// arrives as data-selected on each Tab. The active tab is marked by an accent bottom border on the Tab
+// arrives as data-active on each Tab. The active tab is marked by an accent bottom border on the Tab
 // itself rather than a floating Tabs.Indicator: the indicator is positioned from measured pixel offsets
 // that go stale on a relayout which does not change the selection (closing the explorer widens the panel),
 // leaving the underline stranded; a border in normal flow always tracks its tab. Each tab carries a close
@@ -50,11 +50,11 @@ export function EditorTabStrip({
                 <Tabs.Tab
                   value={tab.path}
                   render={<motion.button whileTap={{ scale: 0.97 }} />}
-                  className="group flex h-full items-center gap-2 whitespace-nowrap border-b-2 border-transparent pr-9 pl-4 text-sm font-semibold text-text-muted outline-none data-[selected]:border-action-primary data-[selected]:text-text-primary"
+                  className="group flex h-full items-center gap-2 whitespace-nowrap border-b-2 border-transparent pr-9 pl-4 text-sm font-semibold text-text-muted outline-none data-[active]:border-action-primary data-[active]:text-text-primary"
                 >
                   <FileText
                     size={15}
-                    className="text-text-muted group-data-[selected]:text-action-primary"
+                    className="text-text-muted group-data-[active]:text-action-primary"
                   />
                   {tab.name}
                 </Tabs.Tab>

@@ -42,6 +42,12 @@ describe('EditorTabStrip', () => {
     expect(screen.getByRole('tab', { name: 'Beta' })).toHaveAttribute('aria-selected', 'false')
   })
 
+  it('flags the active tab with data-active, which the accent underline styling keys on', () => {
+    renderStrip('/a/alpha.md', makeSpies())
+    expect(screen.getByRole('tab', { name: 'Alpha' })).toHaveAttribute('data-active')
+    expect(screen.getByRole('tab', { name: 'Beta' })).not.toHaveAttribute('data-active')
+  })
+
   it('activates a tab through the Tabs root when clicked', () => {
     const spies = makeSpies()
     renderStrip('/a/alpha.md', spies)
