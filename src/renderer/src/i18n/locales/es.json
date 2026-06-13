@@ -48,6 +48,12 @@
       "light": "Claro",
       "dark": "Oscuro",
       "system": "Sistema"
+    },
+    "language": {
+      "title": "Idioma",
+      "description": "Elige el idioma de la interfaz de Pluma.",
+      "en": "English",
+      "es": "Español"
     }
   },
   "explorer": {

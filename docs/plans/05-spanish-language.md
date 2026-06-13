@@ -52,7 +52,9 @@ _Landed: `Settings`/`loadSettings` now carry `language` (seeded via `loadLanguag
 - Test: add `settings/__tests__/useSettings.test.ts` (`renderHook`) asserting `setLanguage('es')` persists to localStorage and flips `i18n.language` to `es`.
 - _Budget:_ small; hook + one test file.
 
-### Step 4 — Language field in the Settings dialog
+### Step 4 — Language field in the Settings dialog ✅ done
+
+_Landed: `SegmentedField` generalized to `SegmentedField<T extends string>` with an `isValid` guard prop (no `as`); theme field passes `isTheme`, new Language field passes `isLanguage`. Added `settings.language.*` to `en.json` and `es.json`. Updated `SettingsDialog.test.tsx` (new props + language-field assertions). 18 settings/i18n tests green; eslint clean (0 errors)._
 
 - Generalize `SegmentedField` in `SettingsDialog.tsx` to a generic string-valued control (`value`, `options`, `onValueChange`, plus an `isValid: (v: string) => v is T` guard prop) so it serves both Theme and Language without an `as` cast. The existing theme field passes `isTheme`; the new language field passes `isLanguage`.
 - Add a **Language** `Field` (segmented: English / Español) wired to `settings.language` / `settings.setLanguage`.

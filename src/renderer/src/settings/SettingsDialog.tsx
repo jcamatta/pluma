@@ -12,7 +12,7 @@ import { RadioGroup } from '@base-ui/react/radio-group'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { IconButton } from '../components/IconButton'
-import { isTheme, type Theme } from './settings'
+import { isLanguage, isTheme, type Language, type Theme } from './settings'
 import type { UseSettings } from './useSettings'
 
 type SettingsDialogProps = {
@@ -28,10 +28,15 @@ export function SettingsDialog({
 }: SettingsDialogProps): React.JSX.Element {
   const { t } = useTranslation()
 
-  const themeOptions: ThemeOption[] = [
+  const themeOptions: SegmentedOption<Theme>[] = [
     { label: t('settings.theme.light'), value: 'light' },
     { label: t('settings.theme.dark'), value: 'dark' },
     { label: t('settings.theme.system'), value: 'system' }
+  ]
+
+  const languageOptions: SegmentedOption<Language>[] = [
+    { label: t('settings.language.en'), value: 'en' },
+    { label: t('settings.language.es'), value: 'es' }
   ]
 
   return (
@@ -55,9 +60,21 @@ export function SettingsDialog({
           <div className="flex flex-col gap-6">
             <Field title={t('settings.theme.title')} description={t('settings.theme.description')}>
               <SegmentedField
+                isValid={isTheme}
                 onValueChange={settings.setTheme}
                 options={themeOptions}
                 value={settings.theme}
+              />
+            </Field>
+            <Field
+              title={t('settings.language.title')}
+              description={t('settings.language.description')}
+            >
+              <SegmentedField
+                isValid={isLanguage}
+                onValueChange={settings.setLanguage}
+                options={languageOptions}
+                value={settings.language}
               />
             </Field>
           </div>
@@ -85,25 +102,31 @@ function Field({ title, description, children }: FieldProps): React.JSX.Element 
   )
 }
 
-type ThemeOption = {
-  readonly value: Theme
+type SegmentedOption<T extends string> = {
+  readonly value: T
   readonly label: string
 }
 
-type SegmentedFieldProps = {
-  readonly value: Theme
-  readonly options: readonly ThemeOption[]
-  readonly onValueChange: (value: Theme) => void
+type SegmentedFieldProps<T extends string> = {
+  readonly value: T
+  readonly options: readonly SegmentedOption<T>[]
+  readonly onValueChange: (value: T) => void
+  readonly isValid: (value: string | null) => value is T
 }
 
-// The value type flows from the `value`/`Radio.Root` props, so onValueChange yields a Theme directly —
-// guarded all the same so a stray non-theme value is dropped rather than written through.
-function SegmentedField({ value, options, onValueChange }: SegmentedFieldProps): React.JSX.Element {
+// Generic over the option's value type (Theme, Language, …). The guard drops a stray value rather than
+// writing it through, so onValueChange only ever receives a valid T.
+function SegmentedField<T extends string>({
+  value,
+  options,
+  onValueChange,
+  isValid
+}: SegmentedFieldProps<T>): React.JSX.Element {
   return (
     <RadioGroup
       className="inline-flex gap-1 rounded-xl border border-border bg-surface-1 p-1"
       onValueChange={(next) => {
-        if (isTheme(next)) onValueChange(next)
+        if (isValid(next)) onValueChange(next)
       }}
       value={value}
     >
