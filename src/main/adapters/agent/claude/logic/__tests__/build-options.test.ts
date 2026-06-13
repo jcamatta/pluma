@@ -83,6 +83,26 @@ describe('buildOptions', () => {
   })
 })
 
+describe('buildOptions · model selection', () => {
+  it('honors the sonnet model from the run state', () => {
+    expect(
+      buildOptions({
+        threadId: undefined,
+        cwd: undefined,
+        state: { effort: 'low', model: 'claude-sonnet-4-6' },
+        toolServer: undefined,
+        tools: []
+      })
+    ).toStrictEqual({
+      includePartialMessages: true,
+      tools: [],
+      systemPrompt: AGENT_SYSTEM_PROMPT,
+      model: 'claude-sonnet-4-6',
+      effort: 'low'
+    })
+  })
+})
+
 describe('buildOptions · tool permissions', () => {
   it('registers the tool server with the stream-holding hook and the frontend permission allow-list', () => {
     const options = buildOptions({

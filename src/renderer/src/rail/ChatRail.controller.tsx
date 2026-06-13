@@ -15,6 +15,7 @@ import { useAgentActivityLog } from './useAgentActivityLog'
 import { useScrollSentMessageIntoView } from './useScrollSentMessageIntoView'
 import { useThreadsRefresh } from './useThreadsRefresh'
 import { useReviewTab } from './useReviewTab'
+import { useRunControls } from './useRunControls'
 import type { ActivityLabels } from './Activity.view'
 import { ConversationRailView, type RailLabels } from './ConversationRail.view'
 import { TranscriptView } from './Transcript.view'
@@ -43,7 +44,6 @@ function railLabels(t: TFunction): RailLabels {
     newChatEmpty: t('rail.newChatEmpty'),
     composerPlaceholder: t('rail.composerPlaceholder'),
     send: t('rail.send'),
-    toSend: t('rail.toSend'),
     stop: t('rail.stop'),
     chatTab: t('rail.chat'),
     reviewTab: t('rail.review')
@@ -68,6 +68,7 @@ export function ChatRailController({
 }: ChatRailControllerProps): React.JSX.Element {
   const { t } = useTranslation()
   const { agent } = useAgent()
+  const runControls = useRunControls()
   const [value, setValue] = useState('')
   const [expandOverride, setExpandOverride] = useState<boolean | null>(null)
 
@@ -80,29 +81,32 @@ export function ChatRailController({
   useThreadsRefresh(agent, cwd)
   const review = useReviewTab()
 
-  const working = activity.status === 'working'
   const { history, currentPrompt } = splitConversation(agent.messages, activity.status !== 'idle')
   const userBubbleRef = useScrollSentMessageIntoView(currentPrompt)
 
   const submit = (): void => {
     const text = value.trim()
-    if (text.length === 0 || working) return
+    if (text.length === 0 || activity.status === 'working') return
     setValue('')
     setExpandOverride(null)
     agent.addMessage({ id: crypto.randomUUID(), role: 'user', content: text })
-    void agent.runAgent()
+    void agent.runAgent({ forwardedProps: { state: runControls.runState } })
   }
 
   return (
     <ConversationRailView
       labels={railLabels(t)}
       title={
-        resolveTitle(threadTitle, history.find((item) => item.role === 'user')?.text ?? currentPrompt) ??
-        t('rail.newChat')
+        resolveTitle(
+          threadTitle,
+          history.find((item) => item.role === 'user')?.text ?? currentPrompt
+        ) ?? t('rail.newChat')
       }
       hasTurn={history.length > 0 || currentPrompt !== null}
-      working={working}
+      working={activity.status === 'working'}
       value={value}
+      model={runControls.model}
+      effort={runControls.effort}
       onChange={setValue}
       onSubmit={submit}
       onStop={() => agent.abortRun()}
@@ -125,8 +129,10 @@ export function ChatRailController({
           prompt={currentPrompt}
           activity={activity}
           labels={activityLabels(t)}
-          expanded={expandOverride ?? working}
-          onToggleExpand={() => setExpandOverride(!(expandOverride ?? working))}
+          expanded={expandOverride ?? activity.status === 'working'}
+          onToggleExpand={() =>
+            setExpandOverride(!(expandOverride ?? activity.status === 'working'))
+          }
         />
       )}
     </ConversationRailView>

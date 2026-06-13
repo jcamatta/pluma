@@ -4,7 +4,7 @@
 // Claude SDK Options at the adapter edge.
 
 type EffortLevel = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
-type Model = 'claude-opus-4-8'
+type Model = 'claude-opus-4-8' | 'claude-sonnet-4-6'
 
 interface RunAgentState {
   readonly effort?: EffortLevel

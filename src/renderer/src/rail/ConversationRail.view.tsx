@@ -13,6 +13,7 @@ import { Scrollable } from '../components/Scrollable'
 import { cn } from '../components/cn'
 import { Empty } from './Empty.view'
 import { RailComposer } from './RailComposer.view'
+import type { RunControlSelectProps } from './RunControlSelect.view'
 
 type RailTab = 'chat' | 'review'
 
@@ -23,7 +24,6 @@ interface RailLabels {
   readonly newChatEmpty: string
   readonly composerPlaceholder: string
   readonly send: string
-  readonly toSend: string
   readonly stop: string
   readonly chatTab: string
   readonly reviewTab: string
@@ -39,6 +39,10 @@ interface ConversationRailViewProps {
   // Whether a run is in flight: the composer swaps Send for Stop and blocks resubmission.
   readonly working: boolean
   readonly value: string
+  // The composer's model/effort selectors, built by the controller (value + translated options + change
+  // handler) and rendered in the composer footer.
+  readonly model: RunControlSelectProps
+  readonly effort: RunControlSelectProps
   readonly onChange: (value: string) => void
   readonly onSubmit: () => void
   readonly onStop: () => void
@@ -97,12 +101,23 @@ function ChatPane({
   hasTurn,
   working,
   value,
+  model,
+  effort,
   onChange,
   onSubmit,
   onStop
 }: Pick<
   ConversationRailViewProps,
-  'labels' | 'children' | 'hasTurn' | 'working' | 'value' | 'onChange' | 'onSubmit' | 'onStop'
+  | 'labels'
+  | 'children'
+  | 'hasTurn'
+  | 'working'
+  | 'value'
+  | 'model'
+  | 'effort'
+  | 'onChange'
+  | 'onSubmit'
+  | 'onStop'
 >): React.JSX.Element {
   return (
     <>
@@ -112,11 +127,12 @@ function ChatPane({
 
       <RailComposer
         placeholder={labels.composerPlaceholder}
-        toSend={labels.toSend}
         send={labels.send}
         stop={labels.stop}
         working={working}
         value={value}
+        model={model}
+        effort={effort}
         onChange={onChange}
         onSubmit={onSubmit}
         onStop={onStop}
@@ -169,6 +185,8 @@ export function ConversationRailView(props: ConversationRailViewProps): React.JS
           hasTurn={props.hasTurn}
           working={props.working}
           value={props.value}
+          model={props.model}
+          effort={props.effort}
           onChange={props.onChange}
           onSubmit={props.onSubmit}
           onStop={props.onStop}

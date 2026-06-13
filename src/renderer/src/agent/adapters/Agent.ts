@@ -120,7 +120,8 @@ export class Agent extends AbstractAgent {
   protected startRun(input: RunAgentInput): Promise<StartRunResult> {
     // Send the SDK session id (when we have one) as the threadId, not AG-UI's random one — only a real
     // session can be resumed. The first turn has none, so toRunInput omits it and a fresh session opens.
-    // Stamp the workspace cwd onto forwardedProps so toRunInput lifts it onto the IPC input.
+    // Stamp the workspace cwd onto forwardedProps so toRunInput lifts it; the run state (model/effort)
+    // already rides forwardedProps from the runAgent call and is preserved by the spread.
     const cwd = this.workspaceCwd
     const forwardedProps =
       cwd === undefined ? input.forwardedProps : { ...input.forwardedProps, cwd }

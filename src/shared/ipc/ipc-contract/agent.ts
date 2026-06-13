@@ -8,7 +8,7 @@ import type { Message, Tool } from '@ag-ui/core'
 import type { IpcContractDefinition } from './types'
 
 type EffortLevel = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
-type Model = 'claude-opus-4-8'
+type Model = 'claude-opus-4-8' | 'claude-sonnet-4-6'
 
 interface RunAgentState {
   readonly effort?: EffortLevel
@@ -153,6 +153,8 @@ export {
   AGENT_THREAD_HISTORY_CHANNEL,
   AGENT_RENAME_THREAD_CHANNEL,
   AGENT_DELETE_THREAD_CHANNEL,
+  type EffortLevel,
+  type Model,
   type RunAgentState,
   type AgentContextEntry,
   type RunAgentInput,

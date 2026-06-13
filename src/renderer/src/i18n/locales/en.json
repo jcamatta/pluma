@@ -78,8 +78,18 @@
     "newChatEmpty": "Ask the assistant to read, review, or revise your manuscript.",
     "composerPlaceholder": "Ask anything about your manuscript…",
     "send": "Send",
-    "toSend": "to send",
     "stop": "Stop",
+    "model": {
+      "label": "Model",
+      "opus": "Opus 4.8",
+      "sonnet": "Sonnet 4.6"
+    },
+    "effort": {
+      "label": "Effort",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
     "thinking": "Thinking…",
     "worked": "Worked",
     "runFailed": "Run failed",
