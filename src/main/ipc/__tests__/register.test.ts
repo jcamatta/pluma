@@ -10,6 +10,7 @@ const removeHandler = vi.fn()
 vi.mock('electron', () => ({ ipcMain: { handle, removeHandler } }))
 
 const STATELESS_CHANNELS = [
+  'asset:create',
   'file:create',
   'file:delete',
   'file:write',

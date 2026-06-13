@@ -245,6 +245,13 @@ rule`). Shared `asset:create` contract + registry union entry; `imageExtensionFo
   slashes) + test; `fs-asset-writer.ts` — `makeDirectory(recursive)` + `writeFile(bytes)`,
   any fs failure (incl. `assets` existing as a file) → `AssetWriteFailed`; temp-dir adapter
   test proves create+write, content-hashed path, and dedup.
-- **Next: Step 5 — IPC endpoint** `ipc/asset/create-asset-handler.ts` runs
-  `copyImageToAssets` with `FsAssetWriterLive`, serializes the `Result`; register in
-  `ipc/register.ts`. Then **Step 6b** (hide `assets/` from the explorer).
+- **Step 5 — DONE** (`asset:create` IPC endpoint). `ipc/asset/create-asset-handler.ts`
+  runs `copyImageToAssets` with `FsAssetWriterLive` + `NodeContext.layer`, maps the typed
+  errors to the wire union (`onError`/`onDefect` annotated `: AssetCreateError` so the
+  PlainError infers correctly — no cast); registered in `registerIpc`; `asset:create` added
+  to `register.test.ts`. Handler test covers ok:true (file on disk) and ok:false
+  (UnsupportedImageType). **PR 1 backend write-path is complete** (use case → adapter →
+  IPC).
+- **Next: Step 6b** — hide the managed `assets/` directory from the explorer
+  (`keep-markdown-entries.ts`). Then **Steps 7–9** (privileged scheme + resolver logic +
+  protocol handler) finish PR 1.
