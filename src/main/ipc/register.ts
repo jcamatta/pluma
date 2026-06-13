@@ -8,6 +8,7 @@
 import { ipcMain } from 'electron'
 import type { BaseEvent } from '@ag-ui/core'
 import type * as Scope from 'effect/Scope'
+import { ASSET_CREATE_CHANNEL, type AssetCreateRequest } from '../../shared/ipc/ipc-contract/asset'
 import {
   AGENT_ABORT_CHANNEL,
   AGENT_DELETE_THREAD_CHANNEL,
@@ -56,6 +57,7 @@ import { handleRenameThread } from './agent/rename-thread-handler'
 import { handleRunAgent } from './agent/run-agent-handler'
 import { handleSubmitToolResult } from './agent/submit-tool-result-handler'
 import { handleThreadHistory } from './agent/thread-history-handler'
+import { handleCreateAsset } from './asset/create-asset-handler'
 import { handleCreateFile } from './file/create-file-handler'
 import { handleDeleteFile } from './file/delete-file-handler'
 import { handleRenameFile } from './file/rename-file-handler'
@@ -97,6 +99,9 @@ const registerFileChannels = (): void => {
 
 const registerIpc = (): void => {
   registerFileChannels()
+  ipcMain.handle(ASSET_CREATE_CHANNEL, (_event, request: AssetCreateRequest) =>
+    handleCreateAsset(request)
+  )
   ipcMain.handle(FOLDER_CREATE_CHANNEL, (_event, path: string) => handleCreateFolder(path))
   ipcMain.handle(FOLDER_DELETE_CHANNEL, (_event, path: string) => handleDeleteFolder(path))
   ipcMain.handle(FOLDER_RENAME_CHANNEL, (_event, request: FolderRenameRequest) =>
