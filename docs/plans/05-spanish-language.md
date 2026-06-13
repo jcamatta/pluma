@@ -62,7 +62,9 @@ _Landed: `SegmentedField` generalized to `SegmentedField<T extends string>` with
 - Update `settings/__tests__/SettingsDialog.test.tsx` to assert the Language field renders and selecting "Español" calls `setLanguage('es')`.
 - _Budget:_ within limits (one component file refactor + two small JSON edits + test); well under 15 files.
 
-### Step 5 — e2e: switch language in the real app
+### Step 5 — e2e: switch language in the real app ✅ done
+
+_Landed: a second test in `e2e/settings.e2e.ts` opens Settings, picks "Español", asserts the dialog title switches to "Configuración" and `localStorage 'pluma.language' === 'es'`, then reverts to English (the userData store is shared across specs, so the test leaves it clean). Same `@e2e feature:settings` claim — no manifest change. `playwright test settings.e2e.ts` → 2 passed._
 
 - Extend `e2e/settings.e2e.ts` (same `@e2e feature:settings` claim — **no manifest change**, no new IPC channel): open Settings, click "Español", and assert a known UI string switched to Spanish (e.g. the Settings dialog title) and/or `localStorage 'pluma.language' === 'es'`. Keep the existing theme assertion intact.
 - Run `npm run test:e2e` and report green.
