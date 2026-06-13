@@ -32,8 +32,10 @@ turn-reconstruction work (`rail-turn-reconstruction.md`).
   turn within a session.
 - Sending a second message shows a new, separate assistant reply and leaves the first reply's text
   unchanged (no backward bleed) in `agent.messages`.
-- A sharpened multi-turn assertion in `e2e/rail.e2e.ts` proves the two replies are distinct and the
-  first does not absorb the second's text.
+- The multi-turn `e2e/rail.e2e.ts` exercises a full second turn end to end and proves the first turn
+  survives (both user bubbles + both sentinels on screen). The precise distinct-id guarantee is pinned
+  by the unit tests, since the live activity summary masks the corruption for the in-flight turn (see
+  the note in step 2).
 - `npm run lint`, `npm run test`, `npm run type-coverage`, `npm run build` green; `npm run test:e2e`
   green for `rail.e2e.ts`.
 
@@ -68,11 +70,15 @@ replaces the array), so each only needs to be internally unique.
      `message_start`s) yields distinct ids. Keep existing single-message assertions green.
    - One commit (logic + data + tests; all small, ≤ a few source files).
 
-2. **Sharpen the multi-turn e2e assertion** (no manifest change).
-   - `e2e/rail.e2e.ts` ("sends a message and shows the assistant reply"): the second-message block
-     already checks both bubbles persist. Add an assertion that the **first** assistant reply still
-     contains its original sentinel and does **not** contain the second turn's sentinel — i.e. no
-     backward bleed — and that a distinct second reply renders. Use sentinels pinned by the prompts.
+2. **Exercise the multi-turn path end to end in e2e** (no manifest change).
+   - `e2e/rail.e2e.ts` ("sends a message and shows the assistant reply"): wait for the second turn to
+     render its own reply (its sentinel) and assert the first turn's bubble and sentinel persist.
+   - Note (discovered during step 1): an e2e cannot cleanly isolate _this_ bug in the current
+     rendering, because the in-flight turn's reply is drawn from a separate live activity summary that
+     masks the corruption until a later turn settles. So the precise distinct-id guard is the step-1
+     unit test; this spec is a multi-turn smoke that proves consecutive turns don't destroy prior ones.
+     The rendered no-bleed guarantee is validated by `rail-render-messages-directly.md`, which renders
+     settled turns straight from `agent.messages`.
    - `e2e/` is weight 0; this rides with step 1's branch.
 
 3. **Remove this plan** — `docs:` commit deleting `docs/plans/fix-message-id-collision.md`

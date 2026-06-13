@@ -57,9 +57,12 @@ test('sends a message and shows the assistant reply in the rail', async () => {
       await expect(reply).toContainText(SENTINEL, { ignoreCase: true })
       await expect(reply.locator('strong')).toContainText(SENTINEL, { ignoreCase: true })
 
-      // Multi-turn: a second message must NOT erase the first turn (the reported bug). Send a follow-up;
-      // the first turn's reply settles into history above the new turn, so both user bubbles stay on
-      // screen. (No need to wait for the second reply — the first bubble persists the instant we send.)
+      // Multi-turn: a second message must NOT erase the first turn (the reported bug). Send a follow-up
+      // and let it complete; the first turn's reply settles into history above the new turn, so both
+      // user bubbles and both replies stay on screen with their own sentinels. (The precise guarantee
+      // that the two turns get distinct, non-colliding message ids — the root cause of the bleed — is
+      // pinned by the unit tests on the stream transform; here we exercise the whole multi-turn path
+      // end to end and prove the first turn survives a second.)
       const SECOND = 'Reply with exactly the single word RAIL and nothing else.'
       await composer.click()
       await composer.fill(SECOND)
@@ -70,6 +73,7 @@ test('sends a message and shows the assistant reply in the rail', async () => {
       })
       await expect(secondBubble).toBeVisible()
       await expect(bubble).toBeVisible()
+      await expect(rail.getByText('RAIL', { exact: false })).toBeVisible({ timeout: 60_000 })
       await expect(rail.getByText(SENTINEL, { exact: false }).first()).toBeVisible()
     } finally {
       await app.close()
