@@ -53,17 +53,32 @@ describe('createFile', () => {
     expect(created).toStrictEqual(['/notes/draft.md'])
   })
 
-  it('fails with InvalidPath when the path is not a .md file, without touching the writer', () => {
+  it('defaults a bare name to a .md file, writing and returning the extended path', () => {
+    const created: string[] = []
+    const exit = run(createFile('/notes/draft'), writerThatSucceeds(created))
+
+    expect(exit).toStrictEqual(Exit.succeed('/notes/draft.md'))
+    expect(created).toStrictEqual(['/notes/draft.md'])
+  })
+
+  it('appends .md to a non-markdown extension rather than rejecting it', () => {
     const created: string[] = []
     const exit = run(createFile('/notes/draft.txt'), writerThatSucceeds(created))
 
-    expect(Exit.isFailure(exit)).toBe(true)
-    expect(created).toStrictEqual([])
-    expect(exit).toStrictEqual(Exit.fail(expect.objectContaining({ _tag: 'InvalidPath' })))
+    expect(exit).toStrictEqual(Exit.succeed('/notes/draft.txt.md'))
+    expect(created).toStrictEqual(['/notes/draft.txt.md'])
   })
 
   it('fails with InvalidPath when the path is just the extension', () => {
     const exit = run(createFile('.md'), writerThatSucceeds([]))
+    expect(exit).toStrictEqual(Exit.fail(expect.objectContaining({ _tag: 'InvalidPath' })))
+  })
+
+  it('fails with InvalidPath when the path is blank, without touching the writer', () => {
+    const created: string[] = []
+    const exit = run(createFile('   '), writerThatSucceeds(created))
+
+    expect(created).toStrictEqual([])
     expect(exit).toStrictEqual(Exit.fail(expect.objectContaining({ _tag: 'InvalidPath' })))
   })
 

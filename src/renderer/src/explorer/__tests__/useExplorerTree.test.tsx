@@ -83,6 +83,22 @@ describe('useExplorerTree draft → create', () => {
     expect(result.current.draft).toBeNull()
   })
 
+  it('sends the typed name as-is and selects the .md path the backend returns', async () => {
+    const repos = createFakeFolderRepository({ '/root': [] })
+    const onSelect = vi.fn()
+    const { result } = renderTree({ repos, onSelect })
+
+    act(() => result.current.beginCreate('file', null))
+    await act(async () => {
+      result.current.commitDraft('draft')
+    })
+
+    // The renderer no longer appends .md; the backend (fake) normalizes and returns /root/draft.md,
+    // and the new file is selected by that returned path, not the raw name the renderer sent.
+    await waitFor(() => expect(repos.created()).toEqual(['/root/draft.md']))
+    expect(onSelect).toHaveBeenCalledWith('/root/draft.md')
+  })
+
   it('creates a folder without selecting it', async () => {
     const repos = createFakeFolderRepository({ '/root': [] })
     const onSelect = vi.fn()

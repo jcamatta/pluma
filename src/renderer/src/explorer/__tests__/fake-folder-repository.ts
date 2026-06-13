@@ -58,6 +58,11 @@ function createFakeFolderRepository(
     return Promise.resolve({ ok: true, value: path })
   }
 
+  // Mirror the backend's create-file contract: a created file is normalized to a .md path and that
+  // normalized path is what comes back, so selection-on-create tests are faithful to the real adapter.
+  const createFile = (path: string): Promise<Result<string, never>> =>
+    record(created, path.toLowerCase().endsWith('.md') ? path : `${path}.md`)
+
   const fileWriter: FileWriterPort = {
     write: (path, content) => {
       written.push({ path, content })
@@ -66,7 +71,7 @@ function createFakeFolderRepository(
   }
 
   const writer: FolderWriterPort = {
-    createFile: (path) => record(created, path),
+    createFile,
     createFolder: (path) => record(created, path),
     deleteFile: (path) => record(deleted, path),
     deleteFolder: (path) => record(deleted, path),

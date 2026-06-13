@@ -26,13 +26,19 @@ describe('handleCreateFile', () => {
       expect(readFileSync(target, 'utf8')).toBe('')
     }))
 
-  it('returns ok:false with InvalidPath for a non-md path', () =>
+  it('returns ok:true with the .md path when the name omits the extension', () =>
     withTempDir(async (dir) => {
-      const target = join(dir, 'note.txt')
-      const result = await handleCreateFile(target)
+      const result = await handleCreateFile(join(dir, 'note'))
 
-      expect(result).toStrictEqual({ ok: false, error: { _tag: 'InvalidPath', path: target } })
+      expect(result).toStrictEqual({ ok: true, value: join(dir, 'note.md') })
+      expect(readFileSync(join(dir, 'note.md'), 'utf8')).toBe('')
     }))
+
+  it('returns ok:false with InvalidPath for a blank path', async () => {
+    const result = await handleCreateFile('   ')
+
+    expect(result).toStrictEqual({ ok: false, error: { _tag: 'InvalidPath', path: '' } })
+  })
 
   it('returns ok:false with DirectoryNotFound when the parent is missing', () =>
     withTempDir(async (dir) => {

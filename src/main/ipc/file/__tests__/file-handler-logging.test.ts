@@ -42,7 +42,7 @@ describe('file handler logging', () => {
 
   it('logs file:create with failed on a typed failure', () =>
     withCapture(async ({ dir, logs }) => {
-      await handleCreateFile(join(dir, 'note.txt'))
+      await handleCreateFile(join(dir, 'missing', 'note.md'))
       const text = logs.join('\n')
 
       expect(text).toContain('file:create')

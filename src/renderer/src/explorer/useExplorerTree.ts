@@ -56,8 +56,8 @@ export function useExplorerTree(root: string, selection: Selection): ExplorerTre
       if (!current || name === '') return
       const parent = current.parentPath ?? root
       const path = joinPath(parent, name)
-      void create({ type: current.type, path, parent }).then((ok) => {
-        if (ok && current.type === 'file') selection.onSelect(path)
+      void create({ type: current.type, path, parent }).then((created) => {
+        if (created !== null && current.type === 'file') selection.onSelect(created)
       })
     },
     [draft, root, create, selection]
