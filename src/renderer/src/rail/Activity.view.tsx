@@ -6,7 +6,7 @@
 
 import { Button } from '@base-ui/react'
 import { Check, ChevronDown, X } from 'lucide-react'
-import type { AgentActivity } from './activity-log'
+import type { LogEntry, RunStatus } from './step'
 import { LogRow } from './LogRow.view'
 
 interface ActivityLabels {
@@ -18,7 +18,8 @@ interface ActivityLabels {
 }
 
 interface ActivityViewProps {
-  readonly activity: AgentActivity
+  readonly status: RunStatus
+  readonly log: readonly LogEntry[]
   readonly labels: ActivityLabels
   readonly expanded: boolean
   readonly onToggleExpand: () => void
@@ -80,7 +81,7 @@ function Header({
   )
 }
 
-function Timeline({ log }: { readonly log: AgentActivity['log'] }): React.JSX.Element | null {
+function Timeline({ log }: { readonly log: readonly LogEntry[] }): React.JSX.Element | null {
   if (log.length === 0) return null
   return (
     <div className="relative mt-1" style={{ paddingLeft: 22 }}>
@@ -95,31 +96,33 @@ function Timeline({ log }: { readonly log: AgentActivity['log'] }): React.JSX.El
 // The header label follows the run status: while working it shows the current (last) step, falling back
 // to "Thinking…" before any step lands — never "Worked", which is reserved for a settled success. A
 // failed run reads "Run failed"; a clean one reads "Worked".
-function headerLabel(activity: AgentActivity, labels: ActivityLabels): string {
-  if (activity.status === 'working') return activity.log.at(-1)?.text ?? labels.thinking
-  if (activity.status === 'error') return labels.runFailed
+function headerLabel(
+  run: { readonly status: RunStatus; readonly log: readonly LogEntry[] },
+  labels: ActivityLabels
+): string {
+  if (run.status === 'working') return run.log.at(-1)?.text ?? labels.thinking
+  if (run.status === 'error') return labels.runFailed
   return labels.worked
 }
 
 export function ActivityView({
-  activity,
+  status,
+  log,
   labels,
   expanded,
   onToggleExpand
 }: ActivityViewProps): React.JSX.Element {
-  const working = activity.status === 'working'
-
   return (
     <>
       <Header
-        working={working}
-        failed={activity.status === 'error'}
-        label={headerLabel(activity, labels)}
-        stepLabel={labels.step(activity.log.length)}
+        working={status === 'working'}
+        failed={status === 'error'}
+        label={headerLabel({ status, log }, labels)}
+        stepLabel={labels.step(log.length)}
         expanded={expanded}
         onToggleExpand={onToggleExpand}
       />
-      {expanded && <Timeline log={activity.log} />}
+      {expanded && <Timeline log={log} />}
     </>
   )
 }

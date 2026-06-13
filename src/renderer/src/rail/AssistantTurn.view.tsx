@@ -28,7 +28,8 @@ export function AssistantTurnView({
       </span>
       <div className="min-w-0 flex-1">
         <ActivityView
-          activity={activity}
+          status={activity.status}
+          log={activity.log}
           labels={labels}
           expanded={expanded}
           onToggleExpand={onToggleExpand}

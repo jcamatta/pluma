@@ -3,7 +3,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import type { AgentActivity } from '../activity-log'
+import type { LogEntry, RunStatus } from '../step'
 import { ActivityView } from '../Activity.view'
 
 const labels = {
@@ -13,35 +13,32 @@ const labels = {
   step: (count: number) => `${count} ${count === 1 ? 'step' : 'steps'}`
 }
 
-const working: AgentActivity = {
+interface Run {
+  readonly status: RunStatus
+  readonly log: readonly LogEntry[]
+}
+
+const working: Run = {
   status: 'working',
-  startedAt: 0,
-  log: [{ id: 't1', status: 'calling', text: 'Calling propose_edit…', toolName: 'propose_edit' }],
-  summary: ''
+  log: [{ id: 't1', status: 'calling', text: 'Calling propose_edit…', toolName: 'propose_edit' }]
 }
 
-const done: AgentActivity = {
+const done: Run = {
   status: 'done',
-  startedAt: 0,
-  log: [{ id: 't1', status: 'success', text: 'propose_edit' }],
-  summary: 'Tightened the opening paragraph.'
+  log: [{ id: 't1', status: 'success', text: 'propose_edit' }]
 }
 
-const errored: AgentActivity = {
+const errored: Run = {
   status: 'error',
-  startedAt: 0,
-  log: [{ id: 'error-0', status: 'failed', text: 'Run failed: agent run failed' }],
-  summary: ''
+  log: [{ id: 'error-0', status: 'failed', text: 'Run failed: agent run failed' }]
 }
 
-function renderActivity(
-  activity: AgentActivity,
-  overrides = {}
-): { onToggleExpand: ReturnType<typeof vi.fn> } {
+function renderActivity(run: Run, overrides = {}): { onToggleExpand: ReturnType<typeof vi.fn> } {
   const onToggleExpand = vi.fn()
   render(
     <ActivityView
-      activity={activity}
+      status={run.status}
+      log={run.log}
       labels={labels}
       expanded
       onToggleExpand={onToggleExpand}

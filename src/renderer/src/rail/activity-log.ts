@@ -16,20 +16,7 @@ import {
   type ToolCallResultEvent,
   type ToolCallStartEvent
 } from '@ag-ui/core'
-
-type LogStatus = 'calling' | 'success' | 'failed' | 'thinking' | 'info'
-
-interface LogEntry {
-  readonly id: string
-  readonly status: LogStatus
-  readonly text: string
-  readonly meta?: string
-  // The tool name for a tool-call entry, kept so the result can re-label it (calling → done) without
-  // re-parsing `text`. Absent for non-tool entries (run errors).
-  readonly toolName?: string
-}
-
-type RunStatus = 'idle' | 'working' | 'done' | 'error'
+import type { LogEntry, RunStatus } from './step'
 
 interface AgentActivity {
   readonly status: RunStatus
@@ -121,4 +108,4 @@ function createActivityReducer(labels: ActivityLabels): ActivityReducer {
 }
 
 export { createActivityReducer, initialActivity }
-export type { ActivityReducer, AgentActivity, LogEntry, LogStatus, RunStatus, ActivityLabels }
+export type { ActivityReducer, AgentActivity, ActivityLabels }
