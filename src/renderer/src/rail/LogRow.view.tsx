@@ -6,7 +6,7 @@
 // pixel geometry (gutter offset, ring size) goes through `style` since it is finer than our scale.
 
 import { Check, X } from 'lucide-react'
-import type { LogEntry, LogStatus } from './activity-log'
+import type { LogEntry, LogStatus } from './step'
 
 function Glyph({ status }: { readonly status: LogStatus }): React.JSX.Element | null {
   if (status === 'calling') {
