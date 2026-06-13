@@ -37,6 +37,31 @@ test('picks a folder and lists its real contents', async () => {
   })
 })
 
+test('lists only Markdown files, filtering out other file types', async () => {
+  await withTempFolder(
+    [
+      { name: 'chapter-1.md', content: '# One' },
+      { name: 'notes.txt', content: 'plain' }
+    ],
+    async (folder) => {
+      const { app, window } = await launchApp()
+      try {
+        await stubFolderPicker(app, folder)
+        await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+
+        await expect(window.getByTestId('explorer')).toBeVisible()
+        await expect(window.getByTestId(`file-row:${join(folder, 'chapter-1.md')}`)).toBeVisible()
+
+        // The non-Markdown file exists on disk but is filtered out of the listing.
+        expect(await readdir(folder)).toContain('notes.txt')
+        await expect(window.getByTestId(`file-row:${join(folder, 'notes.txt')}`)).toHaveCount(0)
+      } finally {
+        await app.close()
+      }
+    }
+  )
+})
+
 test('creates a file through the UI and selects it', async () => {
   await withTempFolder([], async (folder) => {
     const { app, window } = await launchApp()
