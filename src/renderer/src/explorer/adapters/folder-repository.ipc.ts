@@ -6,6 +6,7 @@
 import {
   FOLDER_CREATE_CHANNEL,
   FOLDER_DELETE_CHANNEL,
+  FOLDER_RENAME_CHANNEL,
   FOLDER_LIST_CHANNEL,
   FOLDER_WATCH_CHANNEL
 } from '../../../../shared/ipc/ipc-contract/folder'
@@ -44,6 +45,8 @@ function createFolderRepository(): {
     createFolder: (path) => window.api.invoke(FOLDER_CREATE_CHANNEL, path),
     deleteFile: (path) => window.api.invoke(FILE_DELETE_CHANNEL, path),
     deleteFolder: (path) => window.api.invoke(FOLDER_DELETE_CHANNEL, path),
+    renameFolder: (oldPath, newPath) =>
+      window.api.invoke(FOLDER_RENAME_CHANNEL, { oldPath, newPath }),
     watch: (path) => window.api.invoke(FOLDER_WATCH_CHANNEL, path),
     onChange: (callback) => window.api.on(FOLDER_CHANGED_CHANNEL, callback)
   }

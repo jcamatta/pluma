@@ -4,8 +4,8 @@
 //
 // @e2e feature:explorer
 // @e2e operation:folder.pick operation:folder.list operation:folder.create operation:folder.delete
-// @e2e operation:folder.watch operation:folder.changed operation:file.create operation:file.delete
-// @e2e operation:file.read
+// @e2e operation:folder.rename operation:folder.watch operation:folder.changed
+// @e2e operation:file.create operation:file.delete operation:file.read
 
 import { join } from 'node:path'
 import { access, readdir, writeFile, rm } from 'node:fs/promises'
@@ -121,6 +121,43 @@ test('deletes a file through the UI', async () => {
 
       // The UI delete must have removed the real file from disk, not just the tree row.
       await expect.poll(() => onDisk(path)).toBe(false)
+    } finally {
+      await app.close()
+    }
+  })
+})
+
+test('renames a folder in place through the UI', async () => {
+  await withTempFolder([], async (folder) => {
+    const { app, window } = await launchApp()
+    try {
+      await stubFolderPicker(app, folder)
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+      await expect(window.getByTestId('explorer')).toBeVisible()
+
+      // Create the folder to rename through the real folder:create IPC.
+      await window.getByRole('button', { name: 'New folder' }).first().click()
+      await window.getByPlaceholder('Untitled').fill('draft')
+      await window.getByPlaceholder('Untitled').press('Enter')
+
+      const oldPath = join(folder, 'draft')
+      const newPath = join(folder, 'final')
+      const oldRow = window.getByTestId(`folder-row:${oldPath}`)
+      await expect(oldRow).toBeVisible()
+      await expect.poll(() => onDisk(oldPath)).toBe(true)
+
+      // Rename it in place via the inline field.
+      await oldRow.hover()
+      await oldRow.getByRole('button', { name: 'Rename folder' }).click()
+      const input = oldRow.getByRole('textbox')
+      await input.fill('final')
+      await input.press('Enter')
+
+      // The row re-renders under the new path, the old one is gone, and the directory moved on disk.
+      await expect(window.getByTestId(`folder-row:${newPath}`)).toBeVisible()
+      await expect(window.getByTestId(`folder-row:${oldPath}`)).toHaveCount(0)
+      await expect.poll(() => onDisk(newPath)).toBe(true)
+      await expect.poll(() => onDisk(oldPath)).toBe(false)
     } finally {
       await app.close()
     }

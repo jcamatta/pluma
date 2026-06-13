@@ -8,6 +8,7 @@ import type { FolderChange } from '../../../../shared/ipc/ipc-event-contract/fol
 import type {
   FolderCreateError,
   FolderDeleteError,
+  FolderRenameError,
   FolderWatchError
 } from '../../../../shared/ipc/ipc-contract/folder'
 import type { FileCreateError, FileDeleteError } from '../../../../shared/ipc/ipc-contract/file'
@@ -17,6 +18,10 @@ interface FolderWriterPort {
   readonly createFolder: (path: string) => Promise<Result<string, FolderCreateError>>
   readonly deleteFile: (path: string) => Promise<Result<string, FileDeleteError>>
   readonly deleteFolder: (path: string) => Promise<Result<string, FolderDeleteError>>
+  readonly renameFolder: (
+    oldPath: string,
+    newPath: string
+  ) => Promise<Result<string, FolderRenameError>>
   readonly watch: (path: string) => Promise<Result<null, FolderWatchError>>
   readonly onChange: (callback: (change: FolderChange) => void) => () => void
 }

@@ -19,21 +19,26 @@ type ExplorerViewProps = ExplorerCallbacks & {
   readonly tree: readonly TreeNodeModel[]
   readonly selected: string | null
   readonly draft: DraftNode | null
+  readonly renamingPath: string | null
 }
 
 export function ExplorerView(props: ExplorerViewProps): React.JSX.Element {
-  const { labels, tree, selected, draft, onClose, onCreate } = props
+  const { labels, tree, selected, draft, renamingPath, onClose, onCreate } = props
   const ctx: RowContext = {
     labels,
     selected,
     draft,
+    renamingPath,
     onClose,
     onSelect: props.onSelect,
     onToggle: props.onToggle,
     onCreate,
     onDelete: props.onDelete,
     onCommitDraft: props.onCommitDraft,
-    onCancelDraft: props.onCancelDraft
+    onCancelDraft: props.onCancelDraft,
+    onStartRename: props.onStartRename,
+    onCommitRename: props.onCommitRename,
+    onCancelRename: props.onCancelRename
   }
 
   return (

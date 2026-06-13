@@ -14,17 +14,18 @@ import { ReposHarness } from './render-with-repos'
 type TreeOptions = {
   readonly repos: FakeRepository
   readonly root?: string
+  readonly selected?: string | null
   readonly onSelect?: (path: string) => void
 }
 
 function renderTree(
   options: TreeOptions
 ): ReturnType<typeof renderHook<ReturnType<typeof useExplorerTree>, void>> {
-  const { repos, root = '/root', onSelect = (): void => {} } = options
+  const { repos, root = '/root', selected = null, onSelect = (): void => {} } = options
   const wrapper = ({ children }: { readonly children: ReactNode }): React.JSX.Element => (
     <ReposHarness repos={repos}>{children}</ReposHarness>
   )
-  return renderHook(() => useExplorerTree(root, onSelect), { wrapper })
+  return renderHook(() => useExplorerTree(root, { selected, onSelect }), { wrapper })
 }
 
 function treeNames(tree: ReturnType<typeof useExplorerTree>['tree']): readonly string[] {
@@ -148,5 +149,67 @@ describe('useExplorerTree delete', () => {
 
     await waitFor(() => expect(repos.deleted()).toEqual(['/root/a.md']))
     expect(deleteFileSpy).toHaveBeenCalledWith('/root/a.md')
+  })
+})
+
+describe('useExplorerTree rename', () => {
+  it('renames a folder in place and clears the renaming state', async () => {
+    const repos = createFakeFolderRepository({ '/root': [{ name: 'draft', type: 'directory' }] })
+    const renameSpy = vi.spyOn(repos.writer, 'renameFolder')
+    const { result } = renderTree({ repos })
+    await waitFor(() => expect(result.current.tree).toHaveLength(1))
+
+    act(() => result.current.beginRename('/root/draft'))
+    expect(result.current.renamingPath).toBe('/root/draft')
+
+    await act(async () => {
+      result.current.commitRename('final')
+    })
+
+    await waitFor(() => expect(repos.renamed()).toEqual([{ from: '/root/draft', to: '/root/final' }]))
+    expect(renameSpy).toHaveBeenCalledWith('/root/draft', '/root/final')
+    expect(result.current.renamingPath).toBeNull()
+  })
+
+  it('remaps the selected file under the renamed folder', async () => {
+    const repos = createFakeFolderRepository({ '/root': [{ name: 'draft', type: 'directory' }] })
+    const onSelect = vi.fn()
+    const { result } = renderTree({ repos, selected: '/root/draft/ch1.md', onSelect })
+    await waitFor(() => expect(result.current.tree).toHaveLength(1))
+
+    act(() => result.current.beginRename('/root/draft'))
+    await act(async () => {
+      result.current.commitRename('final')
+    })
+
+    await waitFor(() => expect(onSelect).toHaveBeenCalledWith('/root/final/ch1.md'))
+  })
+
+  it('does not call rename for an unchanged name', async () => {
+    const repos = createFakeFolderRepository({ '/root': [{ name: 'draft', type: 'directory' }] })
+    const renameSpy = vi.spyOn(repos.writer, 'renameFolder')
+    const { result } = renderTree({ repos })
+    await waitFor(() => expect(result.current.tree).toHaveLength(1))
+
+    act(() => result.current.beginRename('/root/draft'))
+    await act(async () => {
+      result.current.commitRename('draft')
+    })
+
+    expect(renameSpy).not.toHaveBeenCalled()
+    expect(result.current.renamingPath).toBeNull()
+  })
+
+  it('cancelRename clears the renaming state without renaming', async () => {
+    const repos = createFakeFolderRepository({ '/root': [{ name: 'draft', type: 'directory' }] })
+    const renameSpy = vi.spyOn(repos.writer, 'renameFolder')
+    const { result } = renderTree({ repos })
+    await waitFor(() => expect(result.current.tree).toHaveLength(1))
+
+    act(() => result.current.beginRename('/root/draft'))
+    act(() => result.current.cancelRename())
+
+    expect(result.current.renamingPath).toBeNull()
+    expect(renameSpy).not.toHaveBeenCalled()
   })
 })

@@ -20,10 +20,19 @@ export function ExplorerController({
   onClose
 }: ExplorerControllerProps): React.JSX.Element {
   const { t } = useTranslation()
-  const { tree, draft, toggle, beginCreate, commitDraft, cancelDraft, remove } = useExplorerTree(
-    root,
-    onSelect
-  )
+  const {
+    tree,
+    draft,
+    renamingPath,
+    toggle,
+    beginCreate,
+    commitDraft,
+    cancelDraft,
+    remove,
+    beginRename,
+    commitRename,
+    cancelRename
+  } = useExplorerTree(root, { selected, onSelect })
 
   return (
     <ExplorerView
@@ -33,6 +42,7 @@ export function ExplorerController({
         newFolder: t('explorer.newFolder'),
         deleteFile: t('explorer.deleteFile'),
         deleteFolder: t('explorer.deleteFolder'),
+        renameFolder: t('explorer.renameFolder'),
         collapse: t('explorer.collapse'),
         untitled: t('explorer.untitled'),
         empty: t('explorer.empty')
@@ -40,6 +50,7 @@ export function ExplorerController({
       tree={tree}
       selected={selected}
       draft={draft}
+      renamingPath={renamingPath}
       onClose={onClose}
       onSelect={onSelect}
       onToggle={toggle}
@@ -47,6 +58,9 @@ export function ExplorerController({
       onDelete={remove}
       onCommitDraft={commitDraft}
       onCancelDraft={cancelDraft}
+      onStartRename={beginRename}
+      onCommitRename={commitRename}
+      onCancelRename={cancelRename}
     />
   )
 }

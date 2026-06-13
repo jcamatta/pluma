@@ -11,6 +11,7 @@ const labels: ExplorerLabels = {
   newFolder: 'New folder',
   deleteFile: 'Delete file',
   deleteFolder: 'Delete folder',
+  renameFolder: 'Rename folder',
   collapse: 'Collapse files',
   untitled: 'Untitled',
   empty: 'No files yet.'
@@ -25,13 +26,17 @@ const baseProps = {
   tree: emptyTree,
   selected: null,
   draft: null,
+  renamingPath: null,
   onClose: noop,
   onSelect: noop,
   onToggle: noop,
   onCreate: () => undefined,
   onDelete: noop,
   onCommitDraft: noop,
-  onCancelDraft: noop
+  onCancelDraft: noop,
+  onStartRename: noop,
+  onCommitRename: noop,
+  onCancelRename: noop
 }
 
 describe('ExplorerView', () => {
@@ -110,5 +115,38 @@ describe('ExplorerView', () => {
     )
     fireEvent.keyDown(screen.getByPlaceholderText('Untitled'), { key: 'Escape' })
     expect(onCancelDraft).toHaveBeenCalled()
+  })
+})
+
+describe('ExplorerView rename', () => {
+  it('starts a folder rename from the row action', () => {
+    const onStartRename = vi.fn()
+    const tree: readonly TreeNodeModel[] = [
+      { path: '/r/dir', name: 'dir', type: 'directory', open: false, children: undefined }
+    ]
+    render(<ExplorerView {...baseProps} tree={tree} onStartRename={onStartRename} />)
+
+    fireEvent.click(screen.getByLabelText('Rename folder'))
+    expect(onStartRename).toHaveBeenCalledWith('/r/dir')
+  })
+
+  it('shows the inline name field pre-filled and commits on Enter while renaming', () => {
+    const onCommitRename = vi.fn()
+    const tree: readonly TreeNodeModel[] = [
+      { path: '/r/dir', name: 'dir', type: 'directory', open: false, children: undefined }
+    ]
+    render(
+      <ExplorerView
+        {...baseProps}
+        tree={tree}
+        renamingPath="/r/dir"
+        onCommitRename={onCommitRename}
+      />
+    )
+
+    const input = screen.getByDisplayValue('dir')
+    fireEvent.change(input, { target: { value: 'renamed' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(onCommitRename).toHaveBeenCalledWith('renamed')
   })
 })

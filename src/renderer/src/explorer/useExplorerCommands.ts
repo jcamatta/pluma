@@ -10,6 +10,7 @@ import { folderListingKey } from './folder-query-keys'
 import { useRepos } from './RepositoriesContext'
 import { useCreateEntry } from './useCreateEntry'
 import { useDeleteEntry } from './useDeleteEntry'
+import { useRenameEntry } from './useRenameEntry'
 
 type ExplorerCommands = {
   readonly create: (args: {
@@ -22,6 +23,11 @@ type ExplorerCommands = {
     readonly path: string
     readonly parent: string
   }) => Promise<boolean>
+  readonly rename: (args: {
+    readonly oldPath: string
+    readonly newPath: string
+    readonly parent: string
+  }) => Promise<boolean>
 }
 
 function useExplorerCommands(root: string): ExplorerCommands {
@@ -29,6 +35,7 @@ function useExplorerCommands(root: string): ExplorerCommands {
   const queryClient = useQueryClient()
   const { create: createEntry } = useCreateEntry()
   const { remove: deleteEntry } = useDeleteEntry()
+  const { rename: renameEntry } = useRenameEntry()
 
   useEffect(() => {
     void writer.watch(root)
@@ -52,7 +59,13 @@ function useExplorerCommands(root: string): ExplorerCommands {
     [deleteEntry]
   )
 
-  return { create, remove }
+  const rename = useCallback(
+    (args: Parameters<ExplorerCommands['rename']>[0]) =>
+      renameEntry(args).then((result) => result.ok),
+    [renameEntry]
+  )
+
+  return { create, remove, rename }
 }
 
 export { useExplorerCommands }
