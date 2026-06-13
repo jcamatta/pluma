@@ -20,7 +20,7 @@ function renderController(
     <ReposHarness repos={repos}>
       <AgentToolsProvider>
         <ActiveEditorProvider>
-          <EditorController path={path} isActive onOpenSettings={() => undefined} />
+          <EditorController path={path} isActive />
         </ActiveEditorProvider>
       </AgentToolsProvider>
     </ReposHarness>

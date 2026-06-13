@@ -13,6 +13,7 @@ const FEATURES = [
   'launcher',
   'explorer',
   'editor',
+  'editor-tabs',
   'workspace-open',
   'settings',
   'rail',
