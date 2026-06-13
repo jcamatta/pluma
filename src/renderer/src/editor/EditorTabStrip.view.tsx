@@ -64,11 +64,10 @@ export function EditorTabStrip({
             ))}
           </AnimatePresence>
           <Tabs.Indicator
-            className="absolute bottom-0 rounded-sm bg-action-primary"
+            className="absolute bottom-0 border-b-2 border-action-primary"
             style={{
               left: 'var(--active-tab-left)',
               width: 'var(--active-tab-width)',
-              height: 2,
               transition: 'left 150ms ease, width 150ms ease'
             }}
           />
