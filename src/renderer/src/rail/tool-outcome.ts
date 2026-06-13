@@ -4,7 +4,7 @@
 // unparseable, or any result without an explicit ok:false, is treated as success — the reducer must never
 // throw on a malformed result, and a missing flag is not evidence of failure.
 
-import type { LogStatus } from './activity-log'
+import type { LogStatus } from './step'
 
 const isFailedResult = (value: unknown): boolean =>
   typeof value === 'object' && value !== null && 'ok' in value && value.ok === false
