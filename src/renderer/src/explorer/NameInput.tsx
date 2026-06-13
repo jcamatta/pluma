@@ -8,6 +8,7 @@ import { Input } from '@base-ui/react'
 type NameInputProps = {
   readonly type: 'file' | 'directory'
   readonly placeholder: string
+  readonly initialValue?: string
   readonly onCommit: (name: string) => void
   readonly onCancel: () => void
 }
@@ -15,12 +16,13 @@ type NameInputProps = {
 export function NameInput({
   type,
   placeholder,
+  initialValue = '',
   onCommit,
   onCancel
 }: NameInputProps): React.JSX.Element {
   const ref = useRef<HTMLInputElement>(null)
   const done = useRef(false)
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(initialValue)
 
   useEffect(() => {
     const el = ref.current

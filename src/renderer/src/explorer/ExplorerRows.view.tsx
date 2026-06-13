@@ -2,7 +2,7 @@
 // the inline draft row). Pure — no hooks, no IPC; everything comes through the RowContext from the
 // parent ExplorerView. Rendered in our design tokens.
 
-import { ChevronDown, FilePlus, FileText, Folder, FolderPlus, Trash2 } from 'lucide-react'
+import { ChevronDown, FilePlus, FileText, Folder, FolderPlus, Pencil, Trash2 } from 'lucide-react'
 import { IconButton } from '../components/IconButton'
 import { NameInput } from './NameInput'
 import type { RowContext, TreeNodeModel } from './explorer-view-types'
@@ -39,6 +39,63 @@ function DraftRow({
   )
 }
 
+function FolderRowContent({
+  node,
+  ctx
+}: {
+  readonly node: TreeNodeModel
+  readonly ctx: RowContext
+}): React.JSX.Element {
+  if (ctx.renamingPath === node.path) {
+    return (
+      <NameInput
+        type="directory"
+        placeholder={node.name}
+        initialValue={node.name}
+        onCommit={ctx.onCommitRename}
+        onCancel={ctx.onCancelRename}
+      />
+    )
+  }
+  return (
+    <>
+      <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold">
+        {node.name}
+      </span>
+      <RowActions>
+        <IconButton
+          label={ctx.labels.newFile}
+          onClick={() => ctx.onCreate('file', node.path)}
+          stopPropagation
+        >
+          <FilePlus size={15} />
+        </IconButton>
+        <IconButton
+          label={ctx.labels.newFolder}
+          onClick={() => ctx.onCreate('directory', node.path)}
+          stopPropagation
+        >
+          <FolderPlus size={15} />
+        </IconButton>
+        <IconButton
+          label={ctx.labels.renameFolder}
+          onClick={() => ctx.onStartRename(node.path)}
+          stopPropagation
+        >
+          <Pencil size={15} />
+        </IconButton>
+        <IconButton
+          label={ctx.labels.deleteFolder}
+          onClick={() => ctx.onDelete(node.path)}
+          stopPropagation
+        >
+          <Trash2 size={15} />
+        </IconButton>
+      </RowActions>
+    </>
+  )
+}
+
 function FolderRow({
   node,
   depth,
@@ -48,12 +105,13 @@ function FolderRow({
   readonly depth: number
   readonly ctx: RowContext
 }): React.JSX.Element {
+  const renaming = ctx.renamingPath === node.path
   return (
     <div>
       <div
         data-row
         data-testid={`folder-row:${node.path}`}
-        onClick={() => ctx.onToggle(node.path)}
+        onClick={renaming ? undefined : () => ctx.onToggle(node.path)}
         style={{ paddingLeft: 11 + depth * 15 }}
         className="mb-px flex w-full cursor-pointer items-center gap-2 rounded-xl py-2 pr-2 text-text-secondary transition-colors hover:bg-(--hover)"
       >
@@ -66,32 +124,7 @@ function FolderRow({
         <span className="flex flex-none text-text-muted">
           <Folder size={16} />
         </span>
-        <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold">
-          {node.name}
-        </span>
-        <RowActions>
-          <IconButton
-            label={ctx.labels.newFile}
-            onClick={() => ctx.onCreate('file', node.path)}
-            stopPropagation
-          >
-            <FilePlus size={15} />
-          </IconButton>
-          <IconButton
-            label={ctx.labels.newFolder}
-            onClick={() => ctx.onCreate('directory', node.path)}
-            stopPropagation
-          >
-            <FolderPlus size={15} />
-          </IconButton>
-          <IconButton
-            label={ctx.labels.deleteFolder}
-            onClick={() => ctx.onDelete(node.path)}
-            stopPropagation
-          >
-            <Trash2 size={15} />
-          </IconButton>
-        </RowActions>
+        <FolderRowContent node={node} ctx={ctx} />
       </div>
       {node.open && (
         <>

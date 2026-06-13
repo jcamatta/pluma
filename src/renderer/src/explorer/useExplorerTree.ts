@@ -1,34 +1,45 @@
 // Orchestrates the explorer's lazily-loaded tree on top of React Query. Open folders are local UI state
 // (a Set of paths); their listings come from useFolderListings (one ['folder', path] query per open
 // path). The tree the view renders is a pure build (buildTree) from the open-set and those listings.
-// The write side (create/delete + the OS watcher) lives in useExplorerCommands, kept apart per CQS;
-// this hook owns the read/tree side and the draft/open UI state. Selection is lifted to the shell so
-// the editor can read it.
+// The write side (create/delete/rename + the OS watcher) lives in useExplorerCommands, kept apart per
+// CQS; this hook owns the read/tree side plus the draft/open/renaming UI state. Selection is lifted to
+// the shell so the editor can read it.
 //
-// Rename is intentionally absent: there is no rename channel in the backend yet (see
-// docs/plans/03-assemble-the-app.md §4.1).
+// Renaming a folder changes the path of the folder and every descendant, so on success the open-folder
+// set and (if it points inside the renamed subtree) the selected file are remapped onto the new root.
 
 import { useCallback, useMemo, useState } from 'react'
 import type { DraftNode, TreeNodeModel } from './explorer-view-types'
 import { joinPath, parentPath } from './explorer-tree'
 import { buildTree } from './explorer-tree-build'
+import { isUnderOrEqual, remapOpenPaths, remapPath } from './explorer-subtree-remap'
 import { useFolderListings } from './useFolderListings'
 import { useExplorerCommands } from './useExplorerCommands'
 
 type ExplorerTree = {
   readonly tree: readonly TreeNodeModel[]
   readonly draft: DraftNode | null
+  readonly renamingPath: string | null
   readonly toggle: (path: string) => void
   readonly beginCreate: (type: 'file' | 'directory', parent: string | null) => void
   readonly commitDraft: (name: string) => void
   readonly cancelDraft: () => void
   readonly remove: (path: string) => void
+  readonly beginRename: (path: string) => void
+  readonly commitRename: (name: string) => void
+  readonly cancelRename: () => void
 }
 
-export function useExplorerTree(root: string, onSelect: (path: string) => void): ExplorerTree {
-  const { create, remove: removeEntry } = useExplorerCommands(root)
+type Selection = {
+  readonly selected: string | null
+  readonly onSelect: (path: string) => void
+}
+
+export function useExplorerTree(root: string, selection: Selection): ExplorerTree {
+  const { create, remove: removeEntry, rename } = useExplorerCommands(root)
   const [openPaths, setOpenPaths] = useState<ReadonlySet<string>>(() => new Set())
   const [draft, setDraft] = useState<DraftNode | null>(null)
+  const [renamingPath, setRenamingPath] = useState<string | null>(null)
 
   const paths = useMemo(() => [root, ...openPaths], [root, openPaths])
   const lookup = useFolderListings(paths)
@@ -46,10 +57,10 @@ export function useExplorerTree(root: string, onSelect: (path: string) => void):
       const parent = current.parentPath ?? root
       const path = joinPath(parent, name)
       void create({ type: current.type, path, parent }).then((ok) => {
-        if (ok && current.type === 'file') onSelect(path)
+        if (ok && current.type === 'file') selection.onSelect(path)
       })
     },
-    [draft, root, create, onSelect]
+    [draft, root, create, selection]
   )
 
   const remove = useCallback(
@@ -64,14 +75,38 @@ export function useExplorerTree(root: string, onSelect: (path: string) => void):
     [tree, root, removeEntry]
   )
 
+  const commitRename = useCallback(
+    (name: string): void => {
+      const path = renamingPath
+      setRenamingPath(null)
+      if (!path) return
+      const parent = parentPath(path)
+      const scopedParent = parent && parent.startsWith(root) ? parent : root
+      const newPath = joinPath(scopedParent, name)
+      if (name === '' || newPath === path) return
+      void rename({ oldPath: path, newPath, parent: scopedParent }).then((ok) => {
+        if (!ok) return
+        const remap = { from: path, to: newPath }
+        setOpenPaths((prev) => remapOpenPaths(prev, remap))
+        const sel = selection.selected
+        if (sel && isUnderOrEqual(sel, path)) selection.onSelect(remapPath(sel, remap))
+      })
+    },
+    [renamingPath, root, rename, selection]
+  )
+
   return {
     tree,
     draft,
+    renamingPath,
     toggle,
     beginCreate: (type, parent) => setDraft({ parentPath: parent, type }),
     commitDraft,
     cancelDraft: () => setDraft(null),
-    remove
+    remove,
+    beginRename: (path) => setRenamingPath(path),
+    commitRename,
+    cancelRename: () => setRenamingPath(null)
   }
 }
 

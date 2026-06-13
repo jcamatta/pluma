@@ -75,4 +75,19 @@ describe('ExplorerController', () => {
     })
     expect(onSelect).toHaveBeenCalledWith('/root/new.md')
   })
+
+  it('renames a folder in place through the inline field', async () => {
+    const repos = createFakeFolderRepository({ '/root': [{ name: 'dir', type: 'directory' }] })
+    renderController(repos)
+    await screen.findByText('dir')
+
+    fireEvent.click(screen.getByLabelText('Rename folder'))
+    const input = await screen.findByDisplayValue('dir')
+    fireEvent.change(input, { target: { value: 'renamed' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+
+    await waitFor(() => {
+      expect(repos.renamed()).toEqual([{ from: '/root/dir', to: '/root/renamed' }])
+    })
+  })
 })

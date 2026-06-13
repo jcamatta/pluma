@@ -25,30 +25,34 @@ describe('isUnderOrEqual', () => {
 
 describe('remapPath', () => {
   it('rewrites the root onto the new root', () => {
-    expect(remapPath('/notes/draft', '/notes/draft', '/notes/final')).toBe('/notes/final')
+    expect(remapPath('/notes/draft', { from: '/notes/draft', to: '/notes/final' })).toBe(
+      '/notes/final'
+    )
   })
 
   it('rewrites a descendant, preserving the tail', () => {
-    expect(remapPath('/notes/draft/ch1/a.md', '/notes/draft', '/notes/final')).toBe(
-      '/notes/final/ch1/a.md'
-    )
+    expect(
+      remapPath('/notes/draft/ch1/a.md', { from: '/notes/draft', to: '/notes/final' })
+    ).toBe('/notes/final/ch1/a.md')
   })
 
   it('leaves a path outside the subtree untouched', () => {
-    expect(remapPath('/notes/other', '/notes/draft', '/notes/final')).toBe('/notes/other')
+    expect(remapPath('/notes/other', { from: '/notes/draft', to: '/notes/final' })).toBe(
+      '/notes/other'
+    )
   })
 
   it('rewrites Windows paths', () => {
-    expect(remapPath('C:\\notes\\draft\\ch1', 'C:\\notes\\draft', 'C:\\notes\\final')).toBe(
-      'C:\\notes\\final\\ch1'
-    )
+    expect(
+      remapPath('C:\\notes\\draft\\ch1', { from: 'C:\\notes\\draft', to: 'C:\\notes\\final' })
+    ).toBe('C:\\notes\\final\\ch1')
   })
 })
 
 describe('remapOpenPaths', () => {
   it('remaps only the affected paths and keeps the rest', () => {
     const open = new Set(['/notes/draft', '/notes/draft/ch1', '/notes/other'])
-    const next = remapOpenPaths(open, '/notes/draft', '/notes/final')
+    const next = remapOpenPaths(open, { from: '/notes/draft', to: '/notes/final' })
 
     expect([...next].sort()).toStrictEqual(['/notes/final', '/notes/final/ch1', '/notes/other'])
   })

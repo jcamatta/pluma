@@ -24,6 +24,7 @@ type ExplorerLabels = {
   readonly newFolder: string
   readonly deleteFile: string
   readonly deleteFolder: string
+  readonly renameFolder: string
   readonly collapse: string
   readonly untitled: string
   readonly empty: string
@@ -37,6 +38,9 @@ type ExplorerCallbacks = {
   readonly onDelete: (path: string) => void
   readonly onCommitDraft: (name: string) => void
   readonly onCancelDraft: () => void
+  readonly onStartRename: (path: string) => void
+  readonly onCommitRename: (name: string) => void
+  readonly onCancelRename: () => void
 }
 
 // Everything the recursive row components need: the callbacks plus the resolved labels, the selected
@@ -45,6 +49,7 @@ type RowContext = ExplorerCallbacks & {
   readonly labels: ExplorerLabels
   readonly selected: string | null
   readonly draft: DraftNode | null
+  readonly renamingPath: string | null
 }
 
 export type { TreeNodeModel, DraftNode, ExplorerLabels, ExplorerCallbacks, RowContext }
