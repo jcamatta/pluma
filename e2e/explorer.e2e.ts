@@ -62,6 +62,28 @@ test('creates a file through the UI and selects it', async () => {
   })
 })
 
+test('creates a file when the name is typed without the .md extension', async () => {
+  await withTempFolder([], async (folder) => {
+    const { app, window } = await launchApp()
+    try {
+      await stubFolderPicker(app, folder)
+      await window.getByRole('button', { name: 'Open Folder', exact: false }).click()
+      await expect(window.getByTestId('explorer')).toBeVisible()
+
+      await window.getByRole('button', { name: 'New file' }).first().click()
+      await window.getByPlaceholder('Untitled').fill('notes')
+      await window.getByPlaceholder('Untitled').press('Enter')
+
+      // The bare name is normalized to notes.md and the real file lands on disk.
+      await expect(window.getByTestId(`file-row:${join(folder, 'notes.md')}`)).toBeVisible()
+      await expect.poll(() => onDisk(join(folder, 'notes.md'))).toBe(true)
+      expect(await readdir(folder)).toContain('notes.md')
+    } finally {
+      await app.close()
+    }
+  })
+})
+
 test('reads a selected file into the editor', async () => {
   await withTempFolder(
     [{ name: 'chapter-1.md', content: '# Chapter One\n\nOnce upon a time.' }],
