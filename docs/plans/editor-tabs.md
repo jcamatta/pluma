@@ -82,12 +82,14 @@ _Landed. Deviations from the sketch, all deliberate:_
 - _**`EditorStack` reads activate/close from `useOpenFiles()`** (the existing `OpenFilesNav` seam, which already carries `open`/`close`) instead of new `App` props — so `App` is unchanged. This also kept `App`'s render function under the 75-line limit._
 - _All checks green: typecheck, build, full unit suite (659), type-coverage, lint (the repo-wide `␍` warnings are this worktree's `autocrlf=true` checkout, not these files)._
 
-### 5. End-to-end coverage
+### 5. End-to-end coverage — DONE
 
 - **Edit** `e2e/coverage-manifest.ts` — add `editor-tabs` to `FEATURES`. No new `OPERATIONS`: tabs drive only existing IPC (`folder.list` / `file.read` on open); switching and closing are pure renderer state.
 - **Add** `e2e/editor-tabs.e2e.ts` — header `@e2e feature:editor-tabs`. Drives the built app: open a folder seeded with two markdown files, open the second via the explorer so two tabs show, select the first tab and assert its surface becomes visible, then close a tab via its X and assert the tab disappears and the neighbour stays active. Only the native folder chooser is stubbed; real folder/file IPC runs.
 
 Ships the feature id and its real-app spec together so the audit stays green. `e2e/` is weight 0.
+
+_Landed: `editor-tabs` in the manifest `FEATURES` + `e2e/editor-tabs.e2e.ts` claiming it. The spec passes in isolation (`1 passed`, 8.0s): auto-open → open a second file → switch tabs → close a tab → neighbour stays active. (The full-suite run's one failure is `rail.e2e.ts`'s Stop-button test — a documented pre-existing red, unrelated.)_
 
 ### 6. Remove the plan
 
