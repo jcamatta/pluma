@@ -41,15 +41,21 @@ const run = <A, E>(
 ): Exit.Exit<A, E> => Effect.runSyncExit(Effect.provide(effect, layer))
 
 describe('listFolder', () => {
-  it('lists the folder and returns its entries on the validated path', () => {
+  it('lists the folder on the validated path, keeping only directories and Markdown files', () => {
     const listed: string[] = []
     const entries: ReadonlyArray<FolderEntry> = [
       { name: 'ideas', type: 'directory' },
-      { name: 'todo.md', type: 'file' }
+      { name: 'todo.md', type: 'file' },
+      { name: 'notes.txt', type: 'file' }
     ]
     const exit = run(listFolder('  /notes '), readerThatReturns(entries, listed))
 
-    expect(exit).toStrictEqual(Exit.succeed(entries))
+    expect(exit).toStrictEqual(
+      Exit.succeed([
+        { name: 'ideas', type: 'directory' },
+        { name: 'todo.md', type: 'file' }
+      ])
+    )
     expect(listed).toStrictEqual(['/notes'])
   })
 
