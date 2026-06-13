@@ -5,14 +5,14 @@ import type { AgentToolResult } from '../agent/tools/types'
 import { useFrontendTool } from '../agent/useFrontendTool'
 import {
   createAnnotationTool,
-  getCurrentDocumentTool,
+  getContentTool,
   getCurrentSelectionTool,
   getRangesTool,
   listOpenFilesTool,
   proposeEditTool
 } from '../agent/tools/specs'
 import { createAnnotationTool as runCreateAnnotation } from '../agent/tools/tool-create-annotation'
-import { getCurrentDocument } from '../agent/tools/tool-get-current-document'
+import { getContent } from '../agent/tools/tool-get-content'
 import { getCurrentSelection } from '../agent/tools/tool-get-current-selection'
 import { getRanges } from '../agent/tools/tool-get-ranges'
 import { listOpenFiles } from '../agent/tools/tool-list-open-files'
@@ -29,7 +29,7 @@ interface EditorToolDeps {
 interface EditorToolEntries {
   readonly list: ToolEntry
   readonly selection: ToolEntry
-  readonly document: ToolEntry
+  readonly content: ToolEntry
   readonly ranges: ToolEntry
   readonly annotation: ToolEntry
   readonly proposal: ToolEntry
@@ -44,10 +44,11 @@ const NO_DOCUMENT: AgentToolResult = { ok: false, error: 'No document is open in
 
 const noOpenEditor = (path: string): AgentToolResult => ({ ok: false, error: `no_open_editor:${path}` })
 
-// The read tools — discover the open files and read the active document/selection. Reads default to the
-// active file (get_current_document also accepts an explicit path) and report the path they read, which
-// is how the agent learns the path it must then pass to the acting tools.
-function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'selection' | 'document'> {
+// The read tools — discover the open files, read a named file, or read the active selection. get_content
+// takes the path the agent learned from list_open_files and reports it back; the selection reads the
+// active editor (the only one with a live cursor) and reports its path. Both hand the agent the path it
+// must then pass to the acting tools.
+function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'selection' | 'content'> {
   const activeTarget = (): ActiveTarget | null => {
     const path = deps.activePath
     if (path === null) return null
@@ -55,13 +56,10 @@ function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'se
     return editor === null ? null : { editor, path }
   }
 
-  const readDocument = (args: unknown): AgentToolResult => {
-    assertWire<{ readonly path?: string }>(args, getCurrentDocumentTool.name)
-    const path = args.path ?? deps.activePath
-    if (path === null) return NO_DOCUMENT
-    const editor = deps.resolve(path)
-    if (editor === null) return args.path === undefined ? NO_DOCUMENT : noOpenEditor(path)
-    return getCurrentDocument({ editor, path })
+  const readContent = (args: unknown): AgentToolResult => {
+    assertWire<{ readonly path: string }>(args, getContentTool.name)
+    const editor = deps.resolve(args.path)
+    return editor ? getContent({ editor, path: args.path }) : noOpenEditor(args.path)
   }
 
   return {
@@ -76,7 +74,7 @@ function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'se
         return target ? getCurrentSelection(target) : NO_DOCUMENT
       }
     },
-    document: { spec: getCurrentDocumentTool, handler: readDocument }
+    content: { spec: getContentTool, handler: readContent }
   }
 }
 
@@ -132,7 +130,7 @@ function useEditorTools(deps: EditorToolDeps): void {
   const entries = editorToolEntries(deps)
   useFrontendTool(entries.list)
   useFrontendTool(entries.selection)
-  useFrontendTool(entries.document)
+  useFrontendTool(entries.content)
   useFrontendTool(entries.ranges)
   useFrontendTool(entries.annotation)
   useFrontendTool(entries.proposal)

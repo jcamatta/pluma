@@ -32,13 +32,17 @@ const getCurrentSelectionTool: Tool = {
   }
 }
 
-const getCurrentDocumentTool: Tool = {
-  name: 'get_current_document',
-  description: 'Return the current editor document as Markdown.',
+const getContentTool: Tool = {
+  name: 'get_content',
+  description:
+    "Return an open file's full content as Markdown. Pass the path of the file to read, taken from list_open_files.",
   parameters: {
     type: 'object',
     additionalProperties: false,
-    properties: {}
+    required: ['path'],
+    properties: {
+      path: { type: 'string', description: filePathDescription }
+    }
   }
 }
 
@@ -99,7 +103,7 @@ const proposeEditTool: Tool = {
 const agentToolSpecs: readonly Tool[] = [
   listOpenFilesTool,
   getCurrentSelectionTool,
-  getCurrentDocumentTool,
+  getContentTool,
   getRangesTool,
   createAnnotationTool,
   proposeEditTool
@@ -108,7 +112,7 @@ const agentToolSpecs: readonly Tool[] = [
 export {
   listOpenFilesTool,
   getCurrentSelectionTool,
-  getCurrentDocumentTool,
+  getContentTool,
   getRangesTool,
   createAnnotationTool,
   proposeEditTool,

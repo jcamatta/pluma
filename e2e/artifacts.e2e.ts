@@ -35,8 +35,8 @@ const PROMPT =
   `1. Call create_annotation on the word "cat" with label "${ANNOTATION_LABEL}" and description ` +
   '"Consider a sharper image.".\n' +
   '2. Call propose_edit to replace the word "mat" with "rug".\n' +
-  'First call get_current_document to read the document and learn its path, then pass that path to ' +
-  'get_ranges (resolve each word) and to create_annotation and propose_edit. ' +
+  'First call list_open_files to find the path of the active file, then read it with get_content and ' +
+  'pass that path to get_ranges (resolve each word), create_annotation and propose_edit. ' +
   'Do not reply with prose and do not ask for confirmation.'
 
 // The cross-file run: the user is active in chapter.md, but the agent is told to annotate notes.md by

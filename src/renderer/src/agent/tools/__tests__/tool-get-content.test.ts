@@ -1,13 +1,13 @@
-// get_current_document: returns the document serialized to Markdown, tagged with the file's path.
+// get_content: returns an open file's document serialized to Markdown, tagged with the file's path.
 
 import { describe, expect, it } from 'vitest'
 import { withEditor } from '../../../editor/extensions/__tests__/editor-test-harness'
-import { getCurrentDocument } from '../tool-get-current-document'
+import { getContent } from '../tool-get-content'
 
-describe('getCurrentDocument', () => {
+describe('getContent', () => {
   it('returns the document markdown tagged with its path', () => {
     withEditor('# Title\n\nA paragraph.', (editor) => {
-      const result = getCurrentDocument({ editor, path: '/book/chapter.md' })
+      const result = getContent({ editor, path: '/book/chapter.md' })
 
       if (!result.ok || result.output.type !== 'json') return expect.fail('expected json output')
       const value: unknown = result.output.value
