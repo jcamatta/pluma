@@ -41,6 +41,12 @@ test('lists, renames, resumes and deletes a past thread', async () => {
         ignoreCase: true,
         timeout: 120_000
       })
+      // The reply streams in mid-run, so wait for the run to actually settle (the composer swaps Stop back
+      // to Send) before touching the thread list — a still-finalizing run re-persists its session and would
+      // otherwise resurrect a thread deleted in the meantime.
+      await expect(rail.getByRole('button', { name: 'Send', exact: true })).toBeVisible({
+        timeout: 120_000
+      })
 
       // Open the threads list; the run that just finished should have surfaced one thread.
       await rail.getByRole('button', { name: 'Show chats' }).click()
@@ -72,6 +78,11 @@ test('lists, renames, resumes and deletes a past thread', async () => {
       await rail.getByRole('button', { name: 'Send', exact: true }).click()
       await expect(rail.getByTestId('assistant-reply')).toContainText(SENTINEL, {
         ignoreCase: true,
+        timeout: 120_000
+      })
+      // Wait for the resumed run to settle before deleting, so its finalize can't re-persist (resurrect)
+      // the thread after we remove it.
+      await expect(rail.getByRole('button', { name: 'Send', exact: true })).toBeVisible({
         timeout: 120_000
       })
 
