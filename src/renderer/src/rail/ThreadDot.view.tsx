@@ -2,7 +2,7 @@
 // works, a success check when it lands, a destructive cross when it errors. Pure props, our tokens.
 
 import { Check, X } from 'lucide-react'
-import type { RunStatus } from './activity-log'
+import type { RunStatus } from './step'
 
 export function ThreadDot({ status }: { readonly status: RunStatus }): React.JSX.Element {
   if (status === 'working') {

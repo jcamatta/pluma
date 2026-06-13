@@ -16,9 +16,7 @@ import {
   type ToolCallResultEvent,
   type ToolCallStartEvent
 } from '@ag-ui/core'
-import type { LogEntry } from './step'
-
-type RunStatus = 'idle' | 'working' | 'done' | 'error'
+import type { LogEntry, RunStatus } from './step'
 
 interface AgentActivity {
   readonly status: RunStatus
@@ -110,4 +108,4 @@ function createActivityReducer(labels: ActivityLabels): ActivityReducer {
 }
 
 export { createActivityReducer, initialActivity }
-export type { ActivityReducer, AgentActivity, RunStatus, ActivityLabels }
+export type { ActivityReducer, AgentActivity, ActivityLabels }
