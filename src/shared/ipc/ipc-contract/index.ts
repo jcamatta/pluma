@@ -16,6 +16,7 @@ import type {
 import type {
   FileCreateContract,
   FileDeleteContract,
+  FileRenameContract,
   FileWriteContract,
   FileReadContract
 } from './file'
@@ -31,6 +32,7 @@ import type {
 type IpcContract =
   | FileCreateContract
   | FileDeleteContract
+  | FileRenameContract
   | FileWriteContract
   | FileReadContract
   | FolderCreateContract
