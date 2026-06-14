@@ -30,36 +30,39 @@ changes, revise the plan and re-show it.
 
 ## Phase 3 — Independent review
 
-Dispatch the **`plan-reviewer`** subagent (Agent tool), passing the plan path. It returns a critique
-(missed constraints, single-responsibility-vs-action, over-complication, simplification, out-of-box)
-with a verdict. Fold the actionable findings into the plan. If the plan changed materially, show the
-user the revised plan again before implementing. Surface any reviewer point that conflicts with a
-decision the user already made — let them decide, don't override silently.
+Dispatch the **`plan-reviewer`** subagent (Agent tool), passing the plan path. It returns an
+**advisory** critique (missed constraints, single-responsibility-vs-action, over-complication,
+simplification, out-of-box) with a verdict, severities, and confidence. **Show the critique to the
+user — do not fold it in automatically.** Reviewers tend to over-flag and argue taste as if it were a
+defect, so the human decides which findings are actually valid and worth acting on. Apply only what
+the user approves, then re-show the revised plan if it changed materially.
 
 ## Phase 4 — Implement
 
-Create the branch (one plan = one branch; `<type>/<description>`) if not already on it, then commit
-the approved plan. Implement **by area tag**, in dependency order. Each commit passes `veto`
-(`.veto/backend.yaml` for `src/main`, `.veto/frontend.yaml` for `src/renderer`); if veto blocks, read
-`.veto/runs/latest.md`, fix the code, recommit — never route around it.
+**You own all git; the worker agents only write code.** Create the branch (one plan = one branch;
+`<type>/<description>`) and commit the approved plan. For each step you dispatch a worker; when it
+reports its code green, **you commit it** — the commit triggers `veto` (`.veto/backend.yaml` for
+`src/main`, `.veto/frontend.yaml` for `src/renderer`). If veto blocks, read `.veto/runs/latest.md` and
+**dispatch the worker again to fix it**; never route around veto. The workers never branch, commit,
+merge, or push. Implement **by area tag**, in dependency order:
 
 1. **`[shared]` contract first (sequential).** Dispatch **`backend-engineer`** for the `src/shared`
-   IPC types and error `_tag`s. Fixing the contract up front is what lets the two sides build without
-   seeing each other's code.
+   IPC types and error `_tag`s, then commit it. Fixing the contract up front is what lets the two
+   sides build without seeing each other's code.
 2. **`[backend]` ∥ `[frontend]` (parallel, optional optimization).** When the change has disjoint
-   backend and frontend work, dispatch **`backend-engineer`** (for `[backend]` steps, `src/main`) and
-   **`frontend-engineer`** (for `[frontend]` steps, `src/renderer`) **at the same time**, each with
-   `isolation: 'worktree'` so their commits never race on one index. Pass each: the plan path, its
-   step(s), the contract, and a summary of prior results. Then **merge** both worktrees' commits onto
-   the plan branch — the trees are disjoint (`src/main` vs `src/renderer`), so the merge is clean.
-   - **Sequential fallback:** for a single-area change, or if the worktree-merge proves unreliable,
-     just run the steps in order (`[backend]` then `[frontend]`) on the one branch — same steps, no
-     `isolation`, zero correctness cost. Prefer this when in doubt.
+   backend and frontend work, dispatch **`backend-engineer`** (`[backend]`, `src/main`) and
+   **`frontend-engineer`** (`[frontend]`, `src/renderer`) **at the same time**, each with
+   `isolation: 'worktree'` so they edit isolated working copies. Pass each: the plan path, its
+   step(s), the contract, and a summary of prior results. Then **integrate** both sides onto the plan
+   branch and commit — the trees are disjoint (`src/main` vs `src/renderer`), so integration is clean.
+   - **Sequential fallback:** for a single-area change, or if the worktree integration proves
+     unreliable, run the steps in order (`[backend]` then `[frontend]`) on the one branch — same
+     steps, no `isolation`, zero correctness cost. Prefer this when in doubt.
 3. **`[e2e]` last (sequential).** Dispatch **`frontend-engineer`** for the real-app spec and the
-   `coverage-manifest.ts` id(s), after both sides are wired and merged — so the manifest is never
+   `coverage-manifest.ts` id(s), after both sides are wired and committed — so the manifest is never
    edited by two workers at once.
 
-Keep each worker's diff to its own files. If two steps would touch the same file, sequence them.
+Keep each worker's changes to its own files. If two steps would touch the same file, sequence them.
 
 ## Phase 5 — Finish
 
