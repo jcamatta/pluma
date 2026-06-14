@@ -12,7 +12,7 @@ type CapturedHandler = (args: Record<string, unknown>) => Promise<{ content: unk
 const captured: {
   toolNames: string[]
   handlers: Record<string, CapturedHandler>
-  annotations: Record<string, unknown>[]
+  annotations: unknown[]
 } = { toolNames: [], handlers: {}, annotations: [] }
 
 vi.mock('@anthropic-ai/claude-agent-sdk', () => ({
@@ -30,6 +30,7 @@ vi.mock('@anthropic-ai/claude-agent-sdk', () => ({
 }))
 
 const { buildBackendToolServer } = await import('../build-backend-tool-server')
+const { backendTools } = await import('../../../tools/backend')
 
 const withTempDir = async (body: (dir: string) => Promise<void>): Promise<void> => {
   const dir = mkdtempSync(join(tmpdir(), 'pluma-'))
@@ -45,7 +46,7 @@ describe('buildBackendToolServer', () => {
     captured.toolNames = []
     captured.annotations = []
 
-    const server = buildBackendToolServer('/workspace')
+    const server = buildBackendToolServer(backendTools('/workspace'))
 
     expect(server).toBeDefined()
     expect(captured.toolNames).toStrictEqual(['read_file', 'list_folder'])
@@ -56,7 +57,7 @@ describe('buildBackendToolServer', () => {
     withTempDir(async (dir) => {
       const target = join(dir, 'note.md')
       writeFileSync(target, '# Hello world')
-      buildBackendToolServer(dir)
+      buildBackendToolServer(backendTools(dir))
 
       const result = await captured.handlers.read_file?.({ path: target })
 

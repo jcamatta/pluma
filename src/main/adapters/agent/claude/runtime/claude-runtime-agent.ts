@@ -24,6 +24,8 @@ import {
 import { buildOptions, DEFAULT_MODEL } from '../logic/build-options'
 import { contextWindowForModel } from '../logic/context-window'
 import { buildFrontendToolServer } from './build-frontend-tool-server'
+import { buildBackendToolServer } from './build-backend-tool-server'
+import { backendTools } from '../../tools/backend'
 import { createToolBridge, type ToolBridge } from '../../tools/tool-bridge'
 import { runEventStream } from './run-event-stream'
 import { streamInput } from './stream-input'
@@ -51,6 +53,8 @@ const startRun = (
     const runId = crypto.randomUUID()
     const bridge = createToolBridge(request.sendToolCall)
     const toolServer = buildFrontendToolServer(input.tools, { bridge, runId })
+    const backend = backendTools(input.cwd)
+    const backendToolServer = buildBackendToolServer(backend)
     const sdkQuery = yield* Effect.try({
       try: () =>
         query({
@@ -60,7 +64,9 @@ const startRun = (
             cwd: input.cwd,
             state: input.state,
             toolServer,
-            tools: input.tools
+            tools: input.tools,
+            backendToolServer,
+            backendTools: backend.map((t) => t.spec)
           })
         }),
       catch: () => new RunAgentFailed({ runId })
