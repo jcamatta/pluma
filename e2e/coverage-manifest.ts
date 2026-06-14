@@ -17,6 +17,7 @@ const FEATURES = [
   'workspace-open',
   'settings',
   'rail',
+  'rail-context-meter',
   'thread-history',
   'artifacts',
   'artifacts-cross-file'
