@@ -24,7 +24,8 @@ const listOpenFilesTool: Tool = {
 
 const getCurrentSelectionTool: Tool = {
   name: 'get_current_selection',
-  description: 'Return the current editor selection as text or Markdown.',
+  description:
+    'Return the file path and the exact text the user currently has selected in the active editor, so you can act on it with propose_edit or create_annotation. The text is empty when there is no selection.',
   parameters: {
     type: 'object',
     additionalProperties: false,
@@ -46,32 +47,20 @@ const getContentTool: Tool = {
   }
 }
 
-const getRangesTool: Tool = {
-  name: 'get_ranges',
-  description:
-    'Resolve exact document text to a tracked range id. Returns an error when the text is missing or ambiguous.',
-  parameters: {
-    type: 'object',
-    additionalProperties: false,
-    required: ['path', 'text'],
-    properties: {
-      path: { type: 'string', description: filePathDescription },
-      text: { type: 'string' }
-    }
-  }
-}
-
 const createAnnotationTool: Tool = {
   name: 'create_annotation',
   description:
-    'Annotate a tracked range with a review note. Requires a rangeId from get_ranges. Returns an error when the range is missing or its text has changed.',
+    'Annotate a passage with a review note. Pass the exact text of the passage, copied verbatim from the document. Returns not_found when the text is absent and ambiguous when it occurs more than once — grow the text until it is unique.',
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['path', 'rangeId', 'label', 'description'],
+    required: ['path', 'text', 'label', 'description'],
     properties: {
       path: { type: 'string', description: filePathDescription },
-      rangeId: { type: 'string' },
+      text: {
+        type: 'string',
+        description: 'The exact passage to annotate, copied verbatim. Must occur exactly once.'
+      },
       label: { type: 'string' },
       description: { type: 'string' },
       severity: {
@@ -87,14 +76,17 @@ const createAnnotationTool: Tool = {
 const proposeEditTool: Tool = {
   name: 'propose_edit',
   description:
-    'Propose replacing a tracked range with new text. Requires a rangeId from get_ranges. The user reviews the edit inline and accepts or rejects it; the change is not applied until accepted. Returns an error when the range is missing or its text has changed.',
+    'Propose replacing a passage with new text. Pass the exact text of the passage to replace, copied verbatim from the document. The user reviews the edit inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the text is absent and ambiguous when it occurs more than once — grow the text until it is unique.',
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['path', 'rangeId', 'replacementText'],
+    required: ['path', 'text', 'replacementText'],
     properties: {
       path: { type: 'string', description: filePathDescription },
-      rangeId: { type: 'string' },
+      text: {
+        type: 'string',
+        description: 'The exact passage to replace, copied verbatim. Must occur exactly once.'
+      },
       replacementText: { type: 'string' }
     }
   }
@@ -104,7 +96,6 @@ const agentToolSpecs: readonly Tool[] = [
   listOpenFilesTool,
   getCurrentSelectionTool,
   getContentTool,
-  getRangesTool,
   createAnnotationTool,
   proposeEditTool
 ]
@@ -113,7 +104,6 @@ export {
   listOpenFilesTool,
   getCurrentSelectionTool,
   getContentTool,
-  getRangesTool,
   createAnnotationTool,
   proposeEditTool,
   agentToolSpecs

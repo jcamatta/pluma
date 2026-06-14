@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import { AgentToolsProvider } from '../../agent/AgentToolsProvider'
 import { useToolRegistry } from '../../agent/AgentToolsContext'
-import { agentToolSpecs, getRangesTool } from '../../agent/tools/specs'
+import { agentToolSpecs, proposeEditTool } from '../../agent/tools/specs'
 import { ActiveEditorProvider } from '../ActiveEditorProvider'
 import { useActiveEditor } from '../ActiveEditorContext'
 import { OpenFilesContext } from '../OpenFilesContext'
@@ -44,17 +44,19 @@ describe('EditorToolsBridge', () => {
         agentToolSpecs.map((tool) => tool.name)
       )
 
-      const before = await result.current.registry.byName(getRangesTool.name)?.handler({
+      const before = await result.current.registry.byName(proposeEditTool.name)?.handler({
         path: PATH,
-        text: 'world'
+        text: 'world',
+        replacementText: 'earth'
       })
       expect(before).toEqual({ ok: false, error: `no_open_editor:${PATH}` })
 
       act(() => result.current.active.registerEditor(PATH, editor))
 
-      const after = await result.current.registry.byName(getRangesTool.name)?.handler({
+      const after = await result.current.registry.byName(proposeEditTool.name)?.handler({
         path: PATH,
-        text: 'world'
+        text: 'world',
+        replacementText: 'earth'
       })
       expect(after?.ok).toBe(true)
     } finally {

@@ -8,11 +8,9 @@ import {
   agentToolSpecs,
   getContentTool,
   getCurrentSelectionTool,
-  getRangesTool,
   listOpenFilesTool,
   proposeEditTool
 } from '../../agent/tools/specs'
-import type { AgentToolResult } from '../../agent/tools/types'
 import { getProposals } from '../extensions/proposals'
 import { createTestEditor } from '../extensions/__tests__/editor-test-harness'
 import { useEditorTools } from '../useEditorTools'
@@ -43,21 +41,8 @@ function renderRegistry(deps: Parameters<typeof useEditorTools>[0]): ToolRegistr
   return result.current
 }
 
-function rangeIdOf(result: AgentToolResult | undefined): string {
-  if (!result?.ok || result.output.type !== 'json') {
-    return expect.fail('expected a json range result')
-  }
-  const value: unknown = result.output.value
-  if (typeof value !== 'object' || value === null || !('rangeId' in value)) {
-    return expect.fail('expected a rangeId in the range result')
-  }
-  const { rangeId } = value
-  if (typeof rangeId !== 'string') return expect.fail('expected rangeId to be a string')
-  return rangeId
-}
-
 describe('useEditorTools', () => {
-  it('registers all five editor tools in the registry', () => {
+  it('registers all the editor tools in the registry', () => {
     const editor = createTestEditor('hello world')
     try {
       const registry = renderRegistry(depsFor(editor))
@@ -73,14 +58,9 @@ describe('useEditorTools', () => {
     try {
       const registry = renderRegistry(depsFor(editor))
 
-      const resolved = await registry
-        .byName(getRangesTool.name)
-        ?.handler({ path: PATH, text: 'world' })
-      const rangeId = rangeIdOf(resolved)
-
       const proposed = await registry
         .byName(proposeEditTool.name)
-        ?.handler({ path: PATH, rangeId, replacementText: 'earth' })
+        ?.handler({ path: PATH, text: 'world', replacementText: 'earth' })
 
       expect(proposed?.ok).toBe(true)
       expect(getProposals(editor)).toHaveLength(1)
@@ -111,8 +91,8 @@ describe('useEditorTools', () => {
       const registry = renderRegistry(depsFor(editor))
 
       const result = await registry
-        .byName(getRangesTool.name)
-        ?.handler({ path: '/missing.md', text: 'world' })
+        .byName(proposeEditTool.name)
+        ?.handler({ path: '/missing.md', text: 'world', replacementText: 'earth' })
 
       expect(result).toEqual({ ok: false, error: 'no_open_editor:/missing.md' })
     } finally {

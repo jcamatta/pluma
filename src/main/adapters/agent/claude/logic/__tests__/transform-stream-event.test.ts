@@ -75,11 +75,11 @@ describe('transformStreamEvent', () => {
     const ctx = context(new Map<number, OpenBlock>(), 'msg_a')
 
     expect(
-      transformStreamEvent(toolStart(1, { id: 'call-1', name: 'getRanges' }), ctx)
+      transformStreamEvent(toolStart(1, { id: 'call-1', name: 'proposeEdit' }), ctx)
     ).toStrictEqual({
       type: EventType.TOOL_CALL_START,
       toolCallId: 'call-1',
-      toolCallName: 'getRanges'
+      toolCallName: 'proposeEdit'
     })
     expect(transformStreamEvent(jsonDelta(1, '{"a":1}'), ctx)).toStrictEqual({
       type: EventType.TOOL_CALL_ARGS,

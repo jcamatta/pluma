@@ -7,14 +7,12 @@ import {
   createAnnotationTool,
   getContentTool,
   getCurrentSelectionTool,
-  getRangesTool,
   listOpenFilesTool,
   proposeEditTool
 } from '../agent/tools/specs'
 import { createAnnotationTool as runCreateAnnotation } from '../agent/tools/tool-create-annotation'
 import { getContent } from '../agent/tools/tool-get-content'
 import { getCurrentSelection } from '../agent/tools/tool-get-current-selection'
-import { getRanges } from '../agent/tools/tool-get-ranges'
 import { listOpenFiles } from '../agent/tools/tool-list-open-files'
 import { proposeEdit } from '../agent/tools/tool-propose-edit'
 import type { AnnotationSeverity } from './extensions/annotations'
@@ -30,7 +28,6 @@ interface EditorToolEntries {
   readonly list: ToolEntry
   readonly selection: ToolEntry
   readonly content: ToolEntry
-  readonly ranges: ToolEntry
   readonly annotation: ToolEntry
   readonly proposal: ToolEntry
 }
@@ -42,13 +39,18 @@ interface ActiveTarget {
 
 const NO_DOCUMENT: AgentToolResult = { ok: false, error: 'No document is open in the editor.' }
 
-const noOpenEditor = (path: string): AgentToolResult => ({ ok: false, error: `no_open_editor:${path}` })
+const noOpenEditor = (path: string): AgentToolResult => ({
+  ok: false,
+  error: `no_open_editor:${path}`
+})
 
 // The read tools — discover the open files, read a named file, or read the active selection. get_content
 // takes the path the agent learned from list_open_files and reports it back; the selection reads the
 // active editor (the only one with a live cursor) and reports its path. Both hand the agent the path it
 // must then pass to the acting tools.
-function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'selection' | 'content'> {
+function readEntries(
+  deps: EditorToolDeps
+): Pick<EditorToolEntries, 'list' | 'selection' | 'content'> {
   const activeTarget = (): ActiveTarget | null => {
     const path = deps.activePath
     if (path === null) return null
@@ -78,30 +80,21 @@ function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'se
   }
 }
 
-// The acting tools — resolve a tracked range, annotate it, or propose an edit. Each requires the file
-// `path`, resolved to its open editor; a path that is not open is a recoverable error.
-function actingEntries(
-  deps: EditorToolDeps
-): Pick<EditorToolEntries, 'ranges' | 'annotation' | 'proposal'> {
+// The acting tools — annotate a passage or propose an edit, each by the passage's exact text. Each
+// requires the file `path`, resolved to its open editor; a path that is not open is a recoverable error.
+function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotation' | 'proposal'> {
   const atPath = (path: string, run: (editor: Editor) => AgentToolResult): AgentToolResult => {
     const editor = deps.resolve(path)
     return editor ? run(editor) : noOpenEditor(path)
   }
 
   return {
-    ranges: {
-      spec: getRangesTool,
-      handler: (args) => {
-        assertWire<{ readonly path: string; readonly text: string }>(args, getRangesTool.name)
-        return atPath(args.path, (live) => getRanges(live, args))
-      }
-    },
     annotation: {
       spec: createAnnotationTool,
       handler: (args) => {
         assertWire<{
           readonly path: string
-          readonly rangeId: string
+          readonly text: string
           readonly label: string
           readonly description: string
           readonly severity?: AnnotationSeverity
@@ -112,10 +105,11 @@ function actingEntries(
     proposal: {
       spec: proposeEditTool,
       handler: (args) => {
-        assertWire<{ readonly path: string; readonly rangeId: string; readonly replacementText: string }>(
-          args,
-          proposeEditTool.name
-        )
+        assertWire<{
+          readonly path: string
+          readonly text: string
+          readonly replacementText: string
+        }>(args, proposeEditTool.name)
         return atPath(args.path, (live) => proposeEdit(live, args))
       }
     }
@@ -131,7 +125,6 @@ function useEditorTools(deps: EditorToolDeps): void {
   useFrontendTool(entries.list)
   useFrontendTool(entries.selection)
   useFrontendTool(entries.content)
-  useFrontendTool(entries.ranges)
   useFrontendTool(entries.annotation)
   useFrontendTool(entries.proposal)
 }

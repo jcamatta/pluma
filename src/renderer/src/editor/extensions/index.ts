@@ -1,5 +1,5 @@
 // The editor's full extension set, in the order TipTap registers them (input rules depend on order:
-// Typography before Markdown). Includes the agent-facing range/annotation/proposal trackers.
+// Typography before Markdown). Includes the agent-facing annotation/proposal trackers.
 
 import Blockquote from '@tiptap/extension-blockquote'
 import Bold from '@tiptap/extension-bold'
@@ -24,7 +24,6 @@ import { UndoRedo } from '@tiptap/extensions'
 import type { AnyExtension } from '@tiptap/core'
 import { FileHandlerExtension } from './file-handler'
 import { PlaceholderExtension } from './placeholder'
-import { RangesExtension } from './ranges'
 import { AnnotationsExtension } from './annotations'
 import { ProposalsExtension } from './proposals'
 import { SlashCommandExtension } from './slash-command'
@@ -54,7 +53,6 @@ export const editorExtensions: AnyExtension[] = [
   Gapcursor,
   FileHandlerExtension,
   UndoRedo,
-  RangesExtension,
   AnnotationsExtension,
   ProposalsExtension,
   SlashCommandExtension,

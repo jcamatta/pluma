@@ -68,11 +68,11 @@ test('opens files as tabs, switches between them, and closes one', async () => {
   )
 })
 
-// One real Claude tool round-trip (resolve a range, then propose the edit) needs well over the default.
+// One real Claude tool round-trip (read the file, then propose the edit) needs well over the default.
 const TOOL_PROMPT =
   'Use your editing tools to replace one word in the active document, then stop. ' +
   'First call list_open_files to find the path of the active file, then read it with get_content and ' +
-  'pass that path to get_ranges to resolve the word "owl", then call propose_edit to replace "owl" ' +
+  'call propose_edit, passing that path and the exact word "owl", to replace "owl" ' +
   'with "hawk". Do not reply with prose and do not ask for confirmation.'
 
 test('agent editing tools act on the active tab while several tabs are open', async () => {

@@ -1,12 +1,10 @@
-// Handler for `get_ranges`: resolve exact document text to a tracked range id. Builds a flat
-// char->position index over the document's text nodes, finds every occurrence of the query, and
-// registers a range when there is exactly one. Zero matches -> not_found; many -> ambiguous (with a
-// short preview of each). The index and match scan are written without `let`: characters are pushed
-// into a const array by the descendant visitor, and occurrences are collected by a recursive scan.
+// Resolve exact document text to a single document span. Builds a flat char->position index over the
+// document's text nodes, finds every occurrence of the query, and reports the span when there is
+// exactly one. Zero matches -> not_found; many -> ambiguous (with a short preview of each). This is the
+// shared anchor-resolution the acting tools use to turn the agent's literal text into a position range,
+// so neither propose_edit nor create_annotation needs a separate range handle.
 
 import type { Editor } from '@tiptap/core'
-import { setRange } from '../../editor/extensions/ranges'
-import type { AgentToolResult } from './types'
 
 interface IndexedChar {
   readonly char: string
@@ -17,6 +15,10 @@ interface DocumentTextIndex {
   readonly text: string
   readonly positions: readonly number[]
 }
+
+type ResolvedAnchor =
+  | { readonly ok: true; readonly from: number; readonly to: number; readonly text: string }
+  | { readonly ok: false; readonly error: string }
 
 const PREVIEW_PADDING = 40
 const MAX_PREVIEWS = 5
@@ -68,27 +70,26 @@ function ambiguousError({ documentText, matches, length }: AmbiguousInput): stri
   return `ambiguous\n${previews}`
 }
 
-export function getRanges(editor: Editor, args: { readonly text: string }): AgentToolResult {
+function resolveAnchor(editor: Editor, text: string): ResolvedAnchor {
   const index = createDocumentTextIndex(editor)
-  const matches = findMatches(index.text, args.text)
+  const matches = findMatches(index.text, text)
 
   if (matches.length === 0) return { ok: false, error: 'not_found' }
   if (matches.length > 1) {
     return {
       ok: false,
-      error: ambiguousError({ documentText: index.text, matches, length: args.text.length })
+      error: ambiguousError({ documentText: index.text, matches, length: text.length })
     }
   }
 
   const start = matches[0]
-  const range = setRange({
-    editor,
-    range: {
-      from: index.positions[start],
-      to: index.positions[start + args.text.length - 1] + 1,
-      originalText: args.text
-    }
-  })
-
-  return { ok: true, output: { type: 'json', value: { rangeId: range.id, text: args.text } } }
+  return {
+    ok: true,
+    from: index.positions[start],
+    to: index.positions[start + text.length - 1] + 1,
+    text
+  }
 }
+
+export { resolveAnchor }
+export type { ResolvedAnchor }

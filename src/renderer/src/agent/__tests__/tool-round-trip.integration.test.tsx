@@ -1,9 +1,9 @@
 // The gate: a tool the model calls reaches the live editor and its result returns inside the run. This
 // exercises the renderer half of the round-trip end to end against a real headless TipTap editor — the
-// real get_ranges/propose_edit handlers, the real registry, and useToolBridge — rather than faking one
-// side. An agent:tool-call for get_ranges resolves a range; its result (carried back on
-// agent:tool-result) feeds a propose_edit call; the proposal then exists in the editor's plugin state.
-// Only window.api is faked, because IPC has no editor to talk to in a unit test.
+// real propose_edit handler, the real registry, and useToolBridge — rather than faking one side. An
+// agent:tool-call for propose_edit resolves the passage and stages a proposal; the proposal then exists
+// in the editor's plugin state and the result returns on agent:tool-result. Only window.api is faked,
+// because IPC has no editor to talk to in a unit test.
 
 import { describe, expect, it } from 'vitest'
 import { renderHook } from '@testing-library/react'
@@ -19,32 +19,21 @@ import type { WindowApi } from '../../../../shared/ipc/window-api'
 import { getProposals } from '../../editor/extensions/proposals'
 import { createTestEditor } from '../../editor/extensions/__tests__/editor-test-harness'
 import type { ToolEntry, ToolRegistry } from '../AgentToolsContext'
-import { getRanges } from '../tools/tool-get-ranges'
 import { proposeEdit } from '../tools/tool-propose-edit'
-import { getRangesTool, proposeEditTool } from '../tools/specs'
+import { proposeEditTool } from '../tools/specs'
 import type { AgentToolResult } from '../tools/types'
 import { useToolBridge } from '../useToolBridge'
 
-// The real tool handlers, bound to the editor under test, in a registry shaped like the live one. args
-// is wire-shaped (unknown); each handler narrows it the same way the production registration would.
+// The real tool handler, bound to the editor under test, in a registry shaped like the live one. args is
+// wire-shaped (unknown); the handler narrows it the same way the production registration would.
 function editorRegistry(editor: Editor): ToolRegistry {
   const entries = new Map<string, ToolEntry>([
-    [
-      getRangesTool.name,
-      {
-        spec: getRangesTool,
-        handler: (args) => {
-          assertWire<{ readonly text: string }>(args, getRangesTool.name)
-          return getRanges(editor, args)
-        }
-      }
-    ],
     [
       proposeEditTool.name,
       {
         spec: proposeEditTool,
         handler: (args) => {
-          assertWire<{ readonly rangeId: string; readonly replacementText: string }>(
+          assertWire<{ readonly text: string; readonly replacementText: string }>(
             args,
             proposeEditTool.name
           )
@@ -112,14 +101,6 @@ function toolApi(): ToolApi {
   return { api, call }
 }
 
-function rangeIdOf(result: AgentToolResult): string {
-  if (!result.ok || result.output.type !== 'json')
-    return expect.fail('expected a json range result')
-  const value = result.output.value
-  assertWire<{ readonly rangeId: string }>(value, getRangesTool.name)
-  return value.rangeId
-}
-
 describe('frontend-tool round-trip (gate)', () => {
   it('lands a propose_edit proposal in the editor via the bridge', async () => {
     // createTestEditor (not withEditor) because the editor must outlive the awaits below; destroyed in
@@ -129,18 +110,11 @@ describe('frontend-tool round-trip (gate)', () => {
       const { api, call } = toolApi()
       renderHook(() => useToolBridge(editorRegistry(editor), api))
 
-      const resolved = await call({
-        runId: 'run-1',
-        toolCallId: 'tc-range',
-        toolName: getRangesTool.name,
-        args: { text: 'world' }
-      })
-
       const proposed = await call({
         runId: 'run-1',
         toolCallId: 'tc-edit',
         toolName: proposeEditTool.name,
-        args: { rangeId: rangeIdOf(resolved), replacementText: 'earth' }
+        args: { text: 'world', replacementText: 'earth' }
       })
 
       expect(proposed.ok).toBe(true)
