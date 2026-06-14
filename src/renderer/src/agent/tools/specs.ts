@@ -64,14 +64,17 @@ const getRangesTool: Tool = {
 const createAnnotationTool: Tool = {
   name: 'create_annotation',
   description:
-    'Annotate a tracked range with a review note. Requires a rangeId from get_ranges. Returns an error when the range is missing or its text has changed.',
+    'Annotate a passage with a review note. Pass the exact text of the passage, copied verbatim from the document. Returns not_found when the text is absent and ambiguous when it occurs more than once — grow the text until it is unique.',
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['path', 'rangeId', 'label', 'description'],
+    required: ['path', 'text', 'label', 'description'],
     properties: {
       path: { type: 'string', description: filePathDescription },
-      rangeId: { type: 'string' },
+      text: {
+        type: 'string',
+        description: 'The exact passage to annotate, copied verbatim. Must occur exactly once.'
+      },
       label: { type: 'string' },
       description: { type: 'string' },
       severity: {

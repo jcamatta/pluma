@@ -1,39 +1,33 @@
-// Handler for `create_annotation`: anchor a review note to a tracked range. Fails (recoverably) when
-// the range is gone or its text drifted, so the agent re-resolves it via get_ranges. Severity
-// defaults to 'warning' when the model omits it.
+// Handler for `create_annotation`: anchor a review note to a passage given by its exact text. Resolves
+// the text to a single span with the shared resolver; a missing or repeated passage fails recoverably
+// (not_found / ambiguous), so the agent grows the text until unique and retries. Severity defaults to
+// 'warning' when the model omits it.
 
 import type { Editor } from '@tiptap/core'
-import { getRange } from '../../editor/extensions/ranges'
 import { createAnnotation, type AnnotationSeverity } from '../../editor/extensions/annotations'
+import { resolveAnchor } from './resolve-anchor'
 import type { AgentToolResult } from './types'
 
 interface CreateAnnotationArgs {
-  readonly rangeId: string
+  readonly text: string
   readonly label: string
   readonly description: string
   readonly severity?: AnnotationSeverity
 }
 
 export function createAnnotationTool(editor: Editor, args: CreateAnnotationArgs): AgentToolResult {
-  const range = getRange({ editor, id: args.rangeId })
-
-  if (!range) {
-    return { ok: false, error: `Range ${args.rangeId} not found. Call get_ranges again.` }
-  }
-
-  if (range.status === 'error') {
-    return { ok: false, error: `${range.error} Current text: ${range.currentText}` }
-  }
+  const resolved = resolveAnchor(editor, args.text)
+  if (!resolved.ok) return { ok: false, error: resolved.error }
 
   const annotation = createAnnotation({
     editor,
     annotation: {
-      from: range.from,
-      to: range.to,
+      from: resolved.from,
+      to: resolved.to,
       label: args.label,
       description: args.description,
       severity: args.severity ?? 'warning',
-      quote: range.currentText
+      quote: args.text
     }
   })
 

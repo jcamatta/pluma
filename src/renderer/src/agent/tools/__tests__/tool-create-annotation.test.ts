@@ -1,24 +1,16 @@
-// create_annotation: success anchors a note to a resolved range and defaults severity to 'warning';
-// missing and drifted ranges fail recoverably.
+// create_annotation: success anchors a note to the resolved passage and defaults severity to
+// 'warning'; absent text fails not_found and repeated text fails ambiguous.
 
 import { describe, expect, it } from 'vitest'
-import type { Editor } from '@tiptap/core'
 import { getAnnotations } from '../../../editor/extensions/annotations'
 import { withEditor } from '../../../editor/extensions/__tests__/editor-test-harness'
-import { getRanges } from '../tool-get-ranges'
 import { createAnnotationTool } from '../tool-create-annotation'
-import { stringField } from './result-helpers'
-
-function resolveRangeId(editor: Editor, text: string): string {
-  return stringField(getRanges(editor, { text }), 'rangeId')
-}
 
 describe('createAnnotationTool', () => {
-  it('annotates a resolved range and defaults severity to warning', () => {
+  it('annotates the resolved passage and defaults severity to warning', () => {
     withEditor('hello world', (editor) => {
-      const rangeId = resolveRangeId(editor, 'world')
       const result = createAnnotationTool(editor, {
-        rangeId,
+        text: 'world',
         label: 'word choice',
         description: 'consider a stronger noun'
       })
@@ -33,9 +25,8 @@ describe('createAnnotationTool', () => {
 
   it('honors an explicit severity', () => {
     withEditor('hello world', (editor) => {
-      const rangeId = resolveRangeId(editor, 'world')
       const result = createAnnotationTool(editor, {
-        rangeId,
+        text: 'world',
         label: 'typo',
         description: 'fix this',
         severity: 'error'
@@ -46,29 +37,18 @@ describe('createAnnotationTool', () => {
     })
   })
 
-  it('fails when the range id is unknown', () => {
+  it('fails not_found when the text is absent', () => {
     withEditor('hello world', (editor) => {
-      const result = createAnnotationTool(editor, {
-        rangeId: 'r_99',
-        label: 'x',
-        description: 'y'
-      })
-      if (result.ok) return expect.fail('expected failure')
-      expect(result.error).toContain('not found')
+      const result = createAnnotationTool(editor, { text: 'missing', label: 'x', description: 'y' })
+      expect(result).toEqual({ ok: false, error: 'not_found' })
     })
   })
 
-  it('fails when the range text has drifted', () => {
-    withEditor('hello world', (editor) => {
-      const rangeId = resolveRangeId(editor, 'world')
-      editor.commands.setContent('hello there')
-
-      const result = createAnnotationTool(editor, {
-        rangeId,
-        label: 'x',
-        description: 'y'
-      })
-      expect(result.ok).toBe(false)
+  it('fails ambiguous when the text occurs more than once', () => {
+    withEditor('the cat sat on the mat', (editor) => {
+      const result = createAnnotationTool(editor, { text: 'the', label: 'x', description: 'y' })
+      if (result.ok) return expect.fail('expected failure')
+      expect(result.error.startsWith('ambiguous\n')).toBe(true)
     })
   })
 })

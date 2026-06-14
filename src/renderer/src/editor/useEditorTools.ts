@@ -42,13 +42,18 @@ interface ActiveTarget {
 
 const NO_DOCUMENT: AgentToolResult = { ok: false, error: 'No document is open in the editor.' }
 
-const noOpenEditor = (path: string): AgentToolResult => ({ ok: false, error: `no_open_editor:${path}` })
+const noOpenEditor = (path: string): AgentToolResult => ({
+  ok: false,
+  error: `no_open_editor:${path}`
+})
 
 // The read tools — discover the open files, read a named file, or read the active selection. get_content
 // takes the path the agent learned from list_open_files and reports it back; the selection reads the
 // active editor (the only one with a live cursor) and reports its path. Both hand the agent the path it
 // must then pass to the acting tools.
-function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'selection' | 'content'> {
+function readEntries(
+  deps: EditorToolDeps
+): Pick<EditorToolEntries, 'list' | 'selection' | 'content'> {
   const activeTarget = (): ActiveTarget | null => {
     const path = deps.activePath
     if (path === null) return null
@@ -101,7 +106,7 @@ function actingEntries(
       handler: (args) => {
         assertWire<{
           readonly path: string
-          readonly rangeId: string
+          readonly text: string
           readonly label: string
           readonly description: string
           readonly severity?: AnnotationSeverity
@@ -112,10 +117,11 @@ function actingEntries(
     proposal: {
       spec: proposeEditTool,
       handler: (args) => {
-        assertWire<{ readonly path: string; readonly rangeId: string; readonly replacementText: string }>(
-          args,
-          proposeEditTool.name
-        )
+        assertWire<{
+          readonly path: string
+          readonly rangeId: string
+          readonly replacementText: string
+        }>(args, proposeEditTool.name)
         return atPath(args.path, (live) => proposeEdit(live, args))
       }
     }
