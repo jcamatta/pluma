@@ -82,7 +82,9 @@ Fixes cluster **D**, and the "author a new file" half of **A**. **These tools ar
 
 Each PR is one branch, sliced into mini-commits sized to the budget (≤ ~300 weighted `src/` lines, ≤ 15 source files, code > 30 lines lands with a test). Order within a track is dependency order; the two tracks are independent. PR 0.0 is a precursor Track 1 builds on.
 
-### PR 0.0 — Collapse `get_ranges` into the acting tools _(frontend refactor, precursor)_
+### PR 0.0 — Collapse `get_ranges` into the acting tools _(frontend refactor, precursor)_ — ✅ shipped
+
+> **Landed** on `chore/collapse-get-ranges` across 5 mini-commits, all checks green (lint, 690 unit tests, type-coverage, build) and the `artifacts` + `editor-tabs` e2e specs passing against the real app. The agent now annotates and proposes edits by passing the exact passage text; `get_ranges`, the `rangeId` handle, and the whole `RangesExtension` are gone, and `get_current_selection` is a pure `{ path, text }` read. The text→span resolution lives in one shared [resolve-anchor.ts](../../src/renderer/src/agent/tools/resolve-anchor.ts) that `propose_edit` and `create_annotation` both call, surfacing the same `not_found` / `ambiguous` contract. The system prompt teaches the text-first flow.
 
 Today the agent resolves text → `rangeId` (`get_ranges`) and then acts (`propose_edit`/`create_annotation`) with that handle, and `get_current_selection` mints a `rangeId` too. Nothing consumes the selection's `rangeId`, and the handle is speculative indirection. Collapse it to the proven one-call `Edit` shape: the acting tools take **anchor text** directly and resolve it internally.
 
