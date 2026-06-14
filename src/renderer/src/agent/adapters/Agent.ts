@@ -14,6 +14,7 @@ import {
 import type { AgentSubscriber } from '@ag-ui/client'
 import { EventType, type BaseEvent, type Message, type Tool } from '@ag-ui/core'
 import { Observable, type Subscriber } from 'rxjs'
+import type { AgentContextUsage } from '../../../../shared/agent/context-usage'
 import { AGENT_ABORT_CHANNEL, AGENT_RUN_CHANNEL } from '../../../../shared/ipc/ipc-contract/agent'
 import { AGENT_EVENT_CHANNEL } from '../../../../shared/ipc/ipc-event-contract/agent'
 import type { WindowApi } from '../../../../shared/ipc/window-api'
@@ -59,10 +60,18 @@ export class Agent extends AbstractAgent {
     this.setMessages([...messages])
   }
 
-  // Start a fresh thread: drop the resume id (next run opens a new session) and clear the transcript.
+  // Start a fresh thread: drop the resume id (next run opens a new session), clear the transcript, and
+  // clear the shared state so the context meter resets until the new thread's first run reports usage.
   newThread(): void {
     this.sessionId = undefined
     this.setMessages([])
+    this.setState({})
+  }
+
+  // Seed (or clear) the context meter's figure on the shared state — used on resume to show a thread's
+  // occupancy before any new run. null clears it. Live runs overwrite this via STATE_SNAPSHOT.
+  seedContextUsage(usage: AgentContextUsage | null): void {
+    this.setState(usage === null ? {} : { contextUsage: usage })
   }
 
   // The thread the conversation currently belongs to: the SDK session id, set on select or adopted from

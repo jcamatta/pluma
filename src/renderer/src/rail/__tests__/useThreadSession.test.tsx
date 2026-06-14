@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { Message } from '@ag-ui/core'
+import type { AgentContextUsage } from '../../../../shared/agent/context-usage'
 import { ThreadControlsContext } from '../../agent/ThreadControlsContext'
 import type { ThreadControls } from '../../agent/ThreadControlsContext'
 import { ThreadsContext } from '../../threads/ThreadsContext'
@@ -20,10 +21,17 @@ const history: readonly Message[] = [
   { id: 'm2', role: 'assistant', content: 'hello' }
 ]
 
+const context: AgentContextUsage = {
+  usedTokens: 60_000,
+  windowTokens: 1_000_000,
+  breakdown: { inputTokens: 5000, cacheReadTokens: 55_000, cacheCreationTokens: 0 }
+}
+
 function renderSession(controls: ThreadControls): ReturnType<typeof renderHook<Session, void>> {
   const repos = createFakeThreadsRepository({
     threads: [{ id: 's1', title: 'First chat', updatedAt: 1 }],
-    history
+    history,
+    context
   })
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrapper = ({ children }: { readonly children: ReactNode }): React.JSX.Element => (
@@ -41,7 +49,8 @@ describe('useThreadSession', () => {
     const controls: ThreadControls = {
       seedThread: vi.fn(),
       newThread: vi.fn(),
-      currentThreadId: () => undefined
+      currentThreadId: () => undefined,
+      seedContext: vi.fn()
     }
     const { result } = renderSession(controls)
 
@@ -52,6 +61,8 @@ describe('useThreadSession', () => {
     expect(result.current.selectedId).toBe('s1')
     expect(result.current.view).toBe('chat')
     await waitFor(() => expect(controls.seedThread).toHaveBeenCalledWith('s1', history))
+    // The thread's stored context occupancy is seeded so the meter shows before any new run.
+    await waitFor(() => expect(controls.seedContext).toHaveBeenCalledWith(context))
     // The header reads the active thread's stored (renameable) name, not the first message.
     await waitFor(() => expect(result.current.selectedTitle).toBe('First chat'))
   })
@@ -60,7 +71,8 @@ describe('useThreadSession', () => {
     const controls: ThreadControls = {
       seedThread: vi.fn(),
       newThread: vi.fn(),
-      currentThreadId: () => undefined
+      currentThreadId: () => undefined,
+      seedContext: vi.fn()
     }
     const { result } = renderSession(controls)
 

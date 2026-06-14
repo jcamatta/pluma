@@ -5,6 +5,7 @@
 // the BaseEvent stream cannot cross IPC, so events arrive on the separate agent:event event channel.
 
 import type { Message, Tool } from '@ag-ui/core'
+import type { AgentContextUsage } from '../../agent/context-usage'
 import type { IpcContractDefinition } from './types'
 
 type EffortLevel = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
@@ -34,6 +35,7 @@ const AGENT_ABORT_CHANNEL = 'agent:abort'
 const AGENT_TOOL_RESULT_CHANNEL = 'agent:tool-result'
 const AGENT_LIST_THREADS_CHANNEL = 'agent:list-threads'
 const AGENT_THREAD_HISTORY_CHANNEL = 'agent:thread-history'
+const AGENT_THREAD_CONTEXT_CHANNEL = 'agent:thread-context'
 const AGENT_RENAME_THREAD_CHANNEL = 'agent:rename-thread'
 const AGENT_DELETE_THREAD_CHANNEL = 'agent:delete-thread'
 
@@ -61,6 +63,11 @@ interface ListThreadsInput {
 }
 
 interface ThreadHistoryInput {
+  readonly cwd: string
+  readonly threadId: string
+}
+
+interface ThreadContextInput {
   readonly cwd: string
   readonly threadId: string
 }
@@ -124,6 +131,13 @@ type AgentThreadHistoryContract = IpcContractDefinition<
   ThreadReadError
 >
 
+type AgentThreadContextContract = IpcContractDefinition<
+  typeof AGENT_THREAD_CONTEXT_CHANNEL,
+  ThreadContextInput,
+  AgentContextUsage | null,
+  ThreadReadError
+>
+
 type AgentRenameThreadContract = IpcContractDefinition<
   typeof AGENT_RENAME_THREAD_CHANNEL,
   RenameThreadRequest,
@@ -151,6 +165,7 @@ export {
   AGENT_TOOL_RESULT_CHANNEL,
   AGENT_LIST_THREADS_CHANNEL,
   AGENT_THREAD_HISTORY_CHANNEL,
+  AGENT_THREAD_CONTEXT_CHANNEL,
   AGENT_RENAME_THREAD_CHANNEL,
   AGENT_DELETE_THREAD_CHANNEL,
   type EffortLevel,
@@ -164,6 +179,7 @@ export {
   type ThreadWriteError,
   type ListThreadsInput,
   type ThreadHistoryInput,
+  type ThreadContextInput,
   type RenameThreadRequest,
   type DeleteThreadRequest,
   type AgentToolOutput,
@@ -174,6 +190,7 @@ export {
   type AgentToolResultContract,
   type AgentListThreadsContract,
   type AgentThreadHistoryContract,
+  type AgentThreadContextContract,
   type AgentRenameThreadContract,
   type AgentDeleteThreadContract
 }

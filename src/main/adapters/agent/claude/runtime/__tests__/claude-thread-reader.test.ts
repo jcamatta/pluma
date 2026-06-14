@@ -78,4 +78,36 @@ describe('ClaudeThreadReaderLive', () => {
     expect(getSessionMessagesMock).toHaveBeenCalledWith('s1', { dir: '/work' })
     expect(exit).toStrictEqual(Exit.succeed([{ id: 'u1', role: 'user', content: 'hi' }]))
   })
+
+  it('derives the context usage for getThreadContext from the last assistant turn', async () => {
+    getSessionMessagesMock.mockResolvedValue([
+      {
+        type: 'assistant',
+        uuid: 'a1',
+        session_id: 's',
+        message: {
+          model: 'claude-opus-4-8',
+          usage: { input_tokens: 5000, cache_read_input_tokens: 55_000 }
+        },
+        parent_tool_use_id: null
+      }
+    ])
+    const exit = await Effect.runPromiseExit(
+      Effect.provide(
+        Effect.gen(function* () {
+          const reader = yield* ThreadReader
+          return yield* reader.getThreadContext('/work', 's1')
+        }),
+        ClaudeThreadReaderLive
+      )
+    )
+    expect(getSessionMessagesMock).toHaveBeenCalledWith('s1', { dir: '/work' })
+    expect(exit).toStrictEqual(
+      Exit.succeed({
+        usedTokens: 60_000,
+        windowTokens: 1_000_000,
+        breakdown: { inputTokens: 5000, cacheReadTokens: 55_000, cacheCreationTokens: 0 }
+      })
+    )
+  })
 })

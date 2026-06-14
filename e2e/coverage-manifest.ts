@@ -42,6 +42,7 @@ const OPERATIONS = [
   'agent.abort',
   'agent.list-threads',
   'agent.thread-history',
+  'agent.thread-context',
   'agent.rename-thread',
   'agent.delete-thread'
 ] as const

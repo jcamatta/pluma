@@ -8,6 +8,7 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { ThreadControlsContext } from '../agent/ThreadControlsContext'
 import { useThreadHistory } from '../threads/useThreadHistory'
+import { useThreadContext } from '../threads/useThreadContext'
 import { useThreads } from '../threads/useThreads'
 
 type RailView = 'chat' | 'threads'
@@ -23,26 +24,32 @@ interface ThreadSession {
 }
 
 function useThreadSession(cwd: string): ThreadSession {
-  const { seedThread, newThread, currentThreadId } = useContext(ThreadControlsContext)
+  const { seedThread, newThread, currentThreadId, seedContext } = useContext(ThreadControlsContext)
   const [view, setView] = useState<RailView>('chat')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const history = useThreadHistory(cwd, selectedId)
+  const context = useThreadContext(cwd, selectedId)
   const threads = useThreads(cwd)
   const seededFor = useRef<string | null>(null)
   // The thread the chat header names: the user's selection, else the session the live chat adopted on its
   // first run. Its stored title (renameable) is resolved from the threads list so a rename shows here too.
-  const activeId = selectedId ?? currentThreadId() ?? null
   const selectedTitle =
-    (threads.data?.ok ? threads.data.value : []).find((summary) => summary.id === activeId)
-      ?.title ?? null
+    (threads.data?.ok ? threads.data.value : []).find(
+      (summary) => summary.id === (selectedId ?? currentThreadId() ?? null)
+    )?.title ?? null
 
+  // Seed the agent from the selected thread once history loads, and seed the context meter from its
+  // stored usage so it shows on resume before any run. The two reads resolve independently; each block
+  // fires when its data is ready. The live run path overwrites the meter via STATE_SNAPSHOT; starting a
+  // new thread clears it.
   useEffect(() => {
-    const data = history.data
-    if (selectedId !== null && data?.ok && seededFor.current !== selectedId) {
+    const loaded = history.data
+    if (selectedId !== null && loaded?.ok && seededFor.current !== selectedId) {
       seededFor.current = selectedId
-      seedThread(selectedId, data.value)
+      seedThread(selectedId, loaded.value)
     }
-  }, [selectedId, history.data, seedThread])
+    if (selectedId !== null && context.data?.ok) seedContext(context.data.value)
+  }, [selectedId, history.data, context.data, seedThread, seedContext])
 
   const select = (id: string): void => {
     setSelectedId(id)

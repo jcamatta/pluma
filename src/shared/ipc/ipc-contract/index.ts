@@ -11,6 +11,7 @@ import type {
   AgentRenameThreadContract,
   AgentRunContract,
   AgentThreadHistoryContract,
+  AgentThreadContextContract,
   AgentToolResultContract
 } from './agent'
 import type {
@@ -46,6 +47,7 @@ type IpcContract =
   | AgentToolResultContract
   | AgentListThreadsContract
   | AgentThreadHistoryContract
+  | AgentThreadContextContract
   | AgentRenameThreadContract
   | AgentDeleteThreadContract
 

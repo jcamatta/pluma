@@ -25,7 +25,8 @@ export function AgentProvider({ cwd, children }: AgentProviderProps): React.JSX.
   const [controls] = useState<ThreadControls>(() => ({
     seedThread: (id, messages) => agent.seedThread(id, messages),
     newThread: () => agent.newThread(),
-    currentThreadId: () => agent.currentThreadId()
+    currentThreadId: () => agent.currentThreadId(),
+    seedContext: (usage) => agent.seedContextUsage(usage)
   }))
 
   useEffect(() => {
