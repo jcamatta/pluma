@@ -8,9 +8,11 @@ import { getSessionMessages, listSessions } from '@anthropic-ai/claude-agent-sdk
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import type { Message } from '@ag-ui/core'
+import type { AgentContextUsage } from '../../../../application/agent/data/context-usage'
 import type { ThreadSummary } from '../../../../application/agent/data/thread-summary'
 import { ThreadReadFailed } from '../../../../application/agent/error/thread-read-failed'
 import { ThreadReader } from '../../../../application/agent/port/thread-reader.port'
+import { lastContextUsageFromSession } from '../logic/last-context-usage'
 import { sessionInfoToSummary } from '../logic/session-info-to-summary'
 import { sessionMessagesToHistory } from '../logic/session-messages-to-history'
 
@@ -33,7 +35,16 @@ const getThreadHistory = (
     catch: () => new ThreadReadFailed({ cwd })
   }).pipe(Effect.map(sessionMessagesToHistory))
 
+const getThreadContext = (
+  cwd: string,
+  id: string
+): Effect.Effect<AgentContextUsage | null, ThreadReadFailed> =>
+  Effect.tryPromise({
+    try: () => getSessionMessages(id, { dir: cwd }),
+    catch: () => new ThreadReadFailed({ cwd })
+  }).pipe(Effect.map(lastContextUsageFromSession))
+
 export const ClaudeThreadReaderLive = Layer.succeed(
   ThreadReader,
-  ThreadReader.of({ listThreads, getThreadHistory })
+  ThreadReader.of({ listThreads, getThreadHistory, getThreadContext })
 )

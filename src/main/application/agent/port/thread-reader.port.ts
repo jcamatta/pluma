@@ -8,6 +8,7 @@
 import * as Context from 'effect/Context'
 import type * as Effect from 'effect/Effect'
 import type { Message } from '@ag-ui/core'
+import type { AgentContextUsage } from '../data/context-usage'
 import type { ThreadSummary } from '../data/thread-summary'
 import type { ThreadReadFailed } from '../error/thread-read-failed'
 
@@ -17,6 +18,12 @@ interface ThreadReaderPort {
     cwd: string,
     id: string
   ) => Effect.Effect<readonly Message[], ThreadReadFailed>
+  // The thread's current context occupancy (null when no assistant turn has reported usage), read from
+  // the stored session so the meter shows on resume before any new run.
+  readonly getThreadContext: (
+    cwd: string,
+    id: string
+  ) => Effect.Effect<AgentContextUsage | null, ThreadReadFailed>
 }
 
 const ThreadReader = Context.GenericTag<ThreadReaderPort>('application/ThreadReader')

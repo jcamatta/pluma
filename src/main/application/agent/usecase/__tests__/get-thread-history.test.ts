@@ -20,7 +20,8 @@ const readerReturning = (
     ThreadReader,
     ThreadReader.of({
       listThreads: () => Effect.succeed([]),
-      getThreadHistory: () => result
+      getThreadHistory: () => result,
+      getThreadContext: () => Effect.succeed(null)
     })
   )
 
