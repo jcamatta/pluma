@@ -37,9 +37,11 @@ test('shows the context meter after a turn and reveals the token breakdown', asy
       await composer.fill(PROMPT)
       await rail.getByRole('button', { name: 'Send', exact: true }).click()
 
-      // The run settles and its assistant message publishes a context snapshot; the meter appears,
-      // labelled with the worded summary it exposes for screen readers.
-      await expect(rail.getByText('Worked', { exact: true })).toBeVisible({ timeout: 60_000 })
+      // The run settles (the composer returns from Stop to Send) and its assistant message publishes a
+      // context snapshot; the meter then appears in the composer.
+      await expect(rail.getByRole('button', { name: 'Send', exact: true })).toBeVisible({
+        timeout: 60_000
+      })
       const meter = rail.getByRole('button', { name: /Context/ })
       await expect(meter).toBeVisible({ timeout: 60_000 })
 
