@@ -14,6 +14,7 @@ import type { ActivityLabels } from '../activity-log'
 const labels: ActivityLabels = {
   calling: (tool) => `Calling ${tool}`,
   done: (tool) => `${tool} done`,
+  failed: (tool) => `${tool} failed`,
   runError: (message) => message
 }
 

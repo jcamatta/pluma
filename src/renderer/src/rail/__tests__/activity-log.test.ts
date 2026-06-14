@@ -14,6 +14,7 @@ import {
 const labels: ActivityLabels = {
   calling: (tool) => `Calling ${tool}`,
   done: (tool) => `${tool} done`,
+  failed: (tool) => `${tool} failed`,
   runError: (message) => `Run failed: ${message}`
 }
 
@@ -113,5 +114,37 @@ describe('reduceActivity', () => {
     const before = fold([{ type: EventType.RUN_STARTED }])
     const after = reduce(before, event({ type: EventType.STEP_STARTED }))
     expect(after).toEqual(before)
+  })
+})
+
+describe('reduceActivity tool outcomes', () => {
+  it('settles a tool step as success when its result is ok:true', () => {
+    const state = fold([
+      { type: EventType.RUN_STARTED },
+      { type: EventType.TOOL_CALL_START, toolCallId: 'tc-1', toolCallName: 'propose_edit' },
+      {
+        type: EventType.TOOL_CALL_RESULT,
+        toolCallId: 'tc-1',
+        content: '{"ok":true,"output":{"proposalId":"p_1"}}'
+      }
+    ])
+    expect(state.log[0]).toMatchObject({ status: 'success', text: 'propose_edit done' })
+  })
+
+  it('settles a tool step as failed when its result is ok:false', () => {
+    const state = fold([
+      { type: EventType.RUN_STARTED },
+      { type: EventType.TOOL_CALL_START, toolCallId: 'tc-1', toolCallName: 'get_ranges' },
+      {
+        type: EventType.TOOL_CALL_RESULT,
+        toolCallId: 'tc-1',
+        content: '{"ok":false,"error":"Maximum call stack size exceeded"}'
+      }
+    ])
+    expect(state.log[0]).toMatchObject({
+      status: 'failed',
+      text: 'get_ranges failed',
+      meta: '{"ok":false,"error":"Maximum call stack size exceeded"}'
+    })
   })
 })

@@ -108,6 +108,7 @@
     "step_other": "{{count}} steps",
     "calling": "Calling {{tool}}…",
     "done": "{{tool}}",
+    "toolFailed": "{{tool}} failed",
     "runError": "Run failed: {{message}}",
     "context": {
       "label": "Context",

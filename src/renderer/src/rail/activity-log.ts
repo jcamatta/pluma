@@ -16,6 +16,7 @@ import {
   type ToolCallResultEvent,
   type ToolCallStartEvent
 } from '@ag-ui/core'
+import { toolOutcomeStatus } from './tool-outcome'
 
 type LogStatus = 'calling' | 'success' | 'failed' | 'thinking' | 'info'
 
@@ -38,11 +39,13 @@ interface AgentActivity {
   readonly summary: string
 }
 
-// The copy the reducer needs, injected so no strings live in this pure module. `calling`/`done` take
-// the tool name; `runError` takes the run's error message.
+// The copy the reducer needs, injected so no strings live in this pure module. `calling`/`done`/`failed`
+// take the tool name; `runError` takes the run's error message. `done` labels a tool whose result was
+// ok:true, `failed` one whose result was ok:false.
 interface ActivityLabels {
   readonly calling: (toolName: string) => string
   readonly done: (toolName: string) => string
+  readonly failed: (toolName: string) => string
   readonly runError: (message: string) => string
 }
 
@@ -55,21 +58,23 @@ type ActivityReducer = (state: AgentActivity, event: AGUIEvent) => AgentActivity
 // `(state, event)` shape useReducer expects. The reducer is pure: same events in, same activity out.
 function createActivityReducer(labels: ActivityLabels): ActivityReducer {
   // A tool call's entry is keyed by its toolCallId so the matching result can flip it from calling →
-  // success. An unknown id is ignored (the list is returned unchanged) — never throws.
+  // success/failed, read from the serialized result the event carries (see toolOutcomeStatus). An unknown
+  // id is ignored (the list is returned unchanged) — never throws.
   const settleToolCall = (
     log: readonly LogEntry[],
     event: ToolCallResultEvent
   ): readonly LogEntry[] =>
-    log.map((entry) =>
-      entry.id === event.toolCallId
-        ? {
-            ...entry,
-            status: 'success',
-            text: labels.done(entry.toolName ?? entry.text),
-            meta: event.content || undefined
-          }
-        : entry
-    )
+    log.map((entry) => {
+      if (entry.id !== event.toolCallId) return entry
+      const status = toolOutcomeStatus(event.content)
+      const name = entry.toolName ?? entry.text
+      return {
+        ...entry,
+        status,
+        text: status === 'failed' ? labels.failed(name) : labels.done(name),
+        meta: event.content || undefined
+      }
+    })
 
   const onToolCallStart = (state: AgentActivity, event: ToolCallStartEvent): AgentActivity => ({
     ...state,
