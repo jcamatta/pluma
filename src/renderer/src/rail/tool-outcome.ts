@@ -1,8 +1,9 @@
 // Calculation: the agent's tools serialize their AgentToolResult to JSON, which the SDK echoes back as a
-// tool_result block; the rail's TOOL_CALL_RESULT event carries that string as `content`. An { ok: false }
-// result means the tool failed and its step must render as failed, not as a green-check success. Anything
-// unparseable, or any result without an explicit ok:false, is treated as success — the reducer must never
-// throw on a malformed result, and a missing flag is not evidence of failure.
+// tool_result block; that string lands as the tool message's `content` and the projection keeps it as the
+// step's meta. An { ok: false } result means the tool failed and its step must render as failed, not as a
+// green-check success. Anything unparseable, or any result without an explicit ok:false, is treated as
+// success — the projection must never throw on a malformed result, and a missing flag is not evidence of
+// failure.
 
 import type { LogStatus } from './step'
 

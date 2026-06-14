@@ -62,7 +62,8 @@ function activityLabels(t: TFunction): ActivityLabels {
 function stepLabels(t: TFunction): StepLabels {
   return {
     calling: (tool) => t('rail.calling', { tool }),
-    done: (tool) => t('rail.done', { tool })
+    done: (tool) => t('rail.done', { tool }),
+    failed: (tool) => t('rail.toolFailed', { tool })
   }
 }
 

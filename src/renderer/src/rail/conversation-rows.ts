@@ -4,16 +4,19 @@
 // the live stream fragments a turn into several messages (a per-text-block assistant message, a separate
 // assistant message per tool call, then the tool result), while a reloaded turn is more consolidated.
 // Grouping by user-message boundaries and matching tool results to calls by id collapses both to the same
-// rows. A step is `calling` until its tool result lands, then `success`; failure styling is intentionally
-// not derived (AG-UI's apply() drops the tool error, so it cannot be shown live — see the plan). Labels
-// are injected so no copy lives here; same input → same output, no React, no IO.
+// rows. A step is `calling` until its tool result lands, then `success` or `failed` — the settled result
+// content (the tool's serialized { ok } payload, kept as the step's meta) is read by toolOutcomeStatus, so
+// an ok:false tool renders as failed on reload just as it did live. Labels are injected so no copy lives
+// here; same input → same output, no React, no IO.
 
 import type { Message, ToolCall, ToolMessage } from '@ag-ui/core'
-import type { LogEntry } from './step'
+import type { LogEntry, LogStatus } from './step'
+import { toolOutcomeStatus } from './tool-outcome'
 
 interface StepLabels {
   readonly calling: (toolName: string) => string
   readonly done: (toolName: string) => string
+  readonly failed: (toolName: string) => string
 }
 
 interface UserRow {
@@ -96,16 +99,30 @@ const assistantRow = (
   return [{ kind: 'assistant', id: first.id, text: folded.text, steps }]
 }
 
+// A settled step's status is read from its result content: ok:false → failed, otherwise success. An
+// unsettled step is still calling.
+const stepStatus = (step: RawStep): LogStatus =>
+  step.settled ? toolOutcomeStatus(step.meta ?? '') : 'calling'
+
 function createConversationRows(
   labels: StepLabels
 ): (messages: readonly Message[]) => readonly Row[] {
-  const toEntry = (step: RawStep): LogEntry => ({
-    id: step.id,
-    status: step.settled ? 'success' : 'calling',
-    text: step.settled ? labels.done(step.toolName) : labels.calling(step.toolName),
-    toolName: step.toolName,
-    ...(step.meta === undefined ? {} : { meta: step.meta })
-  })
+  const labelFor = (status: LogStatus, toolName: string): string => {
+    if (status === 'failed') return labels.failed(toolName)
+    if (status === 'calling') return labels.calling(toolName)
+    return labels.done(toolName)
+  }
+
+  const toEntry = (step: RawStep): LogEntry => {
+    const status = stepStatus(step)
+    return {
+      id: step.id,
+      status,
+      text: labelFor(status, step.toolName),
+      toolName: step.toolName,
+      ...(step.meta === undefined ? {} : { meta: step.meta })
+    }
+  }
 
   return (messages) =>
     groupTurns(messages).flatMap((turn) => [...userRow(turn), ...assistantRow(turn, toEntry)])

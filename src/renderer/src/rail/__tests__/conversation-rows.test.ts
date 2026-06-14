@@ -1,7 +1,8 @@
 // Tests for createConversationRows: the pure projection of agent.messages into rail rows. Covers turn
 // grouping (steps per turn, not just the last), tool-result matching by id (calling → success), an
 // unsettled call left "calling", a tool-only turn still yielding a row, no text/step bleed across turns,
-// and that the live-fragmented and reload-consolidated shapes of one turn project to the same content.
+// that an ok:false tool result settles the step as failed, and that the live-fragmented and
+// reload-consolidated shapes of one turn project to the same content.
 
 import type { Message } from '@ag-ui/core'
 import { describe, expect, it } from 'vitest'
@@ -9,7 +10,8 @@ import { createConversationRows } from '../conversation-rows'
 
 const labels = {
   calling: (name: string) => `Calling ${name}`,
-  done: (name: string) => `Used ${name}`
+  done: (name: string) => `Used ${name}`,
+  failed: (name: string) => `Failed ${name}`
 }
 const toRows = createConversationRows(labels)
 
@@ -78,6 +80,34 @@ describe('createConversationRows turns and steps', () => {
         id: 'c1',
         text: '',
         steps: [{ id: 'c1', status: 'success', text: 'Used ls', toolName: 'ls' }]
+      }
+    ])
+  })
+})
+
+describe('createConversationRows failed steps', () => {
+  it('settles a step as failed when its tool result is ok:false', () => {
+    const rows = toRows([
+      { id: 'u1', role: 'user', content: 'go' },
+      call('c1', 'write'),
+      { id: 'r1', role: 'tool', toolCallId: 'c1', content: '{"ok":false,"error":"nope"}' }
+    ])
+
+    expect(rows).toStrictEqual([
+      { kind: 'user', id: 'u1', text: 'go' },
+      {
+        kind: 'assistant',
+        id: 'c1',
+        text: '',
+        steps: [
+          {
+            id: 'c1',
+            status: 'failed',
+            text: 'Failed write',
+            toolName: 'write',
+            meta: '{"ok":false,"error":"nope"}'
+          }
+        ]
       }
     ])
   })
