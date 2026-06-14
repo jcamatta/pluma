@@ -110,13 +110,13 @@ describe('buildOptions · tool permissions', () => {
       cwd: undefined,
       state: undefined,
       toolServer,
-      tools: [spec('get_ranges'), spec('propose_edit')]
+      tools: [spec('get_content'), spec('propose_edit')]
     })
 
     expect(options.mcpServers).toStrictEqual({ frontend: toolServer })
     expect(options.hooks?.PreToolUse).toHaveLength(1)
     expect(options.allowedTools).toStrictEqual([
-      'mcp__frontend__get_ranges',
+      'mcp__frontend__get_content',
       'mcp__frontend__propose_edit'
     ])
   })
@@ -127,7 +127,7 @@ describe('buildOptions · tool permissions', () => {
       cwd: undefined,
       state: undefined,
       toolServer: undefined,
-      tools: [spec('get_ranges')]
+      tools: [spec('get_content')]
     })
 
     expect('allowedTools' in options).toBe(false)
@@ -136,8 +136,8 @@ describe('buildOptions · tool permissions', () => {
 
 describe('frontendAllowedTools', () => {
   it('namespaces each tool name under the frontend MCP server', () => {
-    expect(frontendAllowedTools([spec('get_ranges'), spec('create_annotation')])).toStrictEqual([
-      'mcp__frontend__get_ranges',
+    expect(frontendAllowedTools([spec('get_content'), spec('create_annotation')])).toStrictEqual([
+      'mcp__frontend__get_content',
       'mcp__frontend__create_annotation'
     ])
   })

@@ -7,14 +7,12 @@ import {
   createAnnotationTool,
   getContentTool,
   getCurrentSelectionTool,
-  getRangesTool,
   listOpenFilesTool,
   proposeEditTool
 } from '../agent/tools/specs'
 import { createAnnotationTool as runCreateAnnotation } from '../agent/tools/tool-create-annotation'
 import { getContent } from '../agent/tools/tool-get-content'
 import { getCurrentSelection } from '../agent/tools/tool-get-current-selection'
-import { getRanges } from '../agent/tools/tool-get-ranges'
 import { listOpenFiles } from '../agent/tools/tool-list-open-files'
 import { proposeEdit } from '../agent/tools/tool-propose-edit'
 import type { AnnotationSeverity } from './extensions/annotations'
@@ -30,7 +28,6 @@ interface EditorToolEntries {
   readonly list: ToolEntry
   readonly selection: ToolEntry
   readonly content: ToolEntry
-  readonly ranges: ToolEntry
   readonly annotation: ToolEntry
   readonly proposal: ToolEntry
 }
@@ -83,24 +80,15 @@ function readEntries(
   }
 }
 
-// The acting tools — resolve a tracked range, annotate it, or propose an edit. Each requires the file
-// `path`, resolved to its open editor; a path that is not open is a recoverable error.
-function actingEntries(
-  deps: EditorToolDeps
-): Pick<EditorToolEntries, 'ranges' | 'annotation' | 'proposal'> {
+// The acting tools — annotate a passage or propose an edit, each by the passage's exact text. Each
+// requires the file `path`, resolved to its open editor; a path that is not open is a recoverable error.
+function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotation' | 'proposal'> {
   const atPath = (path: string, run: (editor: Editor) => AgentToolResult): AgentToolResult => {
     const editor = deps.resolve(path)
     return editor ? run(editor) : noOpenEditor(path)
   }
 
   return {
-    ranges: {
-      spec: getRangesTool,
-      handler: (args) => {
-        assertWire<{ readonly path: string; readonly text: string }>(args, getRangesTool.name)
-        return atPath(args.path, (live) => getRanges(live, args))
-      }
-    },
     annotation: {
       spec: createAnnotationTool,
       handler: (args) => {
@@ -137,7 +125,6 @@ function useEditorTools(deps: EditorToolDeps): void {
   useFrontendTool(entries.list)
   useFrontendTool(entries.selection)
   useFrontendTool(entries.content)
-  useFrontendTool(entries.ranges)
   useFrontendTool(entries.annotation)
   useFrontendTool(entries.proposal)
 }

@@ -61,9 +61,9 @@ describe('reduceActivity', () => {
   it('shows a calling entry before its result arrives', () => {
     const state = fold([
       { type: EventType.RUN_STARTED },
-      { type: EventType.TOOL_CALL_START, toolCallId: 'tc-1', toolCallName: 'get_ranges' }
+      { type: EventType.TOOL_CALL_START, toolCallId: 'tc-1', toolCallName: 'get_content' }
     ])
-    expect(state.log[0]).toMatchObject({ status: 'calling', text: 'Calling get_ranges' })
+    expect(state.log[0]).toMatchObject({ status: 'calling', text: 'Calling get_content' })
   })
 
   it('ignores a result whose tool call id is unknown', () => {

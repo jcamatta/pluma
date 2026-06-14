@@ -28,9 +28,9 @@ describe('AGENT_SYSTEM_PROMPT', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('tools offered in this run')
   })
 
-  it('directs edits through the propose/range tool workflow', () => {
-    expect(AGENT_SYSTEM_PROMPT).toContain('get_ranges')
+  it('directs edits through propose_edit by the exact passage text', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('propose_edit')
+    expect(AGENT_SYSTEM_PROMPT).toContain('exact passage')
   })
 
   it('preserves the author voice by keeping edits surgical', () => {

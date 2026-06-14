@@ -47,21 +47,6 @@ const getContentTool: Tool = {
   }
 }
 
-const getRangesTool: Tool = {
-  name: 'get_ranges',
-  description:
-    'Resolve exact document text to a tracked range id. Returns an error when the text is missing or ambiguous.',
-  parameters: {
-    type: 'object',
-    additionalProperties: false,
-    required: ['path', 'text'],
-    properties: {
-      path: { type: 'string', description: filePathDescription },
-      text: { type: 'string' }
-    }
-  }
-}
-
 const createAnnotationTool: Tool = {
   name: 'create_annotation',
   description:
@@ -111,7 +96,6 @@ const agentToolSpecs: readonly Tool[] = [
   listOpenFilesTool,
   getCurrentSelectionTool,
   getContentTool,
-  getRangesTool,
   createAnnotationTool,
   proposeEditTool
 ]
@@ -120,7 +104,6 @@ export {
   listOpenFilesTool,
   getCurrentSelectionTool,
   getContentTool,
-  getRangesTool,
   createAnnotationTool,
   proposeEditTool,
   agentToolSpecs

@@ -73,16 +73,16 @@ function fakeApi(): FakeApi {
 const call: AgentToolCall = {
   runId: 'run-1',
   toolCallId: 'tc-1',
-  toolName: 'get_ranges',
+  toolName: 'propose_edit',
   args: { text: 'hello' }
 }
 
 describe('useToolBridge', () => {
   it('dispatches a tool call to its handler and sends the result back', async () => {
     const { api, fire, invoke } = fakeApi()
-    const ok: AgentToolResult = { ok: true, output: { type: 'json', value: { rangeId: 'r1' } } }
+    const ok: AgentToolResult = { ok: true, output: { type: 'json', value: { proposalId: 'p_1' } } }
     const handler = vi.fn(() => ok)
-    renderHook(() => useToolBridge(fakeRegistry(new Map([['get_ranges', handler]])), api))
+    renderHook(() => useToolBridge(fakeRegistry(new Map([['propose_edit', handler]])), api))
 
     fire(call)
     await vi.waitFor(() => expect(invoke).toHaveBeenCalled())
@@ -112,7 +112,7 @@ describe('useToolBridge', () => {
   it('catches a rejecting handler and answers with an error result', async () => {
     const { api, fire, invoke } = fakeApi()
     const handler = vi.fn(() => Promise.reject(new Error('boom')))
-    renderHook(() => useToolBridge(fakeRegistry(new Map([['get_ranges', handler]])), api))
+    renderHook(() => useToolBridge(fakeRegistry(new Map([['propose_edit', handler]])), api))
 
     fire(call)
     await vi.waitFor(() => expect(invoke).toHaveBeenCalled())
