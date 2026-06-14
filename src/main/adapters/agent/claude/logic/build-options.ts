@@ -64,4 +64,10 @@ const buildOptions = (input: BuildOptionsInput): ClaudeRunOptions => ({
   ...(input.cwd === undefined ? {} : { cwd: input.cwd })
 })
 
-export { buildOptions, frontendAllowedTools, TOOL_SERVER_KEY, type BuildOptionsInput }
+export {
+  buildOptions,
+  frontendAllowedTools,
+  DEFAULT_MODEL,
+  TOOL_SERVER_KEY,
+  type BuildOptionsInput
+}

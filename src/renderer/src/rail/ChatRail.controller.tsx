@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAgent } from '../agent/useAgent'
 import { ArtifactsPanelController } from '../artifacts/ArtifactsPanel.controller'
+import { ContextMeterController } from './ContextMeter.controller'
 import { useAgentActivityLog } from './useAgentActivityLog'
 import { useScrollSentMessageIntoView } from './useScrollSentMessageIntoView'
 import { useThreadsRefresh } from './useThreadsRefresh'
@@ -107,6 +108,7 @@ export function ChatRailController({
       value={value}
       model={runControls.model}
       effort={runControls.effort}
+      contextMeter={<ContextMeterController agent={agent} />}
       onChange={setValue}
       onSubmit={submit}
       onStop={() => agent.abortRun()}

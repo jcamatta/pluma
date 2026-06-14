@@ -6,6 +6,7 @@
 // run's controls here, not stacked under the assistant's message.
 
 import { ArrowUp, Square } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Button } from '@base-ui/react'
 import { motion } from 'motion/react'
 import { ComposerField } from './ComposerField'
@@ -19,6 +20,9 @@ interface RailComposerProps {
   readonly value: string
   readonly model: RunControlSelectProps
   readonly effort: RunControlSelectProps
+  // The context meter, built by the controller; sits with the send/stop action on the right of the
+  // toolbar. Absent until a run (or a resumed thread) has produced a usage figure.
+  readonly contextSlot?: ReactNode
   readonly onChange: (value: string) => void
   readonly onSubmit: () => void
   readonly onStop: () => void
@@ -32,6 +36,7 @@ export function RailComposer({
   value,
   model,
   effort,
+  contextSlot,
   onChange,
   onSubmit,
   onStop
@@ -55,35 +60,38 @@ export function RailComposer({
         <div className="flex items-center gap-2 px-3 pb-2 pt-1">
           <RunControlSelect {...model} />
           <RunControlSelect {...effort} />
-          {working ? (
-            <Button
-              type="button"
-              onClick={onStop}
-              aria-label={stop}
-              className="ml-auto flex size-8 items-center justify-center rounded-xl border border-(--line2) text-text-secondary"
-              render={
-                <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
-                  <Square size={13} />
-                </motion.button>
-              }
-            />
-          ) : (
-            <Button
-              type="button"
-              onClick={onSubmit}
-              disabled={!canSend}
-              aria-label={send}
-              className="ml-auto flex size-8 items-center justify-center rounded-xl bg-action-primary text-text-on-accent disabled:bg-(--line2) disabled:text-text-muted"
-              render={
-                <motion.button
-                  whileHover={canSend ? { scale: 1.08 } : undefined}
-                  whileTap={canSend ? { scale: 0.92 } : undefined}
-                >
-                  <ArrowUp size={17} />
-                </motion.button>
-              }
-            />
-          )}
+          <div className="ml-auto flex items-center gap-1">
+            {contextSlot}
+            {working ? (
+              <Button
+                type="button"
+                onClick={onStop}
+                aria-label={stop}
+                className="flex size-8 items-center justify-center rounded-xl border border-(--line2) text-text-secondary"
+                render={
+                  <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
+                    <Square size={13} />
+                  </motion.button>
+                }
+              />
+            ) : (
+              <Button
+                type="button"
+                onClick={onSubmit}
+                disabled={!canSend}
+                aria-label={send}
+                className="flex size-8 items-center justify-center rounded-xl bg-action-primary text-text-on-accent disabled:bg-(--line2) disabled:text-text-muted"
+                render={
+                  <motion.button
+                    whileHover={canSend ? { scale: 1.08 } : undefined}
+                    whileTap={canSend ? { scale: 0.92 } : undefined}
+                  >
+                    <ArrowUp size={17} />
+                  </motion.button>
+                }
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

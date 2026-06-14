@@ -10,7 +10,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AbstractAgent, type AgentSubscriber, type RunAgentInput } from '@ag-ui/client'
-import { EventType, type BaseEvent, type Message } from '@ag-ui/core'
+import { EventType, type BaseEvent, type Message, type State } from '@ag-ui/core'
 import { Observable } from 'rxjs'
 import { AgentContext } from '../../agent/AgentContext'
 import { ThreadControlsContext } from '../../agent/ThreadControlsContext'
@@ -86,6 +86,14 @@ class FakeAgent extends AbstractAgent {
         agent: this,
         input: BLANK_INPUT
       })
+    }
+  }
+
+  // The backend publishes context usage onto the shared state; drive onStateChanged the same way so the
+  // composer's context meter updates.
+  emitState(state: State): void {
+    for (const sub of this.subs) {
+      void sub.onStateChanged?.({ messages: this.messages, state, agent: this })
     }
   }
 
@@ -234,5 +242,26 @@ describe('ConversationRailController', () => {
 
     expect(agent.messages).toEqual([])
     expect(screen.getByText(i18n.t('rail.newChatEmpty'))).toBeInTheDocument()
+  })
+})
+
+describe('ConversationRailController context meter', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('shows the context meter in the composer once a usage snapshot arrives', () => {
+    const { agent } = renderRail()
+    expect(screen.queryByTestId('context-meter')).toBeNull()
+
+    act(() =>
+      agent.emitState({
+        contextUsage: {
+          usedTokens: 60_000,
+          windowTokens: 1_000_000,
+          breakdown: { inputTokens: 60_000, cacheReadTokens: 0, cacheCreationTokens: 0 }
+        }
+      })
+    )
+
+    expect(screen.getByRole('button', { name: /context/i })).toBeInTheDocument()
   })
 })

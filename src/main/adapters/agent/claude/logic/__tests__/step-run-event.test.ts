@@ -14,6 +14,10 @@ function asSdkMessage(literal: { type: string }): asserts literal is SDKMessage 
   void literal
 }
 
+// The fold's run-wide deps: the runId stamped on events and the model's context window (meter
+// denominator). 1M matches the offered models, so an assistant message's usage maps against it.
+const deps = { runId: 'run-1', contextWindow: 1_000_000 }
+
 const resultMessage = (subtype: SDKResultMessage['subtype'], isError: boolean): SDKMessage => {
   const literal = { type: 'result', subtype, is_error: isError }
   asSdkMessage(literal)
@@ -23,7 +27,7 @@ const resultMessage = (subtype: SDKResultMessage['subtype'], isError: boolean): 
 describe('stepRunEvent result handling', () => {
   it('finishes the run on a successful result', () => {
     const acc = newRunAccumulator()
-    const [, events] = stepRunEvent('run-1')(acc, resultMessage('success', false))
+    const [, events] = stepRunEvent(deps)(acc, resultMessage('success', false))
 
     expect(events).toStrictEqual([
       {
@@ -37,7 +41,7 @@ describe('stepRunEvent result handling', () => {
 
   it('errors the run on a failed result instead of a false finish', () => {
     const acc = newRunAccumulator()
-    const [, events] = stepRunEvent('run-1')(acc, resultMessage('error_during_execution', true))
+    const [, events] = stepRunEvent(deps)(acc, resultMessage('error_during_execution', true))
 
     expect(events).toStrictEqual([
       { type: EventType.RUN_ERROR, runId: 'run-1', message: 'error_during_execution' }
@@ -46,7 +50,7 @@ describe('stepRunEvent result handling', () => {
 
   it('reports a generic reason when a result is flagged in error but typed success', () => {
     const acc = newRunAccumulator()
-    const [, events] = stepRunEvent('run-1')(acc, resultMessage('success', true))
+    const [, events] = stepRunEvent(deps)(acc, resultMessage('success', true))
 
     expect(events).toStrictEqual([
       { type: EventType.RUN_ERROR, runId: 'run-1', message: 'agent run failed' }
@@ -57,7 +61,7 @@ describe('stepRunEvent result handling', () => {
 describe('stepRunEvent message routing', () => {
   it('maps a user message with a tool_result to a TOOL_CALL_RESULT event', () => {
     const acc = newRunAccumulator()
-    const [next, events] = stepRunEvent('run-1')(acc, {
+    const [next, events] = stepRunEvent(deps)(acc, {
       type: 'user',
       parent_tool_use_id: null,
       message: {
@@ -82,7 +86,7 @@ describe('stepRunEvent message routing', () => {
     const acc = newRunAccumulator()
     const init = { type: 'system', subtype: 'init', session_id: 'thread-9' }
     asSdkMessage(init)
-    const [next, events] = stepRunEvent('run-1')(acc, init)
+    const [next, events] = stepRunEvent(deps)(acc, init)
 
     expect(next.threadId).toBe('thread-9')
     expect(events).toStrictEqual([
@@ -92,7 +96,7 @@ describe('stepRunEvent message routing', () => {
 
   it('emits nothing for an unrelated message type', () => {
     const acc = newRunAccumulator()
-    const [next, events] = stepRunEvent('run-1')(acc, {
+    const [next, events] = stepRunEvent(deps)(acc, {
       type: 'user',
       parent_tool_use_id: null,
       message: { role: 'user', content: 'plain text' }
@@ -120,7 +124,7 @@ describe('stepRunEvent message routing', () => {
       asSdkMessage(literal)
       return literal
     }
-    const step = stepRunEvent('run-1')
+    const step = stepRunEvent(deps)
 
     // First assistant message: its text block is keyed by msg_a.
     const [acc1, started] = step(newRunAccumulator(), messageStart('msg_a'))
@@ -137,5 +141,47 @@ describe('stepRunEvent message routing', () => {
     expect(second).toStrictEqual([
       { type: EventType.TEXT_MESSAGE_START, messageId: 'msg_b-block-0', role: 'assistant' }
     ])
+  })
+})
+
+describe('stepRunEvent context usage', () => {
+  const assistant = (id: string): SDKMessage => {
+    const literal = {
+      type: 'assistant',
+      message: {
+        id,
+        usage: {
+          input_tokens: 1200,
+          cache_read_input_tokens: 11_000,
+          cache_creation_input_tokens: 200
+        }
+      }
+    }
+    asSdkMessage(literal)
+    return literal
+  }
+
+  it('publishes a context snapshot from an assistant message usage', () => {
+    const [, events] = stepRunEvent(deps)(newRunAccumulator(), assistant('msg_a'))
+
+    expect(events).toStrictEqual([
+      {
+        type: EventType.STATE_SNAPSHOT,
+        snapshot: {
+          contextUsage: {
+            usedTokens: 12_400,
+            windowTokens: 1_000_000,
+            breakdown: { inputTokens: 1200, cacheReadTokens: 11_000, cacheCreationTokens: 200 }
+          }
+        }
+      }
+    ])
+  })
+
+  it('skips a repeated assistant id so the same figure is not re-emitted', () => {
+    const [next] = stepRunEvent(deps)(newRunAccumulator(), assistant('msg_a'))
+    const [, again] = stepRunEvent(deps)(next, assistant('msg_a'))
+
+    expect(again).toStrictEqual([])
   })
 })

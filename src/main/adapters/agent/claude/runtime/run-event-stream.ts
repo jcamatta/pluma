@@ -13,6 +13,9 @@ import { newRunAccumulator, stepRunEvent } from '../logic/step-run-event'
 interface RunDeps {
   readonly runId: string
   readonly aborted: Effect.Effect<boolean>
+  // The context window of the model this run uses — the meter's denominator, folded into each assistant
+  // message's usage snapshot.
+  readonly contextWindow: number
 }
 
 const onQueryError = (deps: RunDeps): Stream.Stream<BaseEvent> =>
@@ -24,7 +27,10 @@ const onQueryError = (deps: RunDeps): Stream.Stream<BaseEvent> =>
 
 export const runEventStream = (query: Query, deps: RunDeps): Stream.Stream<BaseEvent> =>
   Stream.fromAsyncIterable(query, (error) => error).pipe(
-    Stream.mapAccum(newRunAccumulator(), stepRunEvent(deps.runId)),
+    Stream.mapAccum(
+      newRunAccumulator(),
+      stepRunEvent({ runId: deps.runId, contextWindow: deps.contextWindow })
+    ),
     Stream.flattenIterables,
     Stream.catchAll(() => onQueryError(deps))
   )
