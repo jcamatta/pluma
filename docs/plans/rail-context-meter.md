@@ -79,10 +79,9 @@ Each step is one small, independently green, additive commit. Phase A delivers t
 
 ### Phase A — live meter during a run
 
-**A1. Shared — usage data type + state guard.**
+**A1. Shared — usage data type.**
 
-- Add `src/shared/agent/context-usage.ts`: the wire `AgentContextUsage` Data type (`usedTokens`, `windowTokens`, `breakdown: { inputTokens, cacheReadTokens, cacheCreationTokens }`) and the single exported guard `readAgentContextUsage(state: unknown): AgentContextUsage | undefined` that reads `state.contextUsage` (the shape carried by both `STATE_SNAPSHOT.snapshot` and `agent.state`). No cast — a real `value is T` narrowing.
-- Add `src/shared/agent/__tests__/context-usage.test.ts`.
+- Add `src/shared/agent/context-usage.ts`: the wire `AgentContextUsage` Data type (`usedTokens`, `windowTokens`, `breakdown: { inputTokens, cacheReadTokens, cacheCreationTokens }`). Type-only — `src/shared` is not one of the vitest projects, so the guard that reads it (`readAgentContextUsage`) lives renderer-side in A4 where it is collected and tested. The backend produces this shape in A2.
 
 **A2. Backend — pure calcs: model→window and SDK-usage→context.**
 
@@ -99,9 +98,10 @@ Each step is one small, independently green, additive commit. Phase A delivers t
 
 **A4. Renderer — usage hook + display calcs.**
 
+- Add `src/renderer/src/rail/read-context-usage.ts` — the `readAgentContextUsage(state: unknown): AgentContextUsage | undefined` guard (reads `state.contextUsage`, `value is T`, no cast). Renderer-side so the renderer vitest project collects it.
 - Add `src/renderer/src/rail/context-meter-logic.ts` — `contextRatio`, `contextPercent`, `formatTokenCount` (`"12.4k"`, `"1.0M"`). Pure.
 - Add `src/renderer/src/rail/useAgentContextUsage.ts` — subscribes `onStateChanged`, reads `agent.state` through `readAgentContextUsage`, returns `AgentContextUsage | undefined` (read-only query hook).
-- Add tests: logic direct; hook via `renderHook` against a fake agent (mirror the `useAgentActivityLog` harness).
+- Add tests: guard + logic direct; hook via `renderHook` against a fake agent (mirror the `useAgentActivityLog` harness).
 
 **A5. Renderer — `ContextMeter` plain component.**
 
