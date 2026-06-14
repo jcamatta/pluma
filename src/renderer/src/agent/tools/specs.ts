@@ -24,7 +24,8 @@ const listOpenFilesTool: Tool = {
 
 const getCurrentSelectionTool: Tool = {
   name: 'get_current_selection',
-  description: 'Return the current editor selection as text or Markdown.',
+  description:
+    'Return the file path and the exact text the user currently has selected in the active editor, so you can act on it with propose_edit or create_annotation. The text is empty when there is no selection.',
   parameters: {
     type: 'object',
     additionalProperties: false,

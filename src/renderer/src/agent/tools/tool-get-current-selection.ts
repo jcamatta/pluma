@@ -1,9 +1,9 @@
-// Handler for `get_current_selection`: serialize the selected slice to Markdown and register it as a
-// tracked range, so the agent gets back a rangeId it can pass to propose_edit / create_annotation. Also
-// reports the file the selection is in, so the agent knows the path to pass to those acting tools.
+// Handler for `get_current_selection`: report the file the user is in and the exact text they have
+// selected. A pure read — it does not touch editor state. The text is the bare selected text (not
+// uniquified), so the agent can pass it straight to propose_edit or create_annotation, which resolve it
+// against the document. Empty when there is no selection.
 
 import type { Editor } from '@tiptap/core'
-import { setRange } from '../../editor/extensions/ranges'
 import type { AgentToolResult } from './types'
 
 interface GetCurrentSelectionInput {
@@ -13,14 +13,9 @@ interface GetCurrentSelectionInput {
 
 function getCurrentSelection({ editor, path }: GetCurrentSelectionInput): AgentToolResult {
   const { from, to } = editor.state.selection
-  const slice = editor.state.doc.cut(from, to)
-  const text = editor.storage.markdown.manager.serialize(slice.toJSON())
-  const range = setRange({
-    editor,
-    range: { from, to, originalText: editor.state.doc.textBetween(from, to, '\n') }
-  })
+  const text = editor.state.doc.textBetween(from, to, '\n')
 
-  return { ok: true, output: { type: 'json', value: { path, rangeId: range.id, text } } }
+  return { ok: true, output: { type: 'json', value: { path, text } } }
 }
 
 export { getCurrentSelection }
