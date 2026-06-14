@@ -43,6 +43,8 @@ interface ConversationRailViewProps {
   // handler) and rendered in the composer footer.
   readonly model: RunControlSelectProps
   readonly effort: RunControlSelectProps
+  // The context meter node for the composer toolbar, built by the controller.
+  readonly contextMeter?: ReactNode
   readonly onChange: (value: string) => void
   readonly onSubmit: () => void
   readonly onStop: () => void
@@ -103,6 +105,7 @@ function ChatPane({
   value,
   model,
   effort,
+  contextMeter,
   onChange,
   onSubmit,
   onStop
@@ -115,6 +118,7 @@ function ChatPane({
   | 'value'
   | 'model'
   | 'effort'
+  | 'contextMeter'
   | 'onChange'
   | 'onSubmit'
   | 'onStop'
@@ -133,6 +137,7 @@ function ChatPane({
         value={value}
         model={model}
         effort={effort}
+        contextSlot={contextMeter}
         onChange={onChange}
         onSubmit={onSubmit}
         onStop={onStop}
@@ -187,6 +192,7 @@ export function ConversationRailView(props: ConversationRailViewProps): React.JS
           value={props.value}
           model={props.model}
           effort={props.effort}
+          contextMeter={props.contextMeter}
           onChange={props.onChange}
           onSubmit={props.onSubmit}
           onStop={props.onStop}

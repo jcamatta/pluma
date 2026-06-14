@@ -73,7 +73,7 @@ export function ContextMeter({ usage, labels }: ContextMeterProps): React.JSX.El
               <Popover.Trigger
                 aria-label={summary}
                 data-testid="context-meter"
-                className="ml-auto flex items-center justify-center rounded-lg p-1 text-text-secondary hover:bg-(--hover)"
+                className="flex items-center justify-center rounded-lg p-1 text-text-secondary hover:bg-(--hover)"
                 render={<motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }} />}
               >
                 <Ring ratio={ratio} />

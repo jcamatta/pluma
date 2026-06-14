@@ -108,7 +108,14 @@
     "step_other": "{{count}} steps",
     "calling": "Calling {{tool}}…",
     "done": "{{tool}}",
-    "runError": "Run failed: {{message}}"
+    "runError": "Run failed: {{message}}",
+    "context": {
+      "label": "Context",
+      "title": "Context window",
+      "input": "Input",
+      "cacheRead": "Cached",
+      "cacheWrite": "Cache write"
+    }
   },
   "threads": {
     "title": "Chats",
