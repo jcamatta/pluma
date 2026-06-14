@@ -36,7 +36,7 @@ const PROMPT =
   '"Consider a sharper image.".\n' +
   '2. Call propose_edit to replace the word "mat" with "rug".\n' +
   'First call list_open_files to find the path of the active file, then read it with get_content and ' +
-  'pass that path to get_ranges (resolve each word), create_annotation and propose_edit. ' +
+  'pass that path, plus the exact word, to create_annotation and propose_edit. ' +
   'Do not reply with prose and do not ask for confirmation.'
 
 // The cross-file run: the user is active in chapter.md, but the agent is told to annotate notes.md by
@@ -50,7 +50,7 @@ const CROSS_FILE_PROMPT =
   `"${CROSS_FILE_LABEL}" and description "A loose thread to follow.". Do not touch any other file. ` +
   'Do not reply with prose and do not ask for confirmation.'
 
-// Two real Claude tool round-trips (resolve a range, then act, twice over) need well over the default.
+// Two real Claude tool round-trips (read, then act, twice over) need well over the default.
 test.setTimeout(180_000)
 
 test('shows the agent annotation and proposal in Review, and applies the proposal on Accept', async () => {

@@ -90,14 +90,17 @@ const createAnnotationTool: Tool = {
 const proposeEditTool: Tool = {
   name: 'propose_edit',
   description:
-    'Propose replacing a tracked range with new text. Requires a rangeId from get_ranges. The user reviews the edit inline and accepts or rejects it; the change is not applied until accepted. Returns an error when the range is missing or its text has changed.',
+    'Propose replacing a passage with new text. Pass the exact text of the passage to replace, copied verbatim from the document. The user reviews the edit inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the text is absent and ambiguous when it occurs more than once — grow the text until it is unique.',
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['path', 'rangeId', 'replacementText'],
+    required: ['path', 'text', 'replacementText'],
     properties: {
       path: { type: 'string', description: filePathDescription },
-      rangeId: { type: 'string' },
+      text: {
+        type: 'string',
+        description: 'The exact passage to replace, copied verbatim. Must occur exactly once.'
+      },
       replacementText: { type: 'string' }
     }
   }

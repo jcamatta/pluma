@@ -119,7 +119,7 @@ function actingEntries(
       handler: (args) => {
         assertWire<{
           readonly path: string
-          readonly rangeId: string
+          readonly text: string
           readonly replacementText: string
         }>(args, proposeEditTool.name)
         return atPath(args.path, (live) => proposeEdit(live, args))
