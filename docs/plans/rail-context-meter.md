@@ -27,6 +27,20 @@ Per the current models reference, both models Pluma uses have a **native 1M-toke
 
 So `contextWindowForModel`: `claude-opus-4-8` → `1_000_000`, `claude-sonnet-4-6` → `1_000_000`, default → `200_000`. (Caveat for the record: on Microsoft Foundry Opus 4.8 is capped at 200k — not a surface Pluma targets. Also: the Opus-4.7+ tokenizer produces ~30% more tokens for the same text, which only affects how fast the meter fills, not our math.) A more robust alternative to a hardcoded map is the **Models API** (`max_input_tokens` per model), but that adds a network call; the static map is enough for v1.
 
+## Progress
+
+**Phase A — DONE and verified** (branch `feat/rail-context-meter`). All four checks green (`lint`, `test:coverage`, `type-coverage`, `build`) and the real-app e2e passes (a live Claude turn shows the meter and opens the breakdown). Landed:
+
+- A1 — `src/shared/agent/context-usage.ts` (wire Data type).
+- A2 — `context-window.ts` (1M map, 200k default) + `to-context-usage.ts` + the application domain type `src/main/application/agent/data/context-usage.ts` (adapters can't import `src/shared`, so the domain type lives in application; the wire type stays in shared). Tested.
+- A3 — `step-run-event.ts` emits `STATE_SNAPSHOT` from each `assistant` message (deduped by id); window threaded via `run-event-stream.ts` ← `claude-runtime-agent.ts` using `contextWindowForModel(state.model ?? DEFAULT_MODEL)`.
+- A4 — renderer guard `read-context-usage.ts`, display calcs `context-meter-logic.ts`, hook `useAgentContextUsage.ts` (subscribes `onStateChanged`, inits from `agent.state`). Tested.
+- A5 — `ContextMeter.tsx` plain component: a **conic-gradient** ring (hand-rolled `<svg>` is lint-banned), Base UI Tooltip (hover) + Popover (click breakdown), Motion on the trigger.
+- A6 — wired through the composer: `RailComposer.view` `contextSlot`, `ConversationRail.view` `contextMeter`, and a new `ContextMeter.controller.tsx` (extracted so `ChatRailController` stays under the statement limit). i18n keys `rail.context.*` in **en.json and es.json** (a recent PR added Spanish + a parity test — the "only en" note is stale).
+- e2e — `rail-context-meter` feature id + `e2e/rail-context-meter.e2e.ts` (live-only; the resume `operation:agent.thread-context` id belongs to Phase B).
+
+**Phase B — not started.** Steps B1–B5 + the resume e2e assertion remain (see below).
+
 ## End-to-end scenario / flow
 
 **Scenario — live.** Marta has a folder open and the rail open. She types _"summarize my draft"_ and Sends. The agent reads files and replies. As the model answers, a ring appears at ~1%. Hover: _"Context 12.4k / 1.0M (1%)"_. Click: _Input 1.2k · Cache 11.1k · Cache write 0_. She sends a longer turn; the ring grows.
