@@ -117,6 +117,9 @@ hooks) and renderer adapters may reach IPC.
 - **Extract pure calculations** out of hooks/actions into a sibling `*-logic.ts` so DOM/`localStorage`
   /event math is unit-testable without a DOM.
 - **Custom CSS variables without a cast:** type the style object as `CSSProperties & { '--my-var': T }`.
+- **No `console`** — surface failures as values or through an explicit logging path, not `console.*`.
+- The renderer never imports `src/main` internals; it reaches the backend only through the preload
+  `window.api` bridge (and only via a renderer adapter).
 - **Comments explain _why_, never restate _what_;** don't cite plan IDs that won't outlive the docs.
 
 ## Base UI + Motion

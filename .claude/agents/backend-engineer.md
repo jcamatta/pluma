@@ -110,6 +110,10 @@ may keep a plain service name (`FileWriter`). Tests live in a `__tests__/` folde
 - **No `let`, no `var`, no reassignment.** Model change with new values, recursion, or Effect.
 - **No global mutable state.** State is passed explicitly or held by an Effect service.
 - **No input mutation** (`no-param-reassign`).
+- **No `throw`** outside the sanctioned `src/shared/invariant.ts` — return a `Result` or fail the
+  Effect with a typed error.
+- **No `console`.** Logging is an action — surface failures as values (`Result`) or through an
+  explicit logging port.
 - **One export per file** (strong default; a co-located type for the single export and barrel
   `index.ts` re-exports are the only exceptions). **One responsibility per file.**
 - **Comments explain _why_, never restate _what_.** Don't narrate code, and don't cite plan IDs
@@ -119,7 +123,10 @@ may keep a plain service name (`FileWriter`). Tests live in a `__tests__/` folde
   `max-statements` 12, `max-depth` 3, `complexity` 8, `max-nested-callbacks` 3.
 - **Import Effect by module, not the barrel** (`@effect/no-import-from-barrel-package`).
 - **Layer boundaries are lint-enforced** (`import-x/no-restricted-paths`): `application` may not import
-  `adapters`/`ipc`. The single sanctioned `throw` carve-out is `src/shared/invariant.ts`.
+  `adapters`/`ipc`. `src/shared` is the **wire layer** (the serialized DTO types crossing IPC):
+  `application` and `adapters` do **not** import it — only IPC handlers map between domain types and
+  wire types. The renderer never imports `src/main` internals; it reaches main only through the preload
+  `window.api` bridge. (`src/shared/invariant.ts` is the single sanctioned `throw` carve-out.)
 
 ## Testing
 
