@@ -14,6 +14,7 @@ const FEATURES = [
   'explorer',
   'editor',
   'editor-tabs',
+  'editor-external-sync',
   'workspace-open',
   'settings',
   'rail',

@@ -42,7 +42,9 @@ function useEditorFileSync(editor: Editor | null, path: string | null): void {
     if (reconcileFileContent(disk, baseRef.current) === 'skip') return
     baseRef.current = disk
     if (editor.getMarkdown() !== disk) {
-      editor.commands.setContent(disk, { contentType: 'markdown' })
+      // emitUpdate: false — applying disk content must not look like a user edit, or it would schedule
+      // an autosave that could write stale content back over a fresh external change.
+      editor.commands.setContent(disk, { contentType: 'markdown', emitUpdate: false })
     }
   }, [editor, disk])
 
