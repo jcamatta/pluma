@@ -4,6 +4,7 @@
 
 import type { Message } from '@ag-ui/core'
 import type { Result } from '../../../../shared/ipc/ipc-result'
+import type { AgentContextUsage } from '../../../../shared/agent/context-usage'
 import type { ThreadReadError, ThreadSummary } from '../../../../shared/ipc/ipc-contract/agent'
 
 interface ThreadsReaderPort {
@@ -12,6 +13,10 @@ interface ThreadsReaderPort {
     cwd: string,
     id: string
   ) => Promise<Result<readonly Message[], ThreadReadError>>
+  readonly getThreadContext: (
+    cwd: string,
+    id: string
+  ) => Promise<Result<AgentContextUsage | null, ThreadReadError>>
 }
 
 export type { ThreadsReaderPort }

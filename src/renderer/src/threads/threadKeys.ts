@@ -10,4 +10,8 @@ function threadHistoryKey(cwd: string, id: string): readonly [string, string, st
   return ['thread-history', cwd, id]
 }
 
-export { threadsKey, threadHistoryKey }
+function threadContextKey(cwd: string, id: string): readonly [string, string, string] {
+  return ['thread-context', cwd, id]
+}
+
+export { threadsKey, threadHistoryKey, threadContextKey }
