@@ -108,7 +108,14 @@
     "step_other": "{{count}} pasos",
     "calling": "Llamando a {{tool}}…",
     "done": "{{tool}}",
-    "runError": "La ejecución falló: {{message}}"
+    "runError": "La ejecución falló: {{message}}",
+    "context": {
+      "label": "Contexto",
+      "title": "Ventana de contexto",
+      "input": "Entrada",
+      "cacheRead": "En caché",
+      "cacheWrite": "Escritura de caché"
+    }
   },
   "threads": {
     "title": "Chats",
