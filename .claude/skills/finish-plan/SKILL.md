@@ -27,10 +27,11 @@ Run the definition-of-done checks and report each result:
 
 If any fails, **stop** — the plan is not finishable until they pass. Do not open a PR over red checks.
 
-## 2. Prove the change works (test-functionality skill)
+## 2. Prove the change works — independently (change-validator agent)
 
-Invoke the `test-functionality` skill (`.claude/skills/test-functionality/SKILL.md`). It exercises the actual change the cheapest faithful way — a throwaway script against the real use cases/`window.api`, a temp harness, or driving the built app with Playwright's Electron driver (screenshotting only for its own visual judgment) — and returns a **written** `## Proof it works` evidence report with real transcripts and a final `Evidence verdict` line. No images are committed or uploaded; the evidence that ships is the text.
+Validation is done by a **fresh, independent agent**, not inline in this context (you helped write the change, so you are not a neutral judge). Dispatch the **`change-validator`** subagent (via the Agent tool), passing it the plan path and the diff range `main...HEAD`. Its body tells it to follow `.claude/skills/test-functionality/SKILL.md` exactly: exercise the actual change the cheapest faithful way — a throwaway script against the real use cases/`window.api`, a temp harness, or driving the built app with Playwright's Electron driver — covering the happy path **and** the negative cases, and return a **written** `## Proof it works` evidence report with real transcripts and a final `Evidence verdict` line. No images are committed; the evidence that ships is the text.
 
+- If the `change-validator` agent is unavailable (e.g. it was added in this same session and Claude Code hasn't restarted yet, so it isn't in the agent list), fall back to invoking the `test-functionality` skill inline — but prefer the independent agent whenever it is available.
 - If the verdict is **FAIL**, stop: the plan is not finishable. Report the failing behaviors to the user instead of opening the PR.
 - If the verdict is **PASS**, keep the report verbatim — it goes into the PR body in step 3.
 

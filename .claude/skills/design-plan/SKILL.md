@@ -41,7 +41,7 @@ Create `docs/plans/<name>.md` (kebab-case, descriptive — e.g. `chat-panel.md`,
 
 - **Title + one-paragraph summary** — the feature in product terms.
 - **Done** — a concrete definition of "done": what the user can do when it's shipped, and which checks/e2e must be green.
-- **Steps** — the sliced sequence from step 1, numbered. For each step: the files it adds/changes (by repo-relative path and role), what it delivers, and the tests it lands with. Keep each step's prose to what it delivers and why a decision was made — not editing mechanics.
+- **Steps** — the sliced sequence from step 1, numbered. **Tag each step with its area** — `[shared]`, `[backend]`, `[frontend]`, or `[e2e]` — so the orchestrator (`build-feature`) knows which worker agent to dispatch for it. For each step: the files it adds/changes (by repo-relative path and role), what it delivers, and the tests it lands with. Keep each step's prose to what it delivers and why a decision was made — not editing mechanics.
 - **Constraints** — the layering/CQS/`Result`/tokens/no-new-deps bounds that apply, and any feature-specific invariants.
 - **Open questions** — anything unsettled. Mark each `SETTLED`/open as it's resolved; an open question blocks the steps that depend on it.
 
