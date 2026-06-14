@@ -5,7 +5,7 @@
 // query; the event stream then closes with an interrupt outcome instead of an error.
 //
 // Frontend tools suspend through the run's tool bridge: each generated SDK tool handler (see
-// build-tool-server) calls the bridge, which keeps the handler's promise pending until the renderer
+// build-frontend-tool-server) calls the bridge, which keeps the handler's promise pending until the renderer
 // answers and `submitToolResult` resolves it. On abort the bridge rejects any outstanding calls.
 
 import { query } from '@anthropic-ai/claude-agent-sdk'
@@ -23,8 +23,8 @@ import {
 } from '../../../../application/agent/port/runtime-agent.port'
 import { buildOptions, DEFAULT_MODEL } from '../logic/build-options'
 import { contextWindowForModel } from '../logic/context-window'
-import { buildToolServer } from './build-tool-server'
-import { createToolBridge, type ToolBridge } from './tool-bridge'
+import { buildFrontendToolServer } from './build-frontend-tool-server'
+import { createToolBridge, type ToolBridge } from '../../tools/tool-bridge'
 import { runEventStream } from './run-event-stream'
 import { streamInput } from './stream-input'
 
@@ -50,7 +50,7 @@ const startRun = (
     const { input } = request
     const runId = crypto.randomUUID()
     const bridge = createToolBridge(request.sendToolCall)
-    const toolServer = buildToolServer(input.tools, { bridge, runId })
+    const toolServer = buildFrontendToolServer(input.tools, { bridge, runId })
     const sdkQuery = yield* Effect.try({
       try: () =>
         query({

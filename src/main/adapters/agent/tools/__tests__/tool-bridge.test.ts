@@ -3,7 +3,7 @@
 // every outstanding call with an error; an unknown toolCallId is ignored.
 
 import { describe, expect, it, vi } from 'vitest'
-import type { AgentToolCall } from '../../../../../application/agent/data/agent-tool'
+import type { AgentToolCall } from '../../../../application/agent/data/agent-tool'
 import { createToolBridge } from '../tool-bridge'
 
 const call = (toolCallId: string): AgentToolCall => ({
