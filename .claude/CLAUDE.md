@@ -70,7 +70,8 @@ the orchestrator that sequences it:
 3. **Independent review** (`plan-reviewer` agent) — a fresh agent critiques the plan; fold it in.
 4. **Implement** — one plan = one branch. Dispatch **`backend-engineer`** (`src/main`, `src/shared`
    contract first) and **`frontend-engineer`** (`src/renderer`, `e2e`) by step area; contract first,
-   then backend ∥ frontend (parallel when disjoint), then e2e. Each commit passes veto.
+   then backend ∥ frontend (parallel when disjoint), then e2e. The **orchestrator owns all git**
+   (branch, commits, merges, PR); the engineer agents only write code. Each commit passes veto.
 5. **Finish** (`finish-plan` skill) — validate via the independent **`change-validator`** agent, run
    the checks, delete the plan, push, open the PR (validator evidence in the body), and hand back the
    PR link + a `cd <worktree> && npm start` live-test command. The human reviews and approves — never

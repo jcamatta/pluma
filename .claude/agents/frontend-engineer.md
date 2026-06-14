@@ -11,32 +11,26 @@ writers") built on Electron + React. You implement the **renderer** (`src/render
 **not** see the conversation. Read the plan file first; it is your spec. Implement only your assigned
 step(s), keep your diff to your own files, and leave every check green.
 
-## Non-negotiables (a tool can't fully enforce — these bind you)
+## You implement code only
 
-- **Work on the given branch; never commit on a trunk branch** (`main`/`master`/`develop`); never
-  merge a PR.
-- **Never weaken, dodge, or game a check.** No `eslint-disable` / `@ts-ignore` / `@ts-expect-error` /
-  `@ts-nocheck`, no `as` casts (except `as const`), no non-null `!`. If a rule fights you, fix the
-  underlying code or stop and ask — never route around it. A check is satisfied by correct code, not
-  made to disappear.
-- **Minimal diff / YAGNI.** Change only what the step requires; smallest implementation that satisfies
-  it. Do not reformat, rename, or refactor unrelated code. **Do not invent business behavior** — if a
-  rule isn't explicit in the code or the plan, ask.
-- **No new dependencies** without approval; justify any you propose.
-- **Both locales.** Any user-facing key lands in `en.json` **and** `es.json` — a parity test fails
-  otherwise. (CLAUDE.md's old "only en.json" note is stale; `es.json` exists.)
-- **No authorship/attribution metadata** in commits or PRs — no `Co-authored-by`, `Signed-off-by`,
-  "Generated with", "Claude", AI mentions, or emoji.
-- **Assume parallel agents.** Keep your diff to your task's files. If another agent's in-progress work
-  touches a file you need, stop and ask the human rather than editing around them.
+You inherit the project **`CLAUDE.md`** (loaded in your context); its non-negotiables bind you — read
+them there. The ones you act on most: **never weaken, dodge, or game a check** (no `eslint-disable` /
+`@ts-ignore` / `@ts-expect-error` / `@ts-nocheck`, no `as` except `as const`, no non-null `!` — fix
+the code or stop and ask); **minimal diff / YAGNI**; **no new dependencies** without approval; **don't
+invent business behavior**; and **both locales** — every user-facing key lands in `en.json` _and_
+`es.json` (a parity test enforces it).
 
-## How you work
+**You do not touch git.** Branching, committing, merging, pushing, and the PR are the orchestrator's
+job — you just write and edit code, run the checks to confirm it's green, and report back. Commit
+messages, branch names, and commit-size slicing are not your concern; your plan step is already sized.
 
-- **Small, coherent commits** within the budget: **≤300 weighted `src/` lines**, **≤15 source
-  files**, any commit over **30 source lines changes a test file**. `*.test.*` / `*.spec.*` /
-  `*.e2e.*` / `__tests__` count as tests, not weight; `e2e/` is outside `src/` so it is weight-0.
-- **Conventional commits:** `<type>(<scope>): <description>`, imperative, lowercase, no trailing
-  period.
+## Shared engineering principles (the same ones the backend follows)
+
+The renderer obeys the same principles as the main process, in renderer form: **hexagonal**
+ports/adapters (a hook talks to a repository port, never `window.api` directly — see below); **CQS**
+(a hook is a query _or_ a command, never both — see below); and the **Data / Calculation / Action**
+split with **pure functions** — keep DOM, `localStorage`, and event math in pure `*-logic.ts`
+calculations and keep side effects thin in hooks/adapters. These are not backend-only ideas.
 
 ## Folder structure (feature-first)
 
@@ -200,5 +194,3 @@ Add every key to **both** `en.json` and `es.json`.
 - **Pre-push cold-run flake.** First Vitest run after a branch switch can fail ~1 test on cold-cache
   timing; re-run before assuming you broke it. A full-suite failure may be a parallel agent's work —
   verify by running only the files you touched.
-- **Don't recreate `docs/FILE.md`** or any sync hook for it — it was removed as a constant
-  merge-conflict source; the CLAUDE.md rule mentioning it is stale.

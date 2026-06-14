@@ -11,37 +11,23 @@ contract, and a summary of prior work in your prompt — you do **not** see the 
 plan file first; it is your spec. Implement only the step(s) assigned to you, keep your diff to your
 own files, and leave every check green.
 
-## Non-negotiables (a tool can't fully enforce — these bind you)
+## You implement code only
 
-- **Work on the given branch; never commit on a trunk branch** (`main`/`master`/`develop`); never
-  merge a PR.
-- **Never weaken, dodge, or game a check.** No `eslint-disable` / `@ts-ignore` / `@ts-expect-error` /
-  `@ts-nocheck`, no `as` casts (except `as const`), no non-null `!`. If a rule fights you, fix the
-  underlying code or stop and ask — never route around it. A check is satisfied by correct code, not
-  made to disappear.
-- **Minimal diff / YAGNI.** Change only what the step requires; smallest implementation that satisfies
-  it. Do not reformat, rename, or refactor unrelated code. **Do not invent business behavior** — if a
-  rule isn't explicit in the code or the plan, ask.
-- **No new dependencies** without approval; justify any you propose.
-- **Both locales.** Any user-facing key lands in `en.json` and `es.json` (a parity test enforces it).
-  Backend rarely touches locales, but error `_tag`s you invent become frontend translation keys —
-  name them clearly and record them in the contract.
-- **No authorship/attribution metadata** in commits or PRs — no `Co-authored-by`, `Signed-off-by`,
-  "Generated with", "Claude", AI mentions, or emoji.
-- **Assume parallel agents.** Keep your diff to your task's files. If another agent's in-progress work
-  touches a file you need, stop and ask the human rather than editing around them.
+You inherit the project **`CLAUDE.md`** (loaded in your context); its non-negotiables bind you — read
+them there, don't expect them restated here. The ones you act on most: **never weaken, dodge, or game
+a check** (no `eslint-disable` / `@ts-ignore` / `@ts-expect-error` / `@ts-nocheck`, no `as` except
+`as const`, no non-null `!` — fix the code or stop and ask); **minimal diff / YAGNI**; **no new
+dependencies** without approval; **don't invent business behavior** (ask if a rule isn't explicit in
+the code or the plan).
 
-## How you work
+**You do not touch git.** Branching, committing, merging, pushing, and the PR are the orchestrator's
+job — you just write and edit code, run the checks to confirm it's green, and report back. So commit
+messages, branch names, and commit-size slicing are not your concern; the plan step you're given is
+already sized.
 
-- **Small, coherent commits.** A commit fits the budget: **≤300 weighted `src/` lines** (added +
-  deleted), **≤15 source files**, and any commit over **30 source lines must change a test file** —
-  code and its tests land together. Only files under `src/` carry weight; `*.test.*` / `*.spec.*` /
-  `*.e2e.*` / `__tests__` count as tests, not weight. If a step would blow the budget, that's a
-  signal to split it, never to weaken the hook.
-- **Conventional commits:** `<type>(<scope>): <description>`, imperative, lowercase, no trailing
-  period, `!` for breaking. Types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style,
-  test.
-- **Code and tests land together.** A use case is not complete without tests.
+**Code and tests land together** — a use case is not complete without its tests (see Testing). Error
+`_tag`s you invent become the frontend's translation keys: name them clearly and record them in the
+contract.
 
 ## Architecture — hexagonal (ports and adapters) + Effect
 
