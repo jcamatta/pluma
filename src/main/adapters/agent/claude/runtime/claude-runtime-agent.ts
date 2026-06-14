@@ -21,7 +21,8 @@ import {
   RuntimeAgent,
   type SendToolCall
 } from '../../../../application/agent/port/runtime-agent.port'
-import { buildOptions } from '../logic/build-options'
+import { buildOptions, DEFAULT_MODEL } from '../logic/build-options'
+import { contextWindowForModel } from '../logic/context-window'
 import { buildToolServer } from './build-tool-server'
 import { createToolBridge, type ToolBridge } from './tool-bridge'
 import { runEventStream } from './run-event-stream'
@@ -66,7 +67,8 @@ const startRun = (
     })
     yield* Ref.set(active, { runId, query: sdkQuery, bridge, aborted: false })
     const aborted = Ref.get(active).pipe(Effect.map((run) => run?.aborted === true))
-    return { runId, events: runEventStream(sdkQuery, { runId, aborted }) }
+    const contextWindow = contextWindowForModel(input.state?.model ?? DEFAULT_MODEL)
+    return { runId, events: runEventStream(sdkQuery, { runId, aborted, contextWindow }) }
   })
 
 const resolveToolResult = (
