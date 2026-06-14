@@ -76,6 +76,7 @@ export function ChatRailController({
   const activity = useAgentActivityLog(agent, {
     calling: (tool) => t('rail.calling', { tool }),
     done: (tool) => t('rail.done', { tool }),
+    failed: (tool) => t('rail.toolFailed', { tool }),
     runError: (message) => t('rail.runError', { message })
   })
 
