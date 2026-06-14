@@ -6,17 +6,21 @@
 
 import { createContext } from 'react'
 import type { Message } from '@ag-ui/core'
+import type { AgentContextUsage } from '../../../shared/agent/context-usage'
 
 interface ThreadControls {
   readonly seedThread: (id: string, messages: readonly Message[]) => void
   readonly newThread: () => void
   readonly currentThreadId: () => string | undefined
+  // Seed (or clear) the context meter for a resumed thread; the live run path writes it directly.
+  readonly seedContext: (usage: AgentContextUsage | null) => void
 }
 
 const ThreadControlsContext = createContext<ThreadControls>({
   seedThread: () => undefined,
   newThread: () => undefined,
-  currentThreadId: () => undefined
+  currentThreadId: () => undefined,
+  seedContext: () => undefined
 })
 
 export { ThreadControlsContext }

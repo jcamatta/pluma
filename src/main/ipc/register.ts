@@ -15,13 +15,15 @@ import {
   AGENT_RENAME_THREAD_CHANNEL,
   AGENT_RUN_CHANNEL,
   AGENT_THREAD_HISTORY_CHANNEL,
+  AGENT_THREAD_CONTEXT_CHANNEL,
   AGENT_TOOL_RESULT_CHANNEL,
   type AgentToolResultMessage,
   type DeleteThreadRequest,
   type ListThreadsInput,
   type RenameThreadRequest,
   type RunAgentInput,
-  type ThreadHistoryInput
+  type ThreadHistoryInput,
+  type ThreadContextInput
 } from '../../shared/ipc/ipc-contract/agent'
 import {
   FILE_CREATE_CHANNEL,
@@ -56,6 +58,7 @@ import { handleRenameThread } from './agent/rename-thread-handler'
 import { handleRunAgent } from './agent/run-agent-handler'
 import { handleSubmitToolResult } from './agent/submit-tool-result-handler'
 import { handleThreadHistory } from './agent/thread-history-handler'
+import { handleThreadContext } from './agent/thread-context-handler'
 import { handleCreateFile } from './file/create-file-handler'
 import { handleDeleteFile } from './file/delete-file-handler'
 import { handleRenameFile } from './file/rename-file-handler'
@@ -74,6 +77,9 @@ const registerThreadChannels = (): void => {
   )
   ipcMain.handle(AGENT_THREAD_HISTORY_CHANNEL, (_event, input: ThreadHistoryInput) =>
     handleThreadHistory(input)
+  )
+  ipcMain.handle(AGENT_THREAD_CONTEXT_CHANNEL, (_event, input: ThreadContextInput) =>
+    handleThreadContext(input)
   )
   ipcMain.handle(AGENT_RENAME_THREAD_CHANNEL, (_event, request: RenameThreadRequest) =>
     handleRenameThread(request)

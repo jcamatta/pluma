@@ -6,7 +6,8 @@ import {
   AGENT_DELETE_THREAD_CHANNEL,
   AGENT_LIST_THREADS_CHANNEL,
   AGENT_RENAME_THREAD_CHANNEL,
-  AGENT_THREAD_HISTORY_CHANNEL
+  AGENT_THREAD_HISTORY_CHANNEL,
+  AGENT_THREAD_CONTEXT_CHANNEL
 } from '../../../../shared/ipc/ipc-contract/agent'
 import type { ThreadsReaderPort } from '../ports/threads-reader.port'
 import type { ThreadsWriterPort } from '../ports/threads-writer.port'
@@ -18,7 +19,9 @@ function createThreadsRepository(): {
   const reader: ThreadsReaderPort = {
     listThreads: (cwd) => window.api.invoke(AGENT_LIST_THREADS_CHANNEL, { cwd }),
     getThreadHistory: (cwd, id) =>
-      window.api.invoke(AGENT_THREAD_HISTORY_CHANNEL, { cwd, threadId: id })
+      window.api.invoke(AGENT_THREAD_HISTORY_CHANNEL, { cwd, threadId: id }),
+    getThreadContext: (cwd, id) =>
+      window.api.invoke(AGENT_THREAD_CONTEXT_CHANNEL, { cwd, threadId: id })
   }
 
   const writer: ThreadsWriterPort = {
