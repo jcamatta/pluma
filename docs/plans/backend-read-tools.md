@@ -42,7 +42,7 @@ When shipped:
 Every step is `[backend]` (`src/main` only); this is a single-area change, run sequentially on the one
 branch. Each step is independently green and within the commit budget.
 
-### Step 1 — Split the tool plumbing along the SDK line `[backend]`
+### Step 1 — Split the tool plumbing along the SDK line `[backend]` — ✅ landed (`14429f9`)
 
 Pure move, **no behavior change**. `git mv` so rename detection keeps the size hook cheap. The
 SDK-neutral bridge moves to the agent side; the SDK-calling server stays on the Claude side (renamed for
