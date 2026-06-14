@@ -3,6 +3,7 @@
 // which method ran; the writer succeeds by default. The single seam the threads hooks depend on.
 
 import type { Message } from '@ag-ui/core'
+import type { AgentContextUsage } from '../../../../shared/agent/context-usage'
 import type { ThreadSummary } from '../../../../shared/ipc/ipc-contract/agent'
 import type { ThreadsRepositories } from '../ThreadsContext'
 import type { ThreadsReaderPort } from '../ports/threads-reader.port'
@@ -11,12 +12,14 @@ import type { ThreadsWriterPort } from '../ports/threads-writer.port'
 interface Seed {
   readonly threads?: readonly ThreadSummary[]
   readonly history?: readonly Message[]
+  readonly context?: AgentContextUsage | null
 }
 
 function createFakeThreadsRepository(seed: Seed = {}): ThreadsRepositories {
   const reader: ThreadsReaderPort = {
     listThreads: () => Promise.resolve({ ok: true, value: seed.threads ?? [] }),
-    getThreadHistory: () => Promise.resolve({ ok: true, value: seed.history ?? [] })
+    getThreadHistory: () => Promise.resolve({ ok: true, value: seed.history ?? [] }),
+    getThreadContext: () => Promise.resolve({ ok: true, value: seed.context ?? null })
   }
 
   const writer: ThreadsWriterPort = {
