@@ -1,33 +1,28 @@
 // Handler for `propose_edit`: stage a replacement over, or an insertion at, a passage given by its exact
-// text, for the user to accept or reject inline. Resolves the anchor to a single span with the shared
-// resolver; a missing or repeated passage (not_found / ambiguous) or an overlap with an existing proposal
-// fails recoverably, so the agent re-resolves and retries. An insert with no anchor writes at the document
-// start (position 1, the first valid insertion point inside the opening text-block; 0 is before the doc
-// node and throws); a non-insert with no anchor fails anchor_required. The edit is not applied here; only
-// proposed. `text` is the agent's new text — it becomes the model's `replacementText` either way. Errors
-// are full sentences so the agent (and the rail log) can see what happened and recover.
+// text, for the user to accept or reject inline. The args are a discriminated union on `operation`: a
+// replace carries the `passage` it swaps out; an insert carries the optional `after` passage it writes
+// behind (omit it to write at the document start — position 1, the first valid insertion point inside the
+// opening text-block; 0 is before the doc node and throws). Each passage is resolved to a single span with
+// the shared resolver; a missing or repeated passage (not_found / ambiguous) or an overlap with an
+// existing proposal fails recoverably, so the agent re-resolves and retries. The edit is not applied here;
+// only proposed. `text` is the agent's new text — it becomes the model's `replacementText` either way.
 
 import type { Editor } from '@tiptap/core'
 import { createProposal } from '../../editor/extensions/proposals'
 import { resolveAnchor } from './resolve-anchor'
 import type { AgentToolResult } from './types'
 
-interface ProposeEditArgs {
-  readonly operation: 'replace' | 'insert'
-  readonly anchor?: string
-  readonly text: string
-}
+type ProposeEditArgs =
+  | { readonly operation: 'replace'; readonly passage: string; readonly text: string }
+  | { readonly operation: 'insert'; readonly after?: string; readonly text: string }
 
 const DOCUMENT_START = 1
-
-const ANCHOR_REQUIRED =
-  'anchor_required: a replace needs the exact passage to replace in `anchor`. To add new text without replacing, set operation to "insert".'
 
 // The resolver's raw not_found is too terse for the agent: the common cause is anchoring on text from a
 // proposal it has not yet had accepted, which is not in the document. Spell that out at this seam only —
 // resolve-anchor stays shared with create_annotation and keeps its raw not_found/ambiguous contract.
 const NOT_FOUND =
-  'not_found: no text matching `anchor` is in the document. Note that text from a proposal that has not been accepted yet is not part of the document and cannot be used as an anchor.'
+  'not_found: no text matching the passage is in the document. Note that text from a proposal that has not been accepted yet is not part of the document and cannot be used as a passage.'
 
 interface StageInput {
   readonly editor: Editor
@@ -52,47 +47,47 @@ function stage({ editor, operation, proposal }: StageInput): AgentToolResult {
   }
 }
 
+function resolveError(error: string): string {
+  return error === 'not_found' ? NOT_FOUND : error
+}
+
+function insertAt({
+  editor,
+  point,
+  text
+}: {
+  readonly editor: Editor
+  readonly point: number
+  readonly text: string
+}): AgentToolResult {
+  return stage({
+    editor,
+    operation: 'insert',
+    proposal: { from: point, to: point, originalText: '', replacementText: text }
+  })
+}
+
 export function proposeEdit(editor: Editor, args: ProposeEditArgs): AgentToolResult {
-  const insert = args.operation === 'insert'
-
-  if (args.anchor === undefined) {
-    if (!insert) return { ok: false, error: ANCHOR_REQUIRED }
-    return stage({
-      editor,
-      operation: args.operation,
-      proposal: {
-        from: DOCUMENT_START,
-        to: DOCUMENT_START,
-        originalText: '',
-        replacementText: args.text
-      }
-    })
+  if (args.operation === 'insert') {
+    if (args.after === undefined)
+      return insertAt({ editor, point: DOCUMENT_START, text: args.text })
+    const resolved = resolveAnchor(editor, args.after)
+    return resolved.ok
+      ? insertAt({ editor, point: resolved.to, text: args.text })
+      : { ok: false, error: resolveError(resolved.error) }
   }
 
-  const resolved = resolveAnchor(editor, args.anchor)
-  if (!resolved.ok) {
-    return { ok: false, error: resolved.error === 'not_found' ? NOT_FOUND : resolved.error }
-  }
-
-  return insert
+  const resolved = resolveAnchor(editor, args.passage)
+  return resolved.ok
     ? stage({
         editor,
-        operation: args.operation,
-        proposal: {
-          from: resolved.to,
-          to: resolved.to,
-          originalText: '',
-          replacementText: args.text
-        }
-      })
-    : stage({
-        editor,
-        operation: args.operation,
+        operation: 'replace',
         proposal: {
           from: resolved.from,
           to: resolved.to,
-          originalText: args.anchor,
+          originalText: args.passage,
           replacementText: args.text
         }
       })
+    : { ok: false, error: resolveError(resolved.error) }
 }

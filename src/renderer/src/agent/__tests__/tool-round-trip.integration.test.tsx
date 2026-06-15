@@ -33,11 +33,10 @@ function editorRegistry(editor: Editor): ToolRegistry {
       {
         spec: proposeEditTool,
         handler: (args) => {
-          assertWire<{
-            readonly operation: 'replace' | 'insert'
-            readonly anchor?: string
-            readonly text: string
-          }>(args, proposeEditTool.name)
+          assertWire<
+            | { readonly operation: 'replace'; readonly passage: string; readonly text: string }
+            | { readonly operation: 'insert'; readonly after?: string; readonly text: string }
+          >(args, proposeEditTool.name)
           return proposeEdit(editor, args)
         }
       }
@@ -115,7 +114,7 @@ describe('frontend-tool round-trip (gate)', () => {
         runId: 'run-1',
         toolCallId: 'tc-edit',
         toolName: proposeEditTool.name,
-        args: { operation: 'replace', anchor: 'world', text: 'earth' }
+        args: { operation: 'replace', passage: 'world', text: 'earth' }
       })
 
       expect(proposed.ok).toBe(true)

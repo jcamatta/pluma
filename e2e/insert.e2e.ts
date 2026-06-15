@@ -26,9 +26,9 @@ const INSERTED = 'The sun was warm.'
 // insert-after semantics so the model can't fall back to a replace.
 const PROMPT =
   'Use your editing tools to insert text into the document, then stop. First call list_open_files to ' +
-  'find the path of the active file. Then call propose_edit on that path with operation "insert", anchor ' +
+  'find the path of the active file. Then call propose_edit on that path with operation "insert", after ' +
   `the exact passage "${ORIGINAL}", and text " ${INSERTED}" — operation insert adds your text immediately ` +
-  'after the anchor passage. Do not reply with prose and do not ask for confirmation.'
+  'after that passage. Do not reply with prose and do not ask for confirmation.'
 
 // A real Claude tool round-trip (read, then act) needs well over the default.
 test.setTimeout(180_000)

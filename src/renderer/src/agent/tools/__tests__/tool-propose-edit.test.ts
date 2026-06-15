@@ -1,7 +1,6 @@
 // propose_edit: a replace stages a proposal over the resolved passage; an insert stages a zero-width
-// proposal after the anchor, or at the document start when the anchor is omitted. Absent anchor fails
-// not_found, repeated anchor fails ambiguous, a replace with no anchor fails anchor_required, and
-// overlapping proposals fail recoverably.
+// proposal after its `after` passage, or at the document start when `after` is omitted. Absent text
+// fails not_found, repeated text fails ambiguous, and overlapping proposals fail recoverably.
 
 import { describe, expect, it } from 'vitest'
 import { acceptProposal, getProposals } from '../../../editor/extensions/proposals'
@@ -11,7 +10,7 @@ import { proposeEdit } from '../tool-propose-edit'
 describe('proposeEdit', () => {
   it('creates a proposal over the resolved passage and echoes the operation', () => {
     withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { operation: 'replace', anchor: 'world', text: 'earth' })
+      const result = proposeEdit(editor, { operation: 'replace', passage: 'world', text: 'earth' })
 
       expect(result.ok).toBe(true)
       if (!result.ok || result.output.type !== 'json') return expect.fail('expected json output')
@@ -21,9 +20,9 @@ describe('proposeEdit', () => {
     })
   })
 
-  it('inserts after the anchor as a zero-width proposal at the anchor end', () => {
+  it('inserts after its passage as a zero-width proposal at the passage end', () => {
     withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { operation: 'insert', anchor: 'hello', text: ' there' })
+      const result = proposeEdit(editor, { operation: 'insert', after: 'hello', text: ' there' })
 
       expect(result.ok).toBe(true)
       const proposal = getProposals(editor)[0]
@@ -35,7 +34,7 @@ describe('proposeEdit', () => {
     })
   })
 
-  it('inserts at the document start when the anchor is omitted, resolving to position 1', () => {
+  it('inserts at the document start when `after` is omitted, resolving to position 1', () => {
     withEditor('', (editor) => {
       const result = proposeEdit(editor, { operation: 'insert', text: 'first words' })
 
@@ -64,25 +63,17 @@ describe('proposeEdit', () => {
     })
   })
 
-  it('fails anchor_required when a replace has no anchor', () => {
+  it('fails not_found when the passage is absent', () => {
     withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { operation: 'replace', text: 'x' })
-      if (result.ok) return expect.fail('expected failure')
-      expect(result.error.startsWith('anchor_required')).toBe(true)
-    })
-  })
-
-  it('fails not_found when the anchor is absent', () => {
-    withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { operation: 'replace', anchor: 'missing', text: 'x' })
+      const result = proposeEdit(editor, { operation: 'replace', passage: 'missing', text: 'x' })
       if (result.ok) return expect.fail('expected failure')
       expect(result.error.startsWith('not_found')).toBe(true)
     })
   })
 
-  it('fails ambiguous when the anchor occurs more than once', () => {
+  it('fails ambiguous when the passage occurs more than once', () => {
     withEditor('the cat sat on the mat', (editor) => {
-      const result = proposeEdit(editor, { operation: 'replace', anchor: 'the', text: 'a' })
+      const result = proposeEdit(editor, { operation: 'replace', passage: 'the', text: 'a' })
       if (result.ok) return expect.fail('expected failure')
       expect(result.error.startsWith('ambiguous\n')).toBe(true)
     })
@@ -90,10 +81,10 @@ describe('proposeEdit', () => {
 
   it('fails when proposals overlap', () => {
     withEditor('hello world', (editor) => {
-      const first = proposeEdit(editor, { operation: 'replace', anchor: 'hello world', text: 'a' })
+      const first = proposeEdit(editor, { operation: 'replace', passage: 'hello world', text: 'a' })
       expect(first.ok).toBe(true)
 
-      const second = proposeEdit(editor, { operation: 'replace', anchor: 'world', text: 'b' })
+      const second = proposeEdit(editor, { operation: 'replace', passage: 'world', text: 'b' })
       expect(second.ok).toBe(false)
     })
   })

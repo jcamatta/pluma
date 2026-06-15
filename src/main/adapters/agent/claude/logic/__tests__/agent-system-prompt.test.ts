@@ -64,20 +64,22 @@ describe('AGENT_SYSTEM_PROMPT', () => {
 
 describe('AGENT_SYSTEM_PROMPT · propose_edit insert', () => {
   it('teaches propose_edit can insert as well as replace', () => {
-    expect(AGENT_SYSTEM_PROMPT).toContain('replace an existing passage or insert new text')
+    expect(AGENT_SYSTEM_PROMPT).toContain('or to insert to add new text without removing anything')
   })
 
-  it('requires every call to state the operation explicitly', () => {
-    expect(AGENT_SYSTEM_PROMPT).toContain('every call must state which operation it is')
-    expect(AGENT_SYSTEM_PROMPT).toContain('there is no default')
+  it('requires every call to state the operation and teaches each operation its own field', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('each call must say which')
+    expect(AGENT_SYSTEM_PROMPT).toContain('the exact passage you are replacing')
+    expect(AGENT_SYSTEM_PROMPT).toContain('as passage')
+    expect(AGENT_SYSTEM_PROMPT).toContain('give as after')
   })
 
-  it('teaches omitting the anchor to insert at the document start', () => {
-    expect(AGENT_SYSTEM_PROMPT).toContain('omit the anchor on an insert')
+  it('teaches omitting `after` to insert at the document start', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('omit after to write at the very start')
     expect(AGENT_SYSTEM_PROMPT).toContain('empty document')
   })
 
-  it('warns that pending, not-yet-accepted text cannot be used as an anchor', () => {
+  it('warns that pending, not-yet-accepted text cannot be used as a passage', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('already in the document')
     expect(AGENT_SYSTEM_PROMPT).toContain('not accepted yet')
     expect(AGENT_SYSTEM_PROMPT).toContain('do not build a chain of inserts')

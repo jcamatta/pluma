@@ -47,7 +47,7 @@ describe('EditorToolsBridge', () => {
       const before = await result.current.registry.byName(proposeEditTool.name)?.handler({
         path: PATH,
         operation: 'replace',
-        anchor: 'world',
+        passage: 'world',
         text: 'earth'
       })
       expect(before).toEqual({ ok: false, error: `no_open_editor:${PATH}` })
@@ -57,7 +57,7 @@ describe('EditorToolsBridge', () => {
       const after = await result.current.registry.byName(proposeEditTool.name)?.handler({
         path: PATH,
         operation: 'replace',
-        anchor: 'world',
+        passage: 'world',
         text: 'earth'
       })
       expect(after?.ok).toBe(true)
