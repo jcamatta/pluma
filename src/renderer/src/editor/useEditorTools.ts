@@ -107,8 +107,9 @@ function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotatio
       handler: (args) => {
         assertWire<{
           readonly path: string
+          readonly operation?: 'replace' | 'insert'
+          readonly anchor?: string
           readonly text: string
-          readonly replacementText: string
         }>(args, proposeEditTool.name)
         return atPath(args.path, (live) => proposeEdit(live, args))
       }

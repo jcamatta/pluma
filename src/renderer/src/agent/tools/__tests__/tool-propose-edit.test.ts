@@ -1,15 +1,17 @@
-// propose_edit: success creates a proposal over the resolved passage; absent text fails not_found,
-// repeated text fails ambiguous, and overlapping proposals fail recoverably.
+// propose_edit: a replace stages a proposal over the resolved passage; an insert stages a zero-width
+// proposal after the anchor, or at the document start when the anchor is omitted. Absent anchor fails
+// not_found, repeated anchor fails ambiguous, a replace with no anchor fails anchor_required, and
+// overlapping proposals fail recoverably.
 
 import { describe, expect, it } from 'vitest'
-import { getProposals } from '../../../editor/extensions/proposals'
+import { acceptProposal, getProposals } from '../../../editor/extensions/proposals'
 import { withEditor } from '../../../editor/extensions/__tests__/editor-test-harness'
 import { proposeEdit } from '../tool-propose-edit'
 
 describe('proposeEdit', () => {
   it('creates a proposal over the resolved passage', () => {
     withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { text: 'world', replacementText: 'earth' })
+      const result = proposeEdit(editor, { anchor: 'world', text: 'earth' })
 
       expect(result.ok).toBe(true)
       expect(getProposals(editor)).toHaveLength(1)
@@ -17,16 +19,66 @@ describe('proposeEdit', () => {
     })
   })
 
-  it('fails not_found when the text is absent', () => {
+  it('inserts after the anchor as a zero-width proposal at the anchor end', () => {
     withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { text: 'missing', replacementText: 'x' })
+      const result = proposeEdit(editor, { operation: 'insert', anchor: 'hello', text: ' there' })
+
+      expect(result.ok).toBe(true)
+      const proposal = getProposals(editor)[0]
+      // "hello" ends at position 6 (1-based, after the doc node); the insert is a point there.
+      expect(proposal?.from).toBe(6)
+      expect(proposal?.to).toBe(6)
+      expect(proposal?.originalText).toBe('')
+      expect(proposal?.replacementText).toBe(' there')
+    })
+  })
+
+  it('inserts at the document start when the anchor is omitted, resolving to position 1', () => {
+    withEditor('', (editor) => {
+      const result = proposeEdit(editor, { operation: 'insert', text: 'first words' })
+
+      expect(result.ok).toBe(true)
+      const proposal = getProposals(editor)[0]
+      expect(proposal?.from).toBe(1)
+      expect(proposal?.to).toBe(1)
+      expect(proposal?.originalText).toBe('')
+    })
+  })
+
+  it('flattens an inserted multi-paragraph text into one block', () => {
+    withEditor('', (editor) => {
+      const result = proposeEdit(editor, {
+        operation: 'insert',
+        text: 'first paragraph\n\nsecond paragraph'
+      })
+      expect(result.ok).toBe(true)
+
+      const proposal = getProposals(editor)[0]
+      if (!proposal) return expect.fail('expected a proposal')
+      acceptProposal({ editor, id: proposal.id })
+
+      // insertText does not reconstruct paragraph nodes; the blank line collapses to a single block.
+      expect(editor.state.doc.childCount).toBe(1)
+    })
+  })
+
+  it('fails anchor_required when a replace has no anchor', () => {
+    withEditor('hello world', (editor) => {
+      const result = proposeEdit(editor, { text: 'x' })
+      expect(result).toEqual({ ok: false, error: 'anchor_required' })
+    })
+  })
+
+  it('fails not_found when the anchor is absent', () => {
+    withEditor('hello world', (editor) => {
+      const result = proposeEdit(editor, { anchor: 'missing', text: 'x' })
       expect(result).toEqual({ ok: false, error: 'not_found' })
     })
   })
 
-  it('fails ambiguous when the text occurs more than once', () => {
+  it('fails ambiguous when the anchor occurs more than once', () => {
     withEditor('the cat sat on the mat', (editor) => {
-      const result = proposeEdit(editor, { text: 'the', replacementText: 'a' })
+      const result = proposeEdit(editor, { anchor: 'the', text: 'a' })
       if (result.ok) return expect.fail('expected failure')
       expect(result.error.startsWith('ambiguous\n')).toBe(true)
     })
@@ -34,10 +86,10 @@ describe('proposeEdit', () => {
 
   it('fails when proposals overlap', () => {
     withEditor('hello world', (editor) => {
-      const first = proposeEdit(editor, { text: 'hello world', replacementText: 'a' })
+      const first = proposeEdit(editor, { anchor: 'hello world', text: 'a' })
       expect(first.ok).toBe(true)
 
-      const second = proposeEdit(editor, { text: 'world', replacementText: 'b' })
+      const second = proposeEdit(editor, { anchor: 'world', text: 'b' })
       expect(second.ok).toBe(false)
     })
   })
