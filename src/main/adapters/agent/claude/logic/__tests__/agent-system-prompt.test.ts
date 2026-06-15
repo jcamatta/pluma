@@ -65,17 +65,22 @@ describe('AGENT_SYSTEM_PROMPT', () => {
 describe('AGENT_SYSTEM_PROMPT · propose_edit insert', () => {
   it('teaches propose_edit can insert as well as replace', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('replace an existing passage or insert new text')
-    expect(AGENT_SYSTEM_PROMPT).toContain('insert after')
+  })
+
+  it('requires every call to state the operation explicitly', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('every call must state which operation it is')
+    expect(AGENT_SYSTEM_PROMPT).toContain('there is no default')
   })
 
   it('teaches omitting the anchor to insert at the document start', () => {
-    expect(AGENT_SYSTEM_PROMPT).toContain('Omit the anchor')
+    expect(AGENT_SYSTEM_PROMPT).toContain('omit the anchor on an insert')
     expect(AGENT_SYSTEM_PROMPT).toContain('empty document')
   })
 
-  it('teaches authoring multiple paragraphs as successive single-paragraph inserts', () => {
-    expect(AGENT_SYSTEM_PROMPT).toContain('successive single-paragraph insert')
-    expect(AGENT_SYSTEM_PROMPT).toContain('collapses into one paragraph')
+  it('warns that pending, not-yet-accepted text cannot be used as an anchor', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('already in the document')
+    expect(AGENT_SYSTEM_PROMPT).toContain('not accepted yet')
+    expect(AGENT_SYSTEM_PROMPT).toContain('do not build a chain of inserts')
   })
 })
 
