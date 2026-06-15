@@ -70,3 +70,16 @@ describe('AGENT_SYSTEM_PROMPT · backend read tools', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('absolute path')
   })
 })
+
+describe('AGENT_SYSTEM_PROMPT · gated file-tree write tools', () => {
+  it('teaches the gated create/rename/delete tools', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('create_file')
+    expect(AGENT_SYSTEM_PROMPT).toContain('rename_file')
+    expect(AGENT_SYSTEM_PROMPT).toContain('delete_file')
+  })
+
+  it('states these actions require the user’s approval before taking effect', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('Approve/Reject')
+    expect(AGENT_SYSTEM_PROMPT).toContain('takes effect only after the user explicitly approves')
+  })
+})
