@@ -1,7 +1,8 @@
 // The suspended main run is keyed on toolCallId, so the bridge must answer every call: these cover the
 // happy path plus the two ways a handler can fail to produce a result (no such tool, a rejection), each
-// of which must still send an error result back. Driven by a fake WindowApi whose `on` callback `fire`
-// invokes — no real IPC.
+// of which must still send an error result back, plus the gated branch — a mutating file command goes to
+// requestApproval, NOT the registry, and its answer (approve → ok, reject → declined) is what is sent
+// back. Driven by a fake WindowApi whose `on` callback `fire` invokes — no real IPC.
 
 import { describe, expect, it, vi } from 'vitest'
 import { renderHook } from '@testing-library/react'
@@ -15,6 +16,10 @@ import { assertWire } from '../../../../shared/ipc/from-wire'
 import type { WindowApi } from '../../../../shared/ipc/window-api'
 import type { ToolEntry, ToolRegistry } from '../AgentToolsContext'
 import { useToolBridge } from '../useToolBridge'
+
+// The approval seam for non-gated tests: such a call must never reach it, so it returns a promise that
+// never settles (the tests assert dispatch answered) — and the gated tests supply their own spy instead.
+const noApproval = (): Promise<AgentToolResult> => new Promise<AgentToolResult>(() => undefined)
 
 function fakeRegistry(entries: Map<string, ToolEntry['handler']>): ToolRegistry {
   return {
@@ -82,7 +87,15 @@ describe('useToolBridge', () => {
     const { api, fire, invoke } = fakeApi()
     const ok: AgentToolResult = { ok: true, output: { type: 'json', value: { proposalId: 'p_1' } } }
     const handler = vi.fn(() => ok)
-    renderHook(() => useToolBridge(fakeRegistry(new Map([['propose_edit', handler]])), api))
+    renderHook(() =>
+      useToolBridge(
+        {
+          registry: fakeRegistry(new Map([['propose_edit', handler]])),
+          requestApproval: noApproval
+        },
+        api
+      )
+    )
 
     fire(call)
     await vi.waitFor(() => expect(invoke).toHaveBeenCalled())
@@ -97,7 +110,9 @@ describe('useToolBridge', () => {
 
   it('answers with an error result for an unknown tool name', async () => {
     const { api, fire, invoke } = fakeApi()
-    renderHook(() => useToolBridge(fakeRegistry(new Map()), api))
+    renderHook(() =>
+      useToolBridge({ registry: fakeRegistry(new Map()), requestApproval: noApproval }, api)
+    )
 
     fire({ ...call, toolName: 'nope' })
     await vi.waitFor(() => expect(invoke).toHaveBeenCalled())
@@ -112,7 +127,15 @@ describe('useToolBridge', () => {
   it('catches a rejecting handler and answers with an error result', async () => {
     const { api, fire, invoke } = fakeApi()
     const handler = vi.fn(() => Promise.reject(new Error('boom')))
-    renderHook(() => useToolBridge(fakeRegistry(new Map([['propose_edit', handler]])), api))
+    renderHook(() =>
+      useToolBridge(
+        {
+          registry: fakeRegistry(new Map([['propose_edit', handler]])),
+          requestApproval: noApproval
+        },
+        api
+      )
+    )
 
     fire(call)
     await vi.waitFor(() => expect(invoke).toHaveBeenCalled())
@@ -121,6 +144,55 @@ describe('useToolBridge', () => {
       runId: 'run-1',
       toolCallId: 'tc-1',
       result: { ok: false, error: 'boom' }
+    })
+  })
+})
+
+describe('useToolBridge gated branch', () => {
+  it('routes a gated tool call to requestApproval and never to the registry', async () => {
+    const { api, fire, invoke } = fakeApi()
+    const handled: AgentToolResult = { ok: true, output: { type: 'text', text: 'x' } }
+    const handler = vi.fn(() => handled)
+    const approved: AgentToolResult = { ok: true, output: { type: 'text', text: 'approved' } }
+    const requestApproval = vi.fn(() => Promise.resolve(approved))
+    renderHook(() =>
+      useToolBridge(
+        { registry: fakeRegistry(new Map([['create_file', handler]])), requestApproval },
+        api
+      )
+    )
+
+    const gated: AgentToolCall = {
+      runId: 'run-1',
+      toolCallId: 'tc-1',
+      toolName: 'create_file',
+      args: { path: '/notes/new.md' }
+    }
+    fire(gated)
+    await vi.waitFor(() => expect(invoke).toHaveBeenCalled())
+
+    expect(requestApproval).toHaveBeenCalledWith(gated)
+    expect(handler).not.toHaveBeenCalled()
+    expect(invoke).toHaveBeenCalledWith(AGENT_TOOL_RESULT_CHANNEL, {
+      runId: 'run-1',
+      toolCallId: 'tc-1',
+      result: approved
+    })
+  })
+
+  it('sends back the declined result when a gated approval is rejected', async () => {
+    const { api, fire, invoke } = fakeApi()
+    const declined: AgentToolResult = { ok: false, error: 'declined' }
+    const requestApproval = vi.fn(() => Promise.resolve(declined))
+    renderHook(() => useToolBridge({ registry: fakeRegistry(new Map()), requestApproval }, api))
+
+    fire({ ...call, toolName: 'delete_file', args: { path: '/notes/old.md' } })
+    await vi.waitFor(() => expect(invoke).toHaveBeenCalled())
+
+    expect(invoke).toHaveBeenCalledWith(AGENT_TOOL_RESULT_CHANNEL, {
+      runId: 'run-1',
+      toolCallId: 'tc-1',
+      result: declined
     })
   })
 })

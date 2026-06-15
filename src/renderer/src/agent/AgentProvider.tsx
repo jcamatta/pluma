@@ -9,6 +9,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { AgentContext } from './AgentContext'
 import { ThreadControlsContext, type ThreadControls } from './ThreadControlsContext'
 import { useToolRegistry } from './AgentToolsContext'
+import { useAgentApprovals } from './AgentApprovalsContext'
 import { createApiAgent } from './adapters/create-api-agent'
 import { useToolBridge } from './useToolBridge'
 
@@ -19,6 +20,7 @@ interface AgentProviderProps {
 
 export function AgentProvider({ cwd, children }: AgentProviderProps): React.JSX.Element {
   const registry = useToolRegistry()
+  const { requestApproval } = useAgentApprovals()
   const [agent] = useState(() => createApiAgent(() => registry.snapshot()))
   // Bind the controls to the agent so consumers may destructure seedThread/newThread without losing
   // the `this` that the Agent methods rely on. Held in state so the context value stays stable.
@@ -33,7 +35,7 @@ export function AgentProvider({ cwd, children }: AgentProviderProps): React.JSX.
     agent.setCwd(cwd)
   }, [agent, cwd])
 
-  useToolBridge(registry)
+  useToolBridge({ registry, requestApproval })
 
   return (
     <AgentContext.Provider value={agent}>
