@@ -105,20 +105,13 @@ function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotatio
     proposal: {
       spec: proposeEditTool,
       handler: (args) => {
-        assertWire<
-          | {
-              readonly path: string
-              readonly operation: 'replace'
-              readonly passage: string
-              readonly text: string
-            }
-          | {
-              readonly path: string
-              readonly operation: 'insert'
-              readonly after?: string
-              readonly text: string
-            }
-        >(args, proposeEditTool.name)
+        assertWire<{
+          readonly path: string
+          readonly operation: 'replace' | 'insert'
+          readonly passage?: string
+          readonly after?: string
+          readonly text: string
+        }>(args, proposeEditTool.name)
         return atPath(args.path, (live) => proposeEdit(live, args))
       }
     }

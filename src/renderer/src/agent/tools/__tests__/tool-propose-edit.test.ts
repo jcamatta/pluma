@@ -1,6 +1,7 @@
 // propose_edit: a replace stages a proposal over the resolved passage; an insert stages a zero-width
-// proposal after its `after` passage, or at the document start when `after` is omitted. Absent text
-// fails not_found, repeated text fails ambiguous, and overlapping proposals fail recoverably.
+// proposal after its `after` passage, or at the document start when `after` is omitted. A replace with no
+// passage fails passage_required, absent text fails not_found, repeated text fails ambiguous, and
+// overlapping proposals fail recoverably.
 
 import { describe, expect, it } from 'vitest'
 import { acceptProposal, getProposals } from '../../../editor/extensions/proposals'
@@ -60,6 +61,14 @@ describe('proposeEdit', () => {
 
       // insertText does not reconstruct paragraph nodes; the blank line collapses to a single block.
       expect(editor.state.doc.childCount).toBe(1)
+    })
+  })
+
+  it('fails passage_required when a replace has no passage', () => {
+    withEditor('hello world', (editor) => {
+      const result = proposeEdit(editor, { operation: 'replace', text: 'x' })
+      if (result.ok) return expect.fail('expected failure')
+      expect(result.error.startsWith('passage_required')).toBe(true)
     })
   })
 

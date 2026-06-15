@@ -33,10 +33,12 @@ function editorRegistry(editor: Editor): ToolRegistry {
       {
         spec: proposeEditTool,
         handler: (args) => {
-          assertWire<
-            | { readonly operation: 'replace'; readonly passage: string; readonly text: string }
-            | { readonly operation: 'insert'; readonly after?: string; readonly text: string }
-          >(args, proposeEditTool.name)
+          assertWire<{
+            readonly operation: 'replace' | 'insert'
+            readonly passage?: string
+            readonly after?: string
+            readonly text: string
+          }>(args, proposeEditTool.name)
           return proposeEdit(editor, args)
         }
       }

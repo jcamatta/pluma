@@ -73,52 +73,42 @@ const createAnnotationTool: Tool = {
   }
 }
 
-// Two operations, two distinct parameter shapes — expressed as a JSON Schema `oneOf` discriminated on
-// `operation`, so the model commits to one shape and fills only the fields that shape needs. A replace
-// carries the `passage` it swaps out; an insert carries the optional `after` passage it writes behind.
-// Each shape names its anchor for what it does (`passage` to replace / `after` to insert behind) instead
-// of one overloaded field, so the model cannot pick an operation and fill the other operation's fields.
+// Two operations, named anchor field per operation — `passage` for a replace (the text it swaps out),
+// `after` for an insert (the text it writes behind). A flat object, not a JSON Schema `oneOf`: models
+// reliably fill flat top-level required fields but drop fields nested inside a oneOf branch (notably the
+// shared `path`), so the discrimination lives in the field names and the handler, not in the schema shape.
 const proposeEditTool: Tool = {
   name: 'propose_edit',
   description:
-    "Propose an edit the user reviews inline and accepts or rejects; the change is not applied until accepted. Set operation to 'replace' to swap an existing passage for new text, or to 'insert' to add new text without removing anything. Each operation takes its own fields. Resolving a passage returns not_found when it is absent from the document and ambiguous when it occurs more than once — grow the passage until it is unique. Text from a proposal the user has not accepted yet is not in the document and cannot be used as a passage.",
+    "Propose an edit the user reviews inline and accepts or rejects; the change is not applied until accepted. Set operation to 'replace' to swap an existing passage for new text — give that passage in `passage`. Set operation to 'insert' to add new text without removing anything — give the passage to add it after in `after`, or omit `after` to add at the document start (including an empty document). Resolving `passage` or `after` returns not_found when it is absent and ambiguous when it occurs more than once — grow it until it is unique. Text from a proposal the user has not accepted yet is not in the document and cannot be used.",
   parameters: {
     type: 'object',
-    oneOf: [
-      {
-        type: 'object',
-        additionalProperties: false,
-        required: ['path', 'operation', 'passage', 'text'],
-        properties: {
-          path: { type: 'string', description: filePathDescription },
-          operation: {
-            const: 'replace',
-            description: 'Replace an existing passage with new text.'
-          },
-          passage: {
-            type: 'string',
-            description:
-              'The exact existing passage to replace, copied verbatim from the document. Must occur exactly once.'
-          },
-          text: { type: 'string', description: 'The new text that replaces the passage.' }
-        }
+    additionalProperties: false,
+    required: ['path', 'operation', 'text'],
+    properties: {
+      path: { type: 'string', description: filePathDescription },
+      operation: {
+        type: 'string',
+        enum: ['replace', 'insert'],
+        description:
+          "Required. 'replace' swaps the `passage` for the new text; 'insert' adds the new text after `after` (or at the document start when `after` is omitted)."
       },
-      {
-        type: 'object',
-        additionalProperties: false,
-        required: ['path', 'operation', 'text'],
-        properties: {
-          path: { type: 'string', description: filePathDescription },
-          operation: { const: 'insert', description: 'Add new text without replacing anything.' },
-          after: {
-            type: 'string',
-            description:
-              'The exact existing passage to insert the new text immediately after, copied verbatim from the document. Must occur exactly once. Omit it to insert at the very start of the document, including authoring into an empty document.'
-          },
-          text: { type: 'string', description: 'The new text to insert.' }
-        }
+      passage: {
+        type: 'string',
+        description:
+          'For operation "replace": the exact existing passage to replace, copied verbatim from the document. Must occur exactly once.'
+      },
+      after: {
+        type: 'string',
+        description:
+          'For operation "insert": the exact existing passage to insert the new text immediately after, copied verbatim from the document. Must occur exactly once. Omit it to insert at the very start of the document, including authoring into an empty document.'
+      },
+      text: {
+        type: 'string',
+        description:
+          'The new text — the replacement for a replace, or the inserted text for an insert.'
       }
-    ]
+    }
   }
 }
 

@@ -1,22 +1,28 @@
 // Handler for `propose_edit`: stage a replacement over, or an insertion at, a passage given by its exact
-// text, for the user to accept or reject inline. The args are a discriminated union on `operation`: a
-// replace carries the `passage` it swaps out; an insert carries the optional `after` passage it writes
-// behind (omit it to write at the document start — position 1, the first valid insertion point inside the
-// opening text-block; 0 is before the doc node and throws). Each passage is resolved to a single span with
-// the shared resolver; a missing or repeated passage (not_found / ambiguous) or an overlap with an
-// existing proposal fails recoverably, so the agent re-resolves and retries. The edit is not applied here;
-// only proposed. `text` is the agent's new text — it becomes the model's `replacementText` either way.
+// text, for the user to accept or reject inline. `operation` picks the field: a replace resolves
+// `passage` (the text it swaps out); an insert resolves `after` (the text it writes behind) or, when
+// `after` is omitted, writes at the document start — position 1, the first valid insertion point inside
+// the opening text-block; 0 is before the doc node and throws. Each is resolved to a single span with the
+// shared resolver; a missing or repeated passage (not_found / ambiguous) or an overlap with an existing
+// proposal fails recoverably, so the agent re-resolves and retries. The edit is not applied here; only
+// proposed. `text` is the agent's new text — it becomes the model's `replacementText` either way.
 
 import type { Editor } from '@tiptap/core'
 import { createProposal } from '../../editor/extensions/proposals'
 import { resolveAnchor } from './resolve-anchor'
 import type { AgentToolResult } from './types'
 
-type ProposeEditArgs =
-  | { readonly operation: 'replace'; readonly passage: string; readonly text: string }
-  | { readonly operation: 'insert'; readonly after?: string; readonly text: string }
+interface ProposeEditArgs {
+  readonly operation: 'replace' | 'insert'
+  readonly passage?: string
+  readonly after?: string
+  readonly text: string
+}
 
 const DOCUMENT_START = 1
+
+const PASSAGE_REQUIRED =
+  'passage_required: a replace needs the exact passage being replaced in `passage`. To add new text without replacing, set operation to "insert" and use `after` (or omit it to write at the document start).'
 
 // The resolver's raw not_found is too terse for the agent: the common cause is anchoring on text from a
 // proposal it has not yet had accepted, which is not in the document. Spell that out at this seam only —
@@ -77,6 +83,7 @@ export function proposeEdit(editor: Editor, args: ProposeEditArgs): AgentToolRes
       : { ok: false, error: resolveError(resolved.error) }
   }
 
+  if (args.passage === undefined) return { ok: false, error: PASSAGE_REQUIRED }
   const resolved = resolveAnchor(editor, args.passage)
   return resolved.ok
     ? stage({
