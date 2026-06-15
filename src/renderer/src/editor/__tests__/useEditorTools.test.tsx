@@ -60,7 +60,7 @@ describe('useEditorTools', () => {
 
       const proposed = await registry
         .byName(proposeEditTool.name)
-        ?.handler({ path: PATH, anchor: 'world', text: 'earth' })
+        ?.handler({ path: PATH, operation: 'replace', anchor: 'world', text: 'earth' })
 
       expect(proposed?.ok).toBe(true)
       expect(getProposals(editor)).toHaveLength(1)
@@ -92,7 +92,7 @@ describe('useEditorTools', () => {
 
       const result = await registry
         .byName(proposeEditTool.name)
-        ?.handler({ path: '/missing.md', anchor: 'world', text: 'earth' })
+        ?.handler({ path: '/missing.md', operation: 'replace', anchor: 'world', text: 'earth' })
 
       expect(result).toEqual({ ok: false, error: 'no_open_editor:/missing.md' })
     } finally {

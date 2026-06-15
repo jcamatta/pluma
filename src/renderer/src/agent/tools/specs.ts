@@ -76,18 +76,18 @@ const createAnnotationTool: Tool = {
 const proposeEditTool: Tool = {
   name: 'propose_edit',
   description:
-    "Propose an edit the user reviews inline and accepts or rejects; the change is not applied until accepted. With operation 'replace' (the default) the new text replaces the anchor passage. With operation 'insert' the new text is added immediately after the anchor passage — to insert before some text, anchor on the passage that precedes it. Omit the anchor (only valid for an insert) to add the text at the document start, including authoring into an empty document. Resolving the anchor returns not_found when it is absent and ambiguous when it occurs more than once — grow the anchor until it is unique. A replace with no anchor returns anchor_required.",
+    "Propose an edit the user reviews inline and accepts or rejects; the change is not applied until accepted. With operation 'replace' the new text replaces the anchor passage. With operation 'insert' the new text is added immediately after the anchor passage — to insert before some text, anchor on the passage that precedes it. Omit the anchor (only valid for an insert) to add the text at the document start, including authoring into an empty document. Resolving the anchor returns not_found when it is absent and ambiguous when it occurs more than once — grow the anchor until it is unique. A replace with no anchor returns anchor_required.",
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['path', 'text'],
+    required: ['path', 'operation', 'text'],
     properties: {
       path: { type: 'string', description: filePathDescription },
       operation: {
         type: 'string',
         enum: ['replace', 'insert'],
         description:
-          "'replace' swaps the anchor passage for the new text; 'insert' adds the new text after the anchor. Defaults to 'replace'."
+          "Required. 'replace' swaps the anchor passage for the new text; 'insert' adds the new text after the anchor."
       },
       anchor: {
         type: 'string',

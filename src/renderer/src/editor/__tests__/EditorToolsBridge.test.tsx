@@ -46,6 +46,7 @@ describe('EditorToolsBridge', () => {
 
       const before = await result.current.registry.byName(proposeEditTool.name)?.handler({
         path: PATH,
+        operation: 'replace',
         anchor: 'world',
         text: 'earth'
       })
@@ -55,6 +56,7 @@ describe('EditorToolsBridge', () => {
 
       const after = await result.current.registry.byName(proposeEditTool.name)?.handler({
         path: PATH,
+        operation: 'replace',
         anchor: 'world',
         text: 'earth'
       })
