@@ -62,6 +62,23 @@ describe('AGENT_SYSTEM_PROMPT', () => {
   })
 })
 
+describe('AGENT_SYSTEM_PROMPT · propose_edit insert', () => {
+  it('teaches propose_edit can insert as well as replace', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('replace an existing passage or insert new text')
+    expect(AGENT_SYSTEM_PROMPT).toContain('insert after')
+  })
+
+  it('teaches omitting the anchor to insert at the document start', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('Omit the anchor')
+    expect(AGENT_SYSTEM_PROMPT).toContain('empty document')
+  })
+
+  it('teaches authoring multiple paragraphs as successive single-paragraph inserts', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('successive single-paragraph insert')
+    expect(AGENT_SYSTEM_PROMPT).toContain('collapses into one paragraph')
+  })
+})
+
 describe('AGENT_SYSTEM_PROMPT · backend read tools', () => {
   it('teaches the backend read tools for files not open in the editor', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('list_folder')
