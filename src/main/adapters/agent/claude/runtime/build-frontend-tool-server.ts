@@ -8,11 +8,10 @@
 import { randomUUID } from 'node:crypto'
 import { createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk'
 import type { McpSdkServerConfigWithInstance } from '@anthropic-ai/claude-agent-sdk'
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import type { Tool } from '@ag-ui/core'
-import type { AgentToolResult } from '../../../../application/agent/data/agent-tool'
 import { jsonSchemaToZodShape } from '../logic/json-schema-to-zod'
-import type { ToolBridge } from './tool-bridge'
+import { toCallToolResult } from './to-call-tool-result'
+import type { ToolBridge } from '../../tools/tool-bridge'
 
 const TOOL_SERVER_NAME = 'pluma-frontend-tools'
 
@@ -26,10 +25,6 @@ interface ToolContext {
   readonly bridge: ToolBridge
   readonly runId: string
 }
-
-const toCallToolResult = (result: AgentToolResult): CallToolResult => ({
-  content: [{ type: 'text', text: JSON.stringify(result) }]
-})
 
 const buildTool = (spec: Tool, context: ToolContext): ReturnType<typeof tool> =>
   tool(
@@ -48,7 +43,7 @@ const buildTool = (spec: Tool, context: ToolContext): ReturnType<typeof tool> =>
     { annotations: { readOnlyHint: READ_ONLY_TOOLS.has(spec.name) } }
   )
 
-const buildToolServer = (
+const buildFrontendToolServer = (
   tools: readonly Tool[],
   context: ToolContext
 ): McpSdkServerConfigWithInstance | undefined => {
@@ -60,4 +55,4 @@ const buildToolServer = (
   })
 }
 
-export { buildToolServer, TOOL_SERVER_NAME, type ToolContext }
+export { buildFrontendToolServer, TOOL_SERVER_NAME, type ToolContext }

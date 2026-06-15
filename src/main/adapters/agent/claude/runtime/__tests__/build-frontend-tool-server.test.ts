@@ -1,11 +1,11 @@
-// Tests for buildToolServer: turning renderer tool specs into one in-process SDK MCP server whose tool
+// Tests for buildFrontendToolServer: turning renderer tool specs into one in-process SDK MCP server whose tool
 // handlers suspend on the bridge. We stub the SDK's tool()/createSdkMcpServer so we can capture the
 // generated handler and assert it round-trips: calling it emits an AgentToolCall through the bridge and
 // returns the renderer's result serialized as text content. An empty spec list yields no server.
 
 import { describe, expect, it, vi } from 'vitest'
 import type { Tool } from '@ag-ui/core'
-import { createToolBridge } from '../tool-bridge'
+import { createToolBridge } from '../../../tools/tool-bridge'
 
 type CapturedHandler = (args: Record<string, unknown>) => Promise<{ content: unknown }>
 
@@ -24,7 +24,7 @@ vi.mock('@anthropic-ai/claude-agent-sdk', () => ({
   })
 }))
 
-const { buildToolServer } = await import('../build-tool-server')
+const { buildFrontendToolServer } = await import('../build-frontend-tool-server')
 
 const proposeEdit: Tool = {
   name: 'propose_edit',
@@ -32,16 +32,16 @@ const proposeEdit: Tool = {
   parameters: { type: 'object', properties: { rangeId: { type: 'string' } }, required: ['rangeId'] }
 }
 
-describe('buildToolServer', () => {
+describe('buildFrontendToolServer', () => {
   it('returns undefined when there are no tools', () => {
     expect(
-      buildToolServer([], { bridge: createToolBridge(vi.fn()), runId: 'run-1' })
+      buildFrontendToolServer([], { bridge: createToolBridge(vi.fn()), runId: 'run-1' })
     ).toBeUndefined()
   })
 
   it('generates one SDK tool per spec', () => {
     captured.toolNames = []
-    const server = buildToolServer([proposeEdit], {
+    const server = buildFrontendToolServer([proposeEdit], {
       bridge: createToolBridge(vi.fn()),
       runId: 'run-1'
     })
@@ -53,7 +53,7 @@ describe('buildToolServer', () => {
   it('routes a tool call through the bridge and returns the result as text content', async () => {
     const send = vi.fn()
     const bridge = createToolBridge(send)
-    buildToolServer([proposeEdit], { bridge, runId: 'run-1' })
+    buildFrontendToolServer([proposeEdit], { bridge, runId: 'run-1' })
 
     const settled = captured.handler?.({ rangeId: 'r1' })
     const emitted = send.mock.calls[0]?.[0]

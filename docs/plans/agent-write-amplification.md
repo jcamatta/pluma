@@ -145,7 +145,16 @@ These tools are not in the e2e manifest as separate ids (they back existing `pro
 
 - Determine how the **Claude Agent SDK** ([build-tool-server.ts](../../src/main/adapters/agent/claude/runtime/build-tool-server.ts) already uses `tool()`/`createSdkMcpServer`) wants gated tools handled — `canUseTool`, permission modes, `PreToolUse` hooks — vs reusing the renderer round-trip ([tool-bridge.ts](../../src/main/adapters/agent/claude/runtime/tool-bridge.ts) + [submit-tool-result.ts](../../src/main/application/agent/usecase/submit-tool-result.ts)). Check what **AG-UI** (`@ag-ui/*` 0.0.55) exposes for tool approval over the run stream. Output: the chosen approval mechanism recorded here; PR 2.2 re-sliced to match. PR 2.1 (reads, no gate) does **not** depend on this and can proceed first.
 
-**PR 2.1 — Backend read tools** _(backend, queries)_
+**PR 2.1 — Backend read tools** _(backend, queries)_ — ✅ shipped
+
+> **Landed** on `feat/backend-read-tools`. The agent now has two in-process read tools — `read_file`
+> (reads any `.md` file by absolute path, including closed ones) and `list_folder` (lists one level from
+> the run's `cwd` by default, returning each entry's name/type/absolute path). They invoke the existing
+> `readFile`/`listFolder` use cases (no business logic in the tool, no gate — reads are queries). All
+> tool code was consolidated under `src/main/adapters/agent/tools/` (SDK-neutral: specs, run handlers,
+> catalog, the shared bridge), with the `createSdkMcpServer` binding kept under `adapters/agent/claude/`.
+> Validated against the real tool server with a real temp workspace (closed-file read, typed errors,
+> absolute-path listing, `cwd` default, `no_workspace`, `readOnlyHint`, no bridge).
 
 - A backend tool layer under `src/main/adapters/agent/claude/runtime/` (or `application/agent`) that maps `read-file` and `list-folder` use cases to SDK `tool()`s running in-process (no bridge), returning the use case `Result` serialized as tool content. Mark `readOnlyHint: true`. Register alongside the frontend tool server in the run wiring.
 - Tests: use-case-backed tool returns content for an existing file / typed error for a missing one; list returns entries; closed files are reachable (no editor needed).

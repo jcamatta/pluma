@@ -13,6 +13,11 @@ import { buildOptions, frontendAllowedTools } from '../build-options'
 
 // A real (empty) SDK server config; buildOptions only forwards it by reference under mcpServers.
 const toolServer = createSdkMcpServer({ name: 'pluma-frontend-tools', version: '1.0.0', tools: [] })
+const backendToolServer = createSdkMcpServer({
+  name: 'pluma-backend-tools',
+  version: '1.0.0',
+  tools: []
+})
 
 const spec = (name: string): Tool => ({
   name,
@@ -131,6 +136,46 @@ describe('buildOptions · tool permissions', () => {
     })
 
     expect('allowedTools' in options).toBe(false)
+  })
+
+  it('registers the backend server alone with its namespaced allow-list', () => {
+    const options = buildOptions({
+      threadId: undefined,
+      cwd: undefined,
+      state: undefined,
+      toolServer: undefined,
+      tools: [],
+      backendToolServer,
+      backendTools: [spec('read_file'), spec('list_folder')]
+    })
+
+    expect(options.mcpServers).toStrictEqual({ backend: backendToolServer })
+    expect(options.hooks?.PreToolUse).toHaveLength(1)
+    expect(options.allowedTools).toStrictEqual([
+      'mcp__backend__read_file',
+      'mcp__backend__list_folder'
+    ])
+  })
+
+  it('registers both servers, concatenating the frontend then backend allow-lists', () => {
+    const options = buildOptions({
+      threadId: undefined,
+      cwd: undefined,
+      state: undefined,
+      toolServer,
+      tools: [spec('get_content'), spec('propose_edit')],
+      backendToolServer,
+      backendTools: [spec('read_file'), spec('list_folder')]
+    })
+
+    expect(options.mcpServers).toStrictEqual({ frontend: toolServer, backend: backendToolServer })
+    expect(options.hooks?.PreToolUse).toHaveLength(1)
+    expect(options.allowedTools).toStrictEqual([
+      'mcp__frontend__get_content',
+      'mcp__frontend__propose_edit',
+      'mcp__backend__read_file',
+      'mcp__backend__list_folder'
+    ])
   })
 })
 

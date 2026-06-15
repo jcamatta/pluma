@@ -61,3 +61,12 @@ describe('AGENT_SYSTEM_PROMPT', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('read again rather than guessing')
   })
 })
+
+describe('AGENT_SYSTEM_PROMPT · backend read tools', () => {
+  it('teaches the backend read tools for files not open in the editor', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('list_folder')
+    expect(AGENT_SYSTEM_PROMPT).toContain('read_file')
+    expect(AGENT_SYSTEM_PROMPT).toContain('one level')
+    expect(AGENT_SYSTEM_PROMPT).toContain('absolute path')
+  })
+})

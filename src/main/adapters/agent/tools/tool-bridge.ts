@@ -5,7 +5,7 @@
 // pending promises are keyed by toolCallId. On abort/teardown, `rejectAll` settles every outstanding
 // call with an error result so no handler hangs and the SDK query can close.
 
-import type { AgentToolCall, AgentToolResult } from '../../../../application/agent/data/agent-tool'
+import type { AgentToolCall, AgentToolResult } from '../../../application/agent/data/agent-tool'
 
 type ToolCallSender = (call: AgentToolCall) => void
 
