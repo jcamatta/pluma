@@ -21,7 +21,8 @@ const FEATURES = [
   'rail-context-meter',
   'thread-history',
   'artifacts',
-  'artifacts-cross-file'
+  'artifacts-cross-file',
+  'agent-filesystem-approval'
 ] as const
 
 // A shipped user-facing operation, one per real IPC channel the UI exercises end to end.
