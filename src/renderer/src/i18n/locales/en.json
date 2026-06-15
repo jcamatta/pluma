@@ -110,6 +110,14 @@
     "done": "{{tool}}",
     "toolFailed": "{{tool}} failed",
     "runError": "Run failed: {{message}}",
+    "approval": {
+      "createFile": "Create file",
+      "renameFile": "Rename file",
+      "deleteFile": "Delete file",
+      "action": "Approve action",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
     "context": {
       "label": "Context",
       "title": "Context window",

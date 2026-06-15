@@ -21,6 +21,7 @@ import type { ActivityLabels } from './Activity.view'
 import type { StepLabels } from './conversation-rows'
 import { ConversationRailView, type RailLabels } from './ConversationRail.view'
 import { ConversationView } from './Conversation.view'
+import { ApprovalCardController } from './ApprovalCard.controller'
 
 interface ChatRailControllerProps {
   readonly cwd: string
@@ -102,6 +103,7 @@ export function ChatRailController({
       model={runControls.model}
       effort={runControls.effort}
       contextMeter={<ContextMeterController agent={agent} />}
+      approvals={<ApprovalCardController />}
       onChange={setValue}
       onSubmit={submit}
       onStop={() => agent.abortRun()}

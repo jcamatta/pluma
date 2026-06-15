@@ -45,6 +45,9 @@ interface ConversationRailViewProps {
   readonly effort: RunControlSelectProps
   // The context meter node for the composer toolbar, built by the controller.
   readonly contextMeter?: ReactNode
+  // Pending gated-tool approval cards, built by the controller; sit just above the composer so they
+  // stay visible during a run that is waiting on the user's Approve/Reject.
+  readonly approvals?: ReactNode
   readonly onChange: (value: string) => void
   readonly onSubmit: () => void
   readonly onStop: () => void
@@ -106,6 +109,7 @@ function ChatPane({
   model,
   effort,
   contextMeter,
+  approvals,
   onChange,
   onSubmit,
   onStop
@@ -119,6 +123,7 @@ function ChatPane({
   | 'model'
   | 'effort'
   | 'contextMeter'
+  | 'approvals'
   | 'onChange'
   | 'onSubmit'
   | 'onStop'
@@ -128,6 +133,8 @@ function ChatPane({
       <Scrollable className="min-h-0 flex-1" contentClassName="px-4 pb-2 pt-4">
         {hasTurn ? children : <Empty icon={<Sparkles size={22} />} text={labels.newChatEmpty} />}
       </Scrollable>
+
+      {approvals}
 
       <RailComposer
         placeholder={labels.composerPlaceholder}
@@ -193,6 +200,7 @@ export function ConversationRailView(props: ConversationRailViewProps): React.JS
           model={props.model}
           effort={props.effort}
           contextMeter={props.contextMeter}
+          approvals={props.approvals}
           onChange={props.onChange}
           onSubmit={props.onSubmit}
           onStop={props.onStop}

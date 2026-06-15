@@ -14,6 +14,7 @@ import { AbstractAgent, type AgentSubscriber, type RunAgentInput } from '@ag-ui/
 import { type BaseEvent, type Message, type State } from '@ag-ui/core'
 import { Observable } from 'rxjs'
 import { AgentContext } from '../../agent/AgentContext'
+import { AgentApprovalsProvider } from '../../agent/AgentApprovalsProvider'
 import { ThreadControlsContext } from '../../agent/ThreadControlsContext'
 import { ThreadsContext } from '../../threads/ThreadsContext'
 import { createFakeThreadsRepository } from '../../threads/__tests__/fake-threads-repository'
@@ -124,9 +125,11 @@ function renderRail(agent: FakeAgent = new FakeAgent()): { agent: FakeAgent } {
         <ThreadsContext.Provider value={createFakeThreadsRepository({})}>
           <AgentContext.Provider value={agent}>
             <ThreadControlsContext.Provider value={controls}>
-              <ActiveEditorProvider>
-                <ConversationRailController cwd="/work" onClose={() => undefined} />
-              </ActiveEditorProvider>
+              <AgentApprovalsProvider>
+                <ActiveEditorProvider>
+                  <ConversationRailController cwd="/work" onClose={() => undefined} />
+                </ActiveEditorProvider>
+              </AgentApprovalsProvider>
             </ThreadControlsContext.Provider>
           </AgentContext.Provider>
         </ThreadsContext.Provider>
