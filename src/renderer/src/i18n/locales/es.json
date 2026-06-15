@@ -110,6 +110,14 @@
     "done": "{{tool}}",
     "toolFailed": "{{tool}} falló",
     "runError": "La ejecución falló: {{message}}",
+    "approval": {
+      "createFile": "Crear archivo",
+      "renameFile": "Renombrar archivo",
+      "deleteFile": "Eliminar archivo",
+      "action": "Aprobar acción",
+      "approve": "Aprobar",
+      "reject": "Rechazar"
+    },
     "context": {
       "label": "Contexto",
       "title": "Ventana de contexto",
