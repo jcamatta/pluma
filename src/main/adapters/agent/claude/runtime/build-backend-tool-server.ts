@@ -1,12 +1,14 @@
 // Action: turn the SDK-neutral backend tools into one in-process SDK MCP server. Each tool becomes an SDK
-// `tool()` whose handler runs the tool's Effect to completion in the main process (no bridge, no renderer
-// round-trip) and returns the AgentToolResult as text content. Every backend tool is a query, so all carry
-// the SDK's readOnlyHint. The caller passes the catalog already built for the run's cwd.
+// `tool()` whose handler runs the tool's Effect to completion in the main process and returns the
+// AgentToolResult as text content. Read tools complete in-process; gated command tools suspend on the run's
+// bridge for human approval before running. readOnlyHint is set per tool: queries are read-only, the gated
+// mutating commands are not. The caller passes the catalog already built for the run's cwd and bridge.
 
 import { createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk'
 import type { McpSdkServerConfigWithInstance } from '@anthropic-ai/claude-agent-sdk'
 import * as Effect from 'effect/Effect'
 import type { BackendTool } from '../../tools/backend/backend-tool'
+import { isMutatingBackendTool } from '../../tools/backend/is-mutating-backend-tool'
 import { jsonSchemaToZodShape } from '../logic/json-schema-to-zod'
 import { toCallToolResult } from './to-call-tool-result'
 
@@ -19,7 +21,7 @@ const buildTool = (backendTool: BackendTool): ReturnType<typeof tool> =>
     jsonSchemaToZodShape(backendTool.spec.parameters),
     async (args: Record<string, unknown>) =>
       toCallToolResult(await Effect.runPromise(backendTool.run(args))),
-    { annotations: { readOnlyHint: true } }
+    { annotations: { readOnlyHint: !isMutatingBackendTool(backendTool) } }
   )
 
 const buildBackendToolServer = (tools: readonly BackendTool[]): McpSdkServerConfigWithInstance =>

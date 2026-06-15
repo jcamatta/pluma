@@ -1,11 +1,13 @@
 // Tests for buildBackendToolServer: binding the SDK-neutral backend catalog to one in-process SDK MCP
 // server. We stub the SDK's tool()/createSdkMcpServer to capture each tool's name, handler, and annotations,
 // then drive a captured handler against a real temp .md file to prove it round-trips the use case's content.
+// The gated command tools carry readOnlyHint: false; the read tools carry readOnlyHint: true.
 
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
+import type { ToolBridge } from '../../../tools/tool-bridge'
 
 type CapturedHandler = (args: Record<string, unknown>) => Promise<{ content: unknown }>
 
@@ -32,6 +34,15 @@ vi.mock('@anthropic-ai/claude-agent-sdk', () => ({
 const { buildBackendToolServer } = await import('../build-backend-tool-server')
 const { backendTools } = await import('../../../tools/backend')
 
+const stubBridge: ToolBridge = {
+  callTool: () => Promise.resolve({ ok: false, error: 'declined' }),
+  resolve: () => undefined,
+  rejectAll: () => undefined
+}
+
+const catalogFor = (cwd: string): ReturnType<typeof backendTools> =>
+  backendTools({ cwd, bridge: stubBridge, runId: 'run-1' })
+
 const withTempDir = async (body: (dir: string) => Promise<void>): Promise<void> => {
   const dir = mkdtempSync(join(tmpdir(), 'pluma-'))
   try {
@@ -42,22 +53,34 @@ const withTempDir = async (body: (dir: string) => Promise<void>): Promise<void> 
 }
 
 describe('buildBackendToolServer', () => {
-  it('binds both backend tools, all read-only', () => {
+  it('binds the read and gated tools, only the read tools read-only', () => {
     captured.toolNames = []
     captured.annotations = []
 
-    const server = buildBackendToolServer(backendTools('/workspace'))
+    const server = buildBackendToolServer(catalogFor('/workspace'))
 
     expect(server).toBeDefined()
-    expect(captured.toolNames).toStrictEqual(['read_file', 'list_folder'])
-    expect(captured.annotations).toStrictEqual([{ readOnlyHint: true }, { readOnlyHint: true }])
+    expect(captured.toolNames).toStrictEqual([
+      'read_file',
+      'list_folder',
+      'create_file',
+      'rename_file',
+      'delete_file'
+    ])
+    expect(captured.annotations).toStrictEqual([
+      { readOnlyHint: true },
+      { readOnlyHint: true },
+      { readOnlyHint: false },
+      { readOnlyHint: false },
+      { readOnlyHint: false }
+    ])
   })
 
   it('read_file handler returns the file contents as serialized text content', () =>
     withTempDir(async (dir) => {
       const target = join(dir, 'note.md')
       writeFileSync(target, '# Hello world')
-      buildBackendToolServer(backendTools(dir))
+      buildBackendToolServer(catalogFor(dir))
 
       const result = await captured.handlers.read_file?.({ path: target })
 
