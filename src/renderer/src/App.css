@@ -375,6 +375,7 @@ body {
 /* The formatted, green "added" preview of a proposal — real headings/lists/paragraphs rendered as a
    widget between blocks, set off by a green accent so it reads as the incoming content. */
 .ProseMirror .proposal-draft {
+  position: relative;
   border-radius: 0.1875rem;
   border-left: 0.1875rem solid color-mix(in srgb, var(--color-success) 60%, transparent);
   padding-left: 0.5rem;
@@ -427,6 +428,15 @@ body {
   width: 0;
   height: 0;
   vertical-align: baseline;
+}
+
+/* For an insert the pill rides inside the draft block: anchored absolutely to the block's top-left, it
+   takes no flow space (so activating it never shifts the document), and the pill still floats above via
+   its own `bottom: 100%`. */
+.ProseMirror .suggestion-pill-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .ProseMirror .suggestion-pill {

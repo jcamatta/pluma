@@ -45,12 +45,8 @@ const xSvg = renderToStaticMarkup(createElement(X, { size: 15 }))
 // Renders the proposal's parsed content (a `{ type: 'doc', content: [...] }` JSON) to real formatted
 // DOM via the editor schema, so the preview shows actual headings/lists/paragraphs rather than the
 // raw markdown source.
-function draftElement({
-  proposal,
-  schema,
-  active,
-  actions
-}: ProposalDecorationsInput): HTMLElement {
+function draftElement(input: ProposalDecorationsInput, embedPill: boolean): HTMLElement {
+  const { proposal, schema, active, actions } = input
   const node = schema.nodeFromJSON(proposal.content)
   const fragment = DOMSerializer.fromSchema(schema).serializeFragment(node.content)
   const element = document.createElement('div')
@@ -62,6 +58,9 @@ function draftElement({
     event.preventDefault()
     actions.onToggleActive()
   })
+  // A pure insert has no struck span to float a pill over, so its accept/reject pill rides inside the
+  // block as an absolute overlay — it sits above the block without displacing the document below it.
+  if (embedPill) element.appendChild(pillElement(input, true))
   element.appendChild(fragment)
   return element
 }
@@ -70,11 +69,12 @@ function draftElement({
 // destroying and recreating it on every state change — without it the node remounts each transaction
 // and replays its entry animation, which reads as a flicker. The proposal id is stable across edits
 // (the widget's mapped position is not, so it must not feed the key).
-function draftDecoration(input: ProposalDecorationsInput): Decoration {
+function draftDecoration(input: ProposalDecorationsInput, embedPill: boolean): Decoration {
   const { proposal, active } = input
   // The active flag is folded into the key so toggling active rebuilds the widget DOM (otherwise
-  // ProseMirror reuses the cached node and the proposal-active class never lands on it).
-  return Decoration.widget(proposal.to, () => draftElement(input), {
+  // ProseMirror reuses the cached node and neither the proposal-active class nor the embedded insert
+  // pill — which both follow the active state — would land on it).
+  return Decoration.widget(proposal.to, () => draftElement(input, embedPill), {
     side: 1,
     key: active ? `${proposal.id}:active` : proposal.id
   })
@@ -133,8 +133,9 @@ function pillActions({ labels, actions }: ProposalDecorationsInput): readonly HT
 
 // Floats above the active suggestion (`bottom: 100%`) and offers accept/reject. A conflicted proposal —
 // its underlying text drifted, so it can no longer apply — renders muted with only the conflicted label,
-// matching the artifacts surface (no plain Accept affordance).
-function pillElement(input: ProposalDecorationsInput): HTMLElement {
+// matching the artifacts surface (no plain Accept affordance). `overlay` marks the wrap as an absolute
+// overlay anchor (used when the pill rides inside an insert's draft block rather than the doc flow).
+function pillElement(input: ProposalDecorationsInput, overlay = false): HTMLElement {
   const { proposal, labels } = input
   const conflicted = proposal.status === 'conflicted'
 
@@ -145,7 +146,9 @@ function pillElement(input: ProposalDecorationsInput): HTMLElement {
   )
   if (!conflicted) pillActions(input).forEach((node) => pill.appendChild(node))
 
-  const wrap = spanWithClass('suggestion-pill-wrap')
+  const wrap = spanWithClass(
+    overlay ? 'suggestion-pill-wrap suggestion-pill-overlay' : 'suggestion-pill-wrap'
+  )
   wrap.appendChild(pill)
   return wrap
 }
@@ -165,29 +168,31 @@ function withActive(className: string, active: boolean): string {
 
 function proposalDecorations(input: ProposalDecorationsInput): Decoration[] {
   const { proposal, active } = input
-  const pill = active ? [pillDecoration(input)] : []
+  const floatingPill = active ? [pillDecoration(input)] : []
 
   if (proposal.status === 'conflicted') {
     return [
       Decoration.inline(proposal.from, proposal.to, {
         class: withActive('proposal-conflicted', active)
       }),
-      ...pill
+      ...floatingPill
     ]
   }
 
-  // A pure insert (`from === to`) replaces nothing, so it shows only the green added preview; a
-  // replace also strikes the removed span red.
-  const removed =
-    proposal.from < proposal.to
-      ? [
-          Decoration.inline(proposal.from, proposal.to, {
-            class: withActive('proposal-delete', active)
-          })
-        ]
-      : []
+  // A pure insert (`from === to`) replaces nothing and has no inline span to float a pill over, so it
+  // shows only the green added preview and embeds its active pill inside that block as an overlay.
+  if (proposal.from === proposal.to) {
+    return [draftDecoration(input, active)]
+  }
 
-  return [...removed, ...pill, draftDecoration(input)]
+  // A replace strikes the removed span red and floats the pill at the span's start.
+  return [
+    Decoration.inline(proposal.from, proposal.to, {
+      class: withActive('proposal-delete', active)
+    }),
+    ...floatingPill,
+    draftDecoration(input, false)
+  ]
 }
 
 export { proposalDecorations }

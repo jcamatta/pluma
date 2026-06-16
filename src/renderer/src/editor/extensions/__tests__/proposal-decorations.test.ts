@@ -187,6 +187,8 @@ describe('proposal accept/reject pill', () => {
 
       setActiveProposal({ editor, id })
       expect(editor.view.dom.querySelectorAll('.suggestion-pill')).toHaveLength(1)
+      // A rewrite's pill floats in the doc flow, not embedded in a draft overlay (that's insert-only).
+      expect(editor.view.dom.querySelector('.suggestion-pill-overlay')).toBeNull()
 
       setActiveProposal({ editor, id: null })
       expect(editor.view.dom.querySelector('.suggestion-pill')).toBeNull()
@@ -201,6 +203,20 @@ describe('proposal accept/reject pill', () => {
       setActiveProposal({ editor, id })
       setSuggestionsVisible({ editor, visible: false })
       expect(editor.view.dom.querySelector('.suggestion-pill')).toBeNull()
+    })
+  })
+
+  it('embeds the active insert pill inside the draft block as an overlay', () => {
+    withEditor('hello world', (editor) => {
+      const id = createDraftId(editor)
+      if (id === null) return expect.fail('insert not created')
+      setActiveProposal({ editor, id })
+
+      // The pill rides inside the green block (an absolute overlay) so it adds no flow height — unlike a
+      // rewrite, whose pill floats over the struck span.
+      expect(
+        editor.view.dom.querySelector('.proposal-draft .suggestion-pill-overlay')
+      ).not.toBeNull()
     })
   })
 
