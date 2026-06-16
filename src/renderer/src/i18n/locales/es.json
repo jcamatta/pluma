@@ -28,6 +28,13 @@
       "quote": "Cita",
       "codeBlock": "Código",
       "divider": "Divisor"
+    },
+    "suggestionPill": {
+      "rewrite": "Reescritura",
+      "insert": "Insertar",
+      "accept": "Aceptar",
+      "reject": "Rechazar",
+      "conflicted": "En conflicto"
     }
   },
   "launcher": {
