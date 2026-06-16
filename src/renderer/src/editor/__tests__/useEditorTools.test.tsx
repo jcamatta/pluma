@@ -8,6 +8,8 @@ import {
   agentToolSpecs,
   getContentTool,
   getCurrentSelectionTool,
+  insertAfterTool,
+  insertAtTool,
   listOpenFilesTool,
   proposeEditTool
 } from '../../agent/tools/specs'
@@ -128,5 +130,39 @@ describe('useEditorTools', () => {
     const result = await registry.byName(getCurrentSelectionTool.name)?.handler({})
 
     expect(result).toEqual({ ok: false, error: 'No document is open in the editor.' })
+  })
+})
+
+describe('useEditorTools insert dispatch', () => {
+  it('dispatches insert_at against the live editor', async () => {
+    const editor = createTestEditor('hello world')
+    try {
+      const registry = renderRegistry(depsFor(editor))
+
+      const inserted = await registry
+        .byName(insertAtTool.name)
+        ?.handler({ path: PATH, text: 'tail', position: 'end' })
+
+      expect(inserted?.ok).toBe(true)
+      expect(getProposals(editor)).toHaveLength(1)
+    } finally {
+      editor.destroy()
+    }
+  })
+
+  it('dispatches insert_after against the live editor', async () => {
+    const editor = createTestEditor('hello world')
+    try {
+      const registry = renderRegistry(depsFor(editor))
+
+      const inserted = await registry
+        .byName(insertAfterTool.name)
+        ?.handler({ path: PATH, text: 'more', anchor: 'world' })
+
+      expect(inserted?.ok).toBe(true)
+      expect(getProposals(editor)).toHaveLength(1)
+    } finally {
+      editor.destroy()
+    }
   })
 })

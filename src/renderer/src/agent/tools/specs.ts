@@ -95,12 +95,62 @@ const proposeEditTool: Tool = {
   }
 }
 
+const insertAtTool: Tool = {
+  name: 'insert_at',
+  description:
+    'Insert text (Markdown — may be multiple paragraphs, headings, or lists) at the document start or end. Use it to draft into an empty document or to append. The user reviews the insertion inline and accepts or rejects it; the change is not applied until accepted.',
+  parameters: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['path', 'text', 'position'],
+    properties: {
+      path: { type: 'string', description: filePathDescription },
+      text: {
+        type: 'string',
+        description:
+          'The content to insert as Markdown. May be multiple paragraphs, headings, or lists.'
+      },
+      position: {
+        type: 'string',
+        enum: ['start', 'end'],
+        description: "'start' inserts before all existing content; 'end' appends after it."
+      }
+    }
+  }
+}
+
+const insertAfterTool: Tool = {
+  name: 'insert_after',
+  description:
+    'Insert text (Markdown — may be multiple paragraphs, headings, or lists) immediately after the block that contains the exact anchor passage. The user reviews the insertion inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the anchor is absent and ambiguous when it occurs more than once — grow the anchor until it is unique.',
+  parameters: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['path', 'text', 'anchor'],
+    properties: {
+      path: { type: 'string', description: filePathDescription },
+      text: {
+        type: 'string',
+        description:
+          'The content to insert as Markdown. May be multiple paragraphs, headings, or lists.'
+      },
+      anchor: {
+        type: 'string',
+        description:
+          'The exact passage the new text goes after, copied verbatim. Must occur exactly once.'
+      }
+    }
+  }
+}
+
 const agentToolSpecs: readonly Tool[] = [
   listOpenFilesTool,
   getCurrentSelectionTool,
   getContentTool,
   createAnnotationTool,
-  proposeEditTool
+  proposeEditTool,
+  insertAtTool,
+  insertAfterTool
 ]
 
 export {
@@ -109,5 +159,7 @@ export {
   getContentTool,
   createAnnotationTool,
   proposeEditTool,
+  insertAtTool,
+  insertAfterTool,
   agentToolSpecs
 }
