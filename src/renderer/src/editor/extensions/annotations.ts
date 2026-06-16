@@ -8,6 +8,7 @@ import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/p
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import {
   getActiveSuggestionId,
+  getSuggestionsVisible,
   readSuggestionsUiState,
   setActiveSuggestion
 } from './suggestions-ui'
@@ -99,6 +100,18 @@ function getActiveAnnotationId(editor: Editor): string | null {
 
 function setActiveAnnotation({ editor, id }: SetActiveAnnotationInput): void {
   setActiveSuggestion({ editor, id })
+}
+
+// Clicking an annotation activates it, or clears the active suggestion if it was already active —
+// mirroring the proposal toggle so the cross-type active id stays single.
+function toggleActiveAnnotation(editor: Editor, id: string): void {
+  const next = getActiveSuggestionId(editor) === id ? null : id
+  setActiveSuggestion({ editor, id: next })
+}
+
+// The annotation whose range contains a clicked position (endpoints inclusive).
+function annotationAtPos(editor: Editor, pos: number): Annotation | undefined {
+  return getAnnotations(editor).find((annotation) => pos >= annotation.from && pos <= annotation.to)
 }
 
 function createAnnotation({ editor, annotation }: CreateAnnotationInput): Annotation {
@@ -206,6 +219,7 @@ const AnnotationsExtension = Extension.create({
   name: 'annotations',
 
   addProseMirrorPlugins() {
+    const editor = this.editor
     return [
       new Plugin<AnnotationsState>({
         key: annotationsPluginKey,
@@ -230,6 +244,15 @@ const AnnotationsExtension = Extension.create({
         props: {
           decorations(editorState) {
             return visibleDecorations(editorState)
+          },
+
+          // Clicking an annotation's highlighted range toggles it active; the editor controller watches
+          // the active annotation id and opens the floating card anchored to it.
+          handleClickOn(_view, pos) {
+            const annotation = annotationAtPos(editor, pos)
+            if (!annotation || !getSuggestionsVisible(editor)) return false
+            toggleActiveAnnotation(editor, annotation.id)
+            return true
           }
         }
       })

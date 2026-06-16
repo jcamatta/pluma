@@ -146,6 +146,58 @@ describe('annotations extension shared cross-type active id', () => {
   })
 })
 
+// Dispatches a click at a position the way ProseMirror does — iterating every plugin's handleClickOn
+// until one claims the click — so this exercises the annotations handler alongside the proposals one.
+function clickAt(editor: Editor, pos: number): boolean {
+  const node = editor.state.doc.nodeAt(pos) ?? editor.state.doc
+  return Boolean(
+    editor.view.someProp('handleClickOn', (handler) =>
+      handler(editor.view, pos, node, pos, new MouseEvent('click'), true)
+    )
+  )
+}
+
+describe('annotations extension click-to-activate', () => {
+  it('activates the annotation whose range is clicked', () => {
+    withEditor('hello world', (editor) => {
+      const annotation = annotate(editor, { label: 'one', from: 1, to: 4 })
+
+      expect(clickAt(editor, 2)).toBe(true)
+      expect(getActiveAnnotationId(editor)).toBe(annotation.id)
+    })
+  })
+
+  it('toggles the active annotation off when its range is clicked again', () => {
+    withEditor('hello world', (editor) => {
+      const annotation = annotate(editor, { label: 'one', from: 1, to: 4 })
+      setActiveAnnotation({ editor, id: annotation.id })
+
+      expect(clickAt(editor, 2)).toBe(true)
+      expect(getActiveAnnotationId(editor)).toBeNull()
+    })
+  })
+
+  it('does not handle a click outside any annotation range', () => {
+    withEditor('hello world', (editor) => {
+      annotate(editor, { label: 'one', from: 1, to: 3 })
+
+      expect(clickAt(editor, 9)).toBe(false)
+      expect(getActiveAnnotationId(editor)).toBeNull()
+    })
+  })
+
+  it('ignores clicks while suggestions are hidden', () => {
+    withEditor('hello world', (editor) => {
+      const annotation = annotate(editor, { label: 'one', from: 1, to: 4 })
+      setSuggestionsVisible({ editor, visible: false })
+
+      expect(clickAt(editor, 2)).toBe(false)
+      expect(getActiveAnnotationId(editor)).toBeNull()
+      expect(annotation.id).toBe('a_1')
+    })
+  })
+})
+
 describe('annotations extension render-all visibility', () => {
   it('highlights every annotation at once without any active selection', () => {
     withEditor('hello world', (editor) => {
