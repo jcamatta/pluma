@@ -76,18 +76,21 @@ const createAnnotationTool: Tool = {
 const proposeEditTool: Tool = {
   name: 'propose_edit',
   description:
-    'Propose replacing a passage with new text. Pass the exact text of the passage to replace, copied verbatim from the document. The user reviews the edit inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the text is absent and ambiguous when it occurs more than once — grow the text until it is unique.',
+    'Propose replacing the exact passage with new text (Markdown). The user reviews the edit inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the passage is absent and ambiguous when it occurs more than once — grow the passage until it is unique.',
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['path', 'text', 'replacementText'],
+    required: ['path', 'passage', 'text'],
     properties: {
       path: { type: 'string', description: filePathDescription },
-      text: {
+      passage: {
         type: 'string',
         description: 'The exact passage to replace, copied verbatim. Must occur exactly once.'
       },
-      replacementText: { type: 'string' }
+      text: {
+        type: 'string',
+        description: 'The new content as Markdown. May be multiple paragraphs, headings, or lists.'
+      }
     }
   }
 }

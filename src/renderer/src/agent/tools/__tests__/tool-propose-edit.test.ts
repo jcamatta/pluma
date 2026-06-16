@@ -9,7 +9,7 @@ import { proposeEdit } from '../tool-propose-edit'
 describe('proposeEdit', () => {
   it('creates a proposal over the resolved passage', () => {
     withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { text: 'world', replacementText: 'earth' })
+      const result = proposeEdit(editor, { passage: 'world', text: 'earth' })
 
       expect(result.ok).toBe(true)
       expect(getProposals(editor)).toHaveLength(1)
@@ -19,7 +19,7 @@ describe('proposeEdit', () => {
 
   it('applies a single-word replacement inline when accepted', () => {
     withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { text: 'world', replacementText: 'earth' })
+      const result = proposeEdit(editor, { passage: 'world', text: 'earth' })
       expect(result.ok).toBe(true)
 
       const id = getProposals(editor)[0]?.id
@@ -33,7 +33,7 @@ describe('proposeEdit', () => {
 
   it('applies multi-paragraph markdown as separate paragraphs when accepted', () => {
     withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { text: 'world', replacementText: 'a\n\nb' })
+      const result = proposeEdit(editor, { passage: 'world', text: 'a\n\nb' })
       expect(result.ok).toBe(true)
 
       const id = getProposals(editor)[0]?.id
@@ -49,14 +49,14 @@ describe('proposeEdit', () => {
 
   it('fails not_found when the text is absent', () => {
     withEditor('hello world', (editor) => {
-      const result = proposeEdit(editor, { text: 'missing', replacementText: 'x' })
+      const result = proposeEdit(editor, { passage: 'missing', text: 'x' })
       expect(result).toEqual({ ok: false, error: 'not_found' })
     })
   })
 
   it('fails ambiguous when the text occurs more than once', () => {
     withEditor('the cat sat on the mat', (editor) => {
-      const result = proposeEdit(editor, { text: 'the', replacementText: 'a' })
+      const result = proposeEdit(editor, { passage: 'the', text: 'a' })
       if (result.ok) return expect.fail('expected failure')
       expect(result.error.startsWith('ambiguous\n')).toBe(true)
     })
@@ -64,10 +64,10 @@ describe('proposeEdit', () => {
 
   it('fails when proposals overlap', () => {
     withEditor('hello world', (editor) => {
-      const first = proposeEdit(editor, { text: 'hello world', replacementText: 'a' })
+      const first = proposeEdit(editor, { passage: 'hello world', text: 'a' })
       expect(first.ok).toBe(true)
 
-      const second = proposeEdit(editor, { text: 'world', replacementText: 'b' })
+      const second = proposeEdit(editor, { passage: 'world', text: 'b' })
       expect(second.ok).toBe(false)
     })
   })
