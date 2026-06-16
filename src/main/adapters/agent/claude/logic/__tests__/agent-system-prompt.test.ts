@@ -63,9 +63,14 @@ describe('AGENT_SYSTEM_PROMPT', () => {
 })
 
 describe('AGENT_SYSTEM_PROMPT · acting tools', () => {
-  it('offers insert_at and insert_after for adding new text', () => {
+  it('offers insert_at and insert for adding new text', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('insert_at')
-    expect(AGENT_SYSTEM_PROMPT).toContain('insert_after')
+    expect(AGENT_SYSTEM_PROMPT).toContain('insert ')
+  })
+
+  it('teaches insert before and after modes relative to a named block', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('mode "before"')
+    expect(AGENT_SYSTEM_PROMPT).toContain('"after"')
   })
 
   it('requires a substantial draft to be produced in one call', () => {
