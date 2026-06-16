@@ -328,9 +328,19 @@ body {
   box-shadow: inset 0 -0.125rem 0 color-mix(in srgb, var(--annotation-color) 70%, transparent);
 }
 
-/* The artifact card header chip, divider, and quote border all take the
-   severity hue. */
-.annotation-chip {
+/* A read note drops its severity highlight for a quiet, settled treatment:
+   a dotted muted underline and secondary text. */
+.ProseMirror .annotation-read {
+  text-decoration: underline dotted var(--text-muted);
+  text-underline-offset: 0.1875rem;
+  color: var(--text-secondary);
+}
+
+/* The note card header chip, label, and severity word all take the severity
+   hue (the card root carries the severity class that sets --annotation-color);
+   the divider and quote border take a tint of it. */
+.annotation-chip,
+.annotation-accent {
   color: var(--annotation-color);
 }
 
@@ -340,6 +350,12 @@ body {
 
 .annotation-quote {
   border-color: color-mix(in srgb, var(--annotation-color) 55%, transparent);
+}
+
+/* The suggestions sub-topbar (editor header row 2): a faint accent wash over the surface so it reads as
+   part of the editor chrome while signalling the inline-review context. */
+.suggestions-bar {
+  background: color-mix(in srgb, var(--action-primary) 4%, var(--surface-3));
 }
 
 /* The live editor selection while composing a request to the agent. */
@@ -359,6 +375,7 @@ body {
 /* The formatted, green "added" preview of a proposal — real headings/lists/paragraphs rendered as a
    widget between blocks, set off by a green accent so it reads as the incoming content. */
 .ProseMirror .proposal-draft {
+  position: relative;
   border-radius: 0.1875rem;
   border-left: 0.1875rem solid color-mix(in srgb, var(--color-success) 60%, transparent);
   padding-left: 0.5rem;
@@ -367,6 +384,18 @@ body {
 }
 
 .ProseMirror .proposal-draft > :first-child {
+  margin-top: 0;
+}
+
+/* An insert reserves headroom for its accept/reject pill at all times, so activating it (which adds the
+   pill) fills reserved space instead of shifting the document below. */
+.ProseMirror .proposal-draft.proposal-insert {
+  margin-top: 1.75rem;
+}
+
+/* The embedded pill is prepended, so the block's real first child is no longer :first-child — restore its
+   margin reset here, otherwise its top margin would reappear only while the pill is shown. */
+.ProseMirror .proposal-draft > .suggestion-pill-overlay + * {
   margin-top: 0;
 }
 
@@ -388,6 +417,113 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* The active suggestion (set on click, never on hover) gets a 2px accent ring, so the focused edit reads
+   as picked; the green preview also flashes to draw the eye when it becomes active. */
+.ProseMirror .proposal-draft.proposal-active {
+  box-shadow: 0 0 0 0.125rem var(--color-accent);
+  animation: apply-flash 1.1s ease-out;
+}
+
+.ProseMirror .proposal-delete.proposal-active,
+.ProseMirror .proposal-conflicted.proposal-active {
+  box-shadow: 0 0 0 0.125rem var(--color-accent);
+}
+
+/* The accept/reject pill floats above the active suggestion. The wrapper is a zero-size positioned
+   anchor; the pill itself sits at `bottom: 100%` so it never overlaps the prose it acts on. */
+.ProseMirror .suggestion-pill-wrap {
+  position: relative;
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: baseline;
+}
+
+/* For an insert the pill rides inside the draft block: anchored absolutely to the block's top-left, it
+   takes no flow space (so activating it never shifts the document), and the pill still floats above via
+   its own `bottom: 100%`. */
+.ProseMirror .suggestion-pill-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.ProseMirror .suggestion-pill {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  white-space: nowrap;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface-3);
+  box-shadow: var(--shadow-1);
+  font-family: var(--font-ui, sans-serif);
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.ProseMirror .suggestion-pill-label {
+  font-weight: 600;
+}
+
+.ProseMirror .suggestion-pill.conflicted {
+  color: var(--text-muted);
+}
+
+.ProseMirror .suggestion-pill-sep {
+  width: 1px;
+  align-self: stretch;
+  margin-inline: 0.125rem;
+  background: var(--border);
+}
+
+.ProseMirror .suggestion-pill-accept,
+.ProseMirror .suggestion-pill-reject {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem;
+  border-radius: 0.375rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.ProseMirror .suggestion-pill-accept:hover {
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+}
+
+.ProseMirror .suggestion-pill-reject:hover {
+  color: var(--color-destructive);
+  background: color-mix(in srgb, var(--color-destructive) 14%, transparent);
+}
+
+@keyframes apply-flash {
+  0% {
+    background: color-mix(in srgb, var(--color-success) 28%, transparent);
+  }
+  100% {
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ProseMirror .proposal-draft,
+  .ProseMirror .proposal-draft.proposal-active {
+    animation: none;
   }
 }
 

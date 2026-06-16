@@ -6,6 +6,7 @@ import { EditorContent, EditorContext, type Editor as TiptapEditor } from '@tipt
 import { type CSSProperties } from 'react'
 import { Scrollable } from '../components/Scrollable'
 import { SlashMenuController } from './slash/SlashMenu.controller'
+import { AnnotationCardController } from './AnnotationCard.controller'
 
 type EditorManuscriptProps = {
   readonly editor: TiptapEditor
@@ -34,6 +35,7 @@ export function EditorManuscript({
         </Scrollable>
       </div>
       <SlashMenuController editor={editor} />
+      <AnnotationCardController editor={editor} />
     </EditorContext.Provider>
   )
 }

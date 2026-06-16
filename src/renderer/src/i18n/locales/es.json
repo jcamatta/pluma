@@ -3,6 +3,7 @@
   "editor": {
     "untitled": "Sin título",
     "settings": "Configuración",
+    "tabBadge": "{{count}} sugerencias pendientes",
     "tabs": {
       "close": "Cerrar {{name}}"
     },
@@ -28,6 +29,41 @@
       "quote": "Cita",
       "codeBlock": "Código",
       "divider": "Divisor"
+    },
+    "suggestionPill": {
+      "rewrite": "Reescritura",
+      "insert": "Insertar",
+      "accept": "Aceptar",
+      "reject": "Rechazar",
+      "conflicted": "En conflicto"
+    },
+    "annotationCard": {
+      "title": "Nota",
+      "gotIt": "Entendido",
+      "read": "Leído",
+      "severity": {
+        "info": "Nota",
+        "warning": "Atención",
+        "error": "Problema"
+      }
+    },
+    "suggestionsBar": {
+      "suggestions": "Sugerencias",
+      "toReview": "{{count}} por revisar",
+      "allReviewed": "Todo revisado",
+      "hideAll": "Ocultar todo",
+      "showAll": "Mostrar todo",
+      "list": "Lista"
+    },
+    "suggestionsList": {
+      "rewrites": "Reescrituras",
+      "inserts": "Inserciones",
+      "notes": "Notas",
+      "read": "leída",
+      "conflicted": "en conflicto",
+      "markRead": "Marcar leída",
+      "acceptAll": "Aceptar todo",
+      "markAllRead": "Marcar todas leídas"
     }
   },
   "launcher": {

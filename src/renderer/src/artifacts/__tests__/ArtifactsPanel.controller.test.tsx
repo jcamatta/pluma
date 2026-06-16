@@ -124,7 +124,9 @@ describe('ArtifactsPanelController', () => {
       act(() => seed(editor))
 
       expect(screen.getByText('Soften the threat.')).toBeInTheDocument()
-      expect(screen.getByText('ZZZ')).toBeInTheDocument()
+      // Target the proposal card by its composite key: once active, the proposal also renders its
+      // replacement as an editor decoration, so the card text alone is ambiguous.
+      expect(screen.getByTestId(`artifact-card:${PATH}::p_1`)).toBeInTheDocument()
 
       fireEvent.click(screen.getByText('Soften the threat.'))
       expect(getActiveAnnotationId(editor)).toBe('a_1')
@@ -143,8 +145,10 @@ describe('ArtifactsPanelController', () => {
       expect(getActiveAnnotationId(editor)).toBe('a_1')
       expect(getActiveProposalId(editor)).toBeNull()
 
-      // Selecting the proposal clears the active annotation — never two active at once.
-      fireEvent.click(screen.getByText('ZZZ'))
+      // Selecting the proposal clears the active annotation — never two active at once. Target the
+      // card by its composite key: once active, the proposal also renders its replacement as an
+      // editor decoration, so the card text alone is ambiguous.
+      fireEvent.click(screen.getByTestId(`artifact-card:${PATH}::p_1`))
       expect(getActiveProposalId(editor)).toBe('p_1')
       expect(getActiveAnnotationId(editor)).toBeNull()
     } finally {

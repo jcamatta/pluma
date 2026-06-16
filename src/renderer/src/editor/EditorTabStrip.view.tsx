@@ -19,6 +19,7 @@ type EditorTabStripProps = {
   readonly tabs: readonly EditorTab[]
   readonly settingsLabel: string
   readonly closeLabel: (name: string) => string
+  readonly badgeLabel: (count: number) => string
   readonly onClose: (path: string) => void
   readonly onOpenSettings: () => void
 }
@@ -27,6 +28,7 @@ export function EditorTabStrip({
   tabs,
   settingsLabel,
   closeLabel,
+  badgeLabel,
   onClose,
   onOpenSettings
 }: EditorTabStripProps): React.JSX.Element {
@@ -57,6 +59,14 @@ export function EditorTabStrip({
                     className="text-text-muted group-data-[active]:text-action-primary"
                   />
                   {tab.name}
+                  {tab.pendingCount > 0 && (
+                    <span
+                      aria-label={badgeLabel(tab.pendingCount)}
+                      className="rounded-full bg-action-primary px-2 text-xs font-semibold text-text-on-accent"
+                    >
+                      {tab.pendingCount}
+                    </span>
+                  )}
                 </Tabs.Tab>
                 <IconButton
                   label={closeLabel(tab.name)}

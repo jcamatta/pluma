@@ -6,7 +6,13 @@
 import { Extension, type Editor, type JSONContent } from '@tiptap/core'
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { DecorationSet } from '@tiptap/pm/view'
-import { proposalDecorations } from './proposal-decorations'
+import { i18n } from '../../i18n'
+import { proposalDecorations, type PillLabels } from './proposal-decorations'
+import {
+  getActiveSuggestionId,
+  readSuggestionsUiState,
+  setActiveSuggestion
+} from './suggestions-ui'
 
 type ProposalStatus = 'ready' | 'conflicted'
 
@@ -42,7 +48,6 @@ type SetActiveProposalInput = {
 
 type ProposalsState = {
   readonly proposals: readonly Proposal[]
-  readonly activeId: string | null
   readonly nextId: number
 }
 
@@ -50,11 +55,10 @@ type ProposalCommand =
   | { readonly type: 'add'; readonly proposal: Omit<Proposal, 'id' | 'status'> }
   | { readonly type: 'remove'; readonly id: string }
   | { readonly type: 'conflict'; readonly id: string }
-  | { readonly type: 'activate'; readonly id: string | null }
 
 const proposalsPluginKey = new PluginKey<ProposalsState>('proposals')
 
-const emptyState: ProposalsState = { proposals: [], activeId: null, nextId: 1 }
+const emptyState: ProposalsState = { proposals: [], nextId: 1 }
 
 function getState(editor: Editor): ProposalsState {
   return proposalsPluginKey.getState(editor.state) ?? emptyState
@@ -64,17 +68,18 @@ function getProposals(editor: Editor): readonly Proposal[] {
   return getState(editor).proposals
 }
 
+// The active suggestion id is shared across proposals and annotations (held in suggestions-ui), so a
+// proposal is "active" only when that single id names one of this editor's proposals; otherwise an
+// annotation (or nothing) is active and this reader yields null.
 function getActiveProposalId(editor: Editor): string | null {
-  return getState(editor).activeId
+  const activeId = getActiveSuggestionId(editor)
+  return activeId !== null && getProposals(editor).some((proposal) => proposal.id === activeId)
+    ? activeId
+    : null
 }
 
 function setActiveProposal({ editor, id }: SetActiveProposalInput): void {
-  editor.view.dispatch(
-    editor.state.tr.setMeta(proposalsPluginKey, {
-      id,
-      type: 'activate'
-    } satisfies ProposalCommand)
-  )
+  setActiveSuggestion({ editor, id })
 }
 
 function createProposal({ editor, proposal }: CreateProposalInput): CreateProposalResult {
@@ -160,7 +165,7 @@ function mapProposal(proposal: Proposal, transaction: Transaction): Proposal {
 function isProposalCommand(value: unknown): value is ProposalCommand {
   if (typeof value !== 'object' || value === null || !('type' in value)) return false
   const { type } = value
-  return type === 'add' || type === 'remove' || type === 'conflict' || type === 'activate'
+  return type === 'add' || type === 'remove' || type === 'conflict'
 }
 
 function readProposalCommand(transaction: Transaction): ProposalCommand | null {
@@ -180,10 +185,6 @@ function reduceProposal(state: ProposalsState, command: ProposalCommand): Propos
     }
   }
 
-  if (command.type === 'activate') {
-    return { ...state, activeId: command.id }
-  }
-
   if (command.type === 'conflict') {
     return {
       ...state,
@@ -195,33 +196,67 @@ function reduceProposal(state: ProposalsState, command: ProposalCommand): Propos
 
   return {
     ...state,
-    proposals: state.proposals.filter((proposal) => proposal.id !== command.id),
-    activeId: state.activeId === command.id ? null : state.activeId
+    proposals: state.proposals.filter((proposal) => proposal.id !== command.id)
   }
 }
 
-function activeDecorations(editorState: EditorState): DecorationSet {
+// When suggestions are visible, every proposal renders its red-green preview at once (hidden ⇒ a clean
+// page); the active proposal also gets the accept/reject pill, its buttons bound to this proposal. Pill
+// labels are read from the i18n singleton (this runs outside React, like placeholder.ts).
+function visibleDecorations(editorState: EditorState, editor: Editor): DecorationSet {
+  const ui = readSuggestionsUiState(editorState)
+  if (!ui.visible) return DecorationSet.empty
+
   const state = proposalsPluginKey.getState(editorState) ?? emptyState
-  if (!state.activeId) return DecorationSet.empty
+  const labels: PillLabels = {
+    rewrite: i18n.t('editor.suggestionPill.rewrite'),
+    insert: i18n.t('editor.suggestionPill.insert'),
+    accept: i18n.t('editor.suggestionPill.accept'),
+    reject: i18n.t('editor.suggestionPill.reject'),
+    conflicted: i18n.t('editor.suggestionPill.conflicted')
+  }
+  const decorations = state.proposals.flatMap((proposal) =>
+    proposalDecorations({
+      proposal,
+      schema: editorState.schema,
+      active: proposal.id === ui.activeId,
+      labels,
+      actions: {
+        onAccept: () => acceptProposal({ editor, id: proposal.id }),
+        onReject: () => rejectProposal({ editor, id: proposal.id }),
+        onToggleActive: () => toggleActiveProposal(editor, proposal.id)
+      }
+    })
+  )
+  return DecorationSet.create(editorState.doc, decorations)
+}
 
-  const active = state.proposals.find((proposal) => proposal.id === state.activeId)
-  if (!active) return DecorationSet.empty
+// Clicking a proposal activates it, or clears the active suggestion if it was already active.
+function toggleActiveProposal(editor: Editor, id: string): void {
+  const next = getActiveSuggestionId(editor) === id ? null : id
+  setActiveSuggestion({ editor, id: next })
+}
 
-  return DecorationSet.create(editorState.doc, proposalDecorations(active, editorState.schema))
+// The proposal whose span contains a clicked position (endpoints inclusive).
+function proposalAtPos(editor: Editor, pos: number): Proposal | undefined {
+  return getProposals(editor).find((proposal) => pos >= proposal.from && pos <= proposal.to)
 }
 
 // When a proposal occupies an otherwise-empty document its green preview widget sits where the empty
 // editor placeholder also renders, so they overlap. Marking the editor DOM lets the stylesheet hide
 // the placeholder while a proposal is active.
 function editorAttributes(editorState: EditorState): Record<string, string> {
+  const { activeId } = readSuggestionsUiState(editorState)
   const state = proposalsPluginKey.getState(editorState) ?? emptyState
-  return state.activeId ? { class: 'has-active-proposal' } : {}
+  const proposalActive = activeId !== null && state.proposals.some((p) => p.id === activeId)
+  return proposalActive ? { class: 'has-active-proposal' } : {}
 }
 
 const ProposalsExtension = Extension.create({
   name: 'proposals',
 
   addProseMirrorPlugins() {
+    const editor = this.editor
     return [
       new Plugin<ProposalsState>({
         key: proposalsPluginKey,
@@ -247,7 +282,16 @@ const ProposalsExtension = Extension.create({
           },
 
           decorations(editorState) {
-            return activeDecorations(editorState)
+            return visibleDecorations(editorState, editor)
+          },
+
+          // Clicking inside a replace's struck-red span toggles its pill; a pure insert has no span, so
+          // its green widget carries the toggle directly (see draftElement).
+          handleClickOn(_view, pos) {
+            const proposal = proposalAtPos(editor, pos)
+            if (!proposal || !readSuggestionsUiState(editor.state).visible) return false
+            toggleActiveProposal(editor, proposal.id)
+            return true
           }
         }
       })

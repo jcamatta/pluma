@@ -3,6 +3,7 @@
   "editor": {
     "untitled": "Untitled",
     "settings": "Settings",
+    "tabBadge": "{{count}} pending suggestions",
     "tabs": {
       "close": "Close {{name}}"
     },
@@ -28,6 +29,41 @@
       "quote": "Quote",
       "codeBlock": "Code",
       "divider": "Divider"
+    },
+    "suggestionPill": {
+      "rewrite": "Rewrite",
+      "insert": "Insert",
+      "accept": "Accept",
+      "reject": "Reject",
+      "conflicted": "Conflicted"
+    },
+    "annotationCard": {
+      "title": "Note",
+      "gotIt": "Got it",
+      "read": "Read",
+      "severity": {
+        "info": "Note",
+        "warning": "Caution",
+        "error": "Issue"
+      }
+    },
+    "suggestionsBar": {
+      "suggestions": "Suggestions",
+      "toReview": "{{count}} to review",
+      "allReviewed": "All reviewed",
+      "hideAll": "Hide all",
+      "showAll": "Show all",
+      "list": "List"
+    },
+    "suggestionsList": {
+      "rewrites": "Rewrites",
+      "inserts": "Inserts",
+      "notes": "Notes",
+      "read": "read",
+      "conflicted": "conflicted",
+      "markRead": "Mark read",
+      "acceptAll": "Accept all",
+      "markAllRead": "Mark all read"
     }
   },
   "launcher": {

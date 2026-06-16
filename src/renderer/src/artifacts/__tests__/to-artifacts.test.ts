@@ -14,7 +14,8 @@ function annotation(id: string, from: number): Annotation {
     label: `label-${id}`,
     description: `description-${id}`,
     severity: 'warning',
-    quote: `quote-${id}`
+    quote: `quote-${id}`,
+    status: 'pending'
   }
 }
 

@@ -11,6 +11,7 @@ import { EditorController } from './Editor.controller'
 import { EditorEmptyStateView } from './EditorEmptyState.view'
 import { EditorTabStrip } from './EditorTabStrip.view'
 import { buildEditorTabs } from './editor-tabs-logic'
+import { useEditorPendingCounts } from './useEditorPendingCounts'
 import { useOpenFiles } from './OpenFilesContext'
 import type { OpenFiles } from './open-files-logic'
 
@@ -22,6 +23,7 @@ interface EditorStackProps {
 function EditorStack({ open, onOpenSettings }: EditorStackProps): React.JSX.Element {
   const { t } = useTranslation()
   const { open: activate, close } = useOpenFiles()
+  const pendingCounts = useEditorPendingCounts()
 
   if (open.active === null) {
     return (
@@ -43,9 +45,10 @@ function EditorStack({ open, onOpenSettings }: EditorStackProps): React.JSX.Elem
       className="flex min-h-0 flex-1 flex-col"
     >
       <EditorTabStrip
-        tabs={buildEditorTabs(open, t('editor.untitled'))}
+        tabs={buildEditorTabs({ open, fallback: t('editor.untitled'), pendingCounts })}
         settingsLabel={t('editor.settings')}
         closeLabel={(name) => t('editor.tabs.close', { name })}
+        badgeLabel={(count) => t('editor.tabBadge', { count })}
         onClose={close}
         onOpenSettings={onOpenSettings}
       />

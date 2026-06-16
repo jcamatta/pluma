@@ -4,13 +4,20 @@
 // do not swallow the annotation.
 
 import { Extension, type Editor } from '@tiptap/core'
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
-import { Plugin, PluginKey, type Transaction } from '@tiptap/pm/state'
+import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import {
+  getActiveSuggestionId,
+  getSuggestionsVisible,
+  readSuggestionsUiState,
+  setActiveSuggestion
+} from './suggestions-ui'
 
 const annotationSeverities = ['info', 'warning', 'error'] as const
 
 type AnnotationSeverity = (typeof annotationSeverities)[number]
+
+type AnnotationStatus = 'pending' | 'read'
 
 type Annotation = {
   readonly id: string
@@ -20,6 +27,7 @@ type Annotation = {
   readonly description: string
   readonly severity: AnnotationSeverity
   readonly quote: string
+  readonly status: AnnotationStatus
 }
 
 const annotationSeverityClass: Record<AnnotationSeverity, string> = {
@@ -28,12 +36,23 @@ const annotationSeverityClass: Record<AnnotationSeverity, string> = {
   error: 'annotation-error'
 }
 
+const annotationReadClass = 'annotation-read'
+
+// Marks the single cross-type active annotation; the ring it styles is wired in a later step, this
+// step only emits the class.
+const annotationActiveClass = 'annotation-active'
+
 type CreateAnnotationInput = {
   readonly editor: Editor
-  readonly annotation: Omit<Annotation, 'id'>
+  readonly annotation: Omit<Annotation, 'id' | 'status'>
 }
 
 type DelAnnotationInput = {
+  readonly editor: Editor
+  readonly id: string
+}
+
+type MarkAnnotationReadInput = {
   readonly editor: Editor
   readonly id: string
 }
@@ -45,18 +64,20 @@ type SetActiveAnnotationInput = {
 
 type AnnotationsState = {
   readonly annotations: readonly Annotation[]
-  readonly activeId: string | null
   readonly nextId: number
 }
 
-type AddAnnotationCommand = { readonly type: 'add'; readonly annotation: Omit<Annotation, 'id'> }
+type AddAnnotationCommand = {
+  readonly type: 'add'
+  readonly annotation: Omit<Annotation, 'id' | 'status'>
+}
 type RemoveAnnotationCommand = { readonly type: 'remove'; readonly id: string }
-type ActivateAnnotationCommand = { readonly type: 'activate'; readonly id: string | null }
-type AnnotationCommand = AddAnnotationCommand | RemoveAnnotationCommand | ActivateAnnotationCommand
+type ReadAnnotationCommand = { readonly type: 'read'; readonly id: string }
+type AnnotationCommand = AddAnnotationCommand | RemoveAnnotationCommand | ReadAnnotationCommand
 
 const annotationsPluginKey = new PluginKey<AnnotationsState>('annotations')
 
-const emptyState: AnnotationsState = { annotations: [], activeId: null, nextId: 1 }
+const emptyState: AnnotationsState = { annotations: [], nextId: 1 }
 
 function getState(editor: Editor): AnnotationsState {
   return annotationsPluginKey.getState(editor.state) ?? emptyState
@@ -66,17 +87,31 @@ function getAnnotations(editor: Editor): readonly Annotation[] {
   return getState(editor).annotations
 }
 
+// The active suggestion id is shared across proposals and annotations (held in suggestions-ui), so an
+// annotation is "active" only when that single id names one of this editor's annotations; otherwise a
+// proposal (or nothing) is active and this reader yields null.
 function getActiveAnnotationId(editor: Editor): string | null {
-  return getState(editor).activeId
+  const activeId = getActiveSuggestionId(editor)
+  return activeId !== null &&
+    getAnnotations(editor).some((annotation) => annotation.id === activeId)
+    ? activeId
+    : null
 }
 
 function setActiveAnnotation({ editor, id }: SetActiveAnnotationInput): void {
-  editor.view.dispatch(
-    editor.state.tr.setMeta(annotationsPluginKey, {
-      id,
-      type: 'activate'
-    } satisfies AnnotationCommand)
-  )
+  setActiveSuggestion({ editor, id })
+}
+
+// Clicking an annotation activates it, or clears the active suggestion if it was already active —
+// mirroring the proposal toggle so the cross-type active id stays single.
+function toggleActiveAnnotation(editor: Editor, id: string): void {
+  const next = getActiveSuggestionId(editor) === id ? null : id
+  setActiveSuggestion({ editor, id: next })
+}
+
+// The annotation whose range contains a clicked position (endpoints inclusive).
+function annotationAtPos(editor: Editor, pos: number): Annotation | undefined {
+  return getAnnotations(editor).find((annotation) => pos >= annotation.from && pos <= annotation.to)
 }
 
 function createAnnotation({ editor, annotation }: CreateAnnotationInput): Annotation {
@@ -90,7 +125,7 @@ function createAnnotation({ editor, annotation }: CreateAnnotationInput): Annota
   )
 
   const created = getState(editor).annotations.find((candidate) => candidate.id === `a_${idBefore}`)
-  return created ?? { ...annotation, id: `a_${idBefore}` }
+  return created ?? { ...annotation, id: `a_${idBefore}`, status: 'pending' }
 }
 
 function delAnnotation({ editor, id }: DelAnnotationInput): void {
@@ -98,6 +133,15 @@ function delAnnotation({ editor, id }: DelAnnotationInput): void {
     editor.state.tr.setMeta(annotationsPluginKey, {
       id,
       type: 'remove'
+    } satisfies AnnotationCommand)
+  )
+}
+
+function markAnnotationRead({ editor, id }: MarkAnnotationReadInput): void {
+  editor.view.dispatch(
+    editor.state.tr.setMeta(annotationsPluginKey, {
+      id,
+      type: 'read'
     } satisfies AnnotationCommand)
   )
 }
@@ -113,7 +157,7 @@ function mapAnnotation(annotation: Annotation, transaction: Transaction): Annota
 function isAnnotationCommand(value: unknown): value is AnnotationCommand {
   if (typeof value !== 'object' || value === null || !('type' in value)) return false
   const { type } = value
-  return type === 'add' || type === 'remove' || type === 'activate'
+  return type === 'add' || type === 'remove' || type === 'read'
 }
 
 function readAnnotationCommand(transaction: Transaction): AnnotationCommand | null {
@@ -126,36 +170,56 @@ function reduceAnnotation(state: AnnotationsState, command: AnnotationCommand): 
     return {
       ...state,
       nextId: state.nextId + 1,
-      annotations: [...state.annotations, { ...command.annotation, id: `a_${state.nextId}` }]
+      annotations: [
+        ...state.annotations,
+        { ...command.annotation, id: `a_${state.nextId}`, status: 'pending' }
+      ]
     }
   }
 
-  if (command.type === 'activate') {
-    return { ...state, activeId: command.id }
+  if (command.type === 'read') {
+    return {
+      ...state,
+      annotations: state.annotations.map((annotation) =>
+        annotation.id === command.id ? { ...annotation, status: 'read' } : annotation
+      )
+    }
   }
 
   return {
     ...state,
-    annotations: state.annotations.filter((annotation) => annotation.id !== command.id),
-    activeId: state.activeId === command.id ? null : state.activeId
+    annotations: state.annotations.filter((annotation) => annotation.id !== command.id)
   }
 }
 
-function activeDecorations(state: AnnotationsState, doc: ProseMirrorNode): DecorationSet {
-  if (!state.activeId) return DecorationSet.empty
+// One inline highlight per annotation across its range, carrying its severity class, the read recipe
+// once it has been marked read, and the active marker when it is the cross-type active suggestion.
+function annotationDecoration(annotation: Annotation, active: boolean): Decoration {
+  const classes = [annotationSeverityClass[annotation.severity]]
+  if (annotation.status === 'read') classes.push(annotationReadClass)
+  if (active) classes.push(annotationActiveClass)
+  return Decoration.inline(annotation.from, annotation.to, { class: classes.join(' ') })
+}
 
-  const active = state.annotations.find((annotation) => annotation.id === state.activeId)
-  if (!active) return DecorationSet.empty
+// When suggestions are visible, every annotation is highlighted at once; hiding them clears the set.
+function visibleDecorations(editorState: EditorState): DecorationSet {
+  const ui = readSuggestionsUiState(editorState)
+  if (!ui.visible) return DecorationSet.empty
 
-  return DecorationSet.create(doc, [
-    Decoration.inline(active.from, active.to, { class: annotationSeverityClass[active.severity] })
-  ])
+  const state = annotationsPluginKey.getState(editorState) ?? emptyState
+  return DecorationSet.create(
+    editorState.doc,
+    state.annotations.map((annotation) =>
+      annotationDecoration(annotation, annotation.id === ui.activeId)
+    )
+  )
 }
 
 const AnnotationsExtension = Extension.create({
   name: 'annotations',
 
   addProseMirrorPlugins() {
+    const editor = this.editor
     return [
       new Plugin<AnnotationsState>({
         key: annotationsPluginKey,
@@ -179,10 +243,16 @@ const AnnotationsExtension = Extension.create({
 
         props: {
           decorations(editorState) {
-            return activeDecorations(
-              annotationsPluginKey.getState(editorState) ?? emptyState,
-              editorState.doc
-            )
+            return visibleDecorations(editorState)
+          },
+
+          // Clicking an annotation's highlighted range toggles it active; the editor controller watches
+          // the active annotation id and opens the floating card anchored to it.
+          handleClickOn(_view, pos) {
+            const annotation = annotationAtPos(editor, pos)
+            if (!annotation || !getSuggestionsVisible(editor)) return false
+            toggleActiveAnnotation(editor, annotation.id)
+            return true
           }
         }
       })
@@ -195,16 +265,21 @@ export {
   annotationsPluginKey,
   annotationSeverities,
   annotationSeverityClass,
+  annotationReadClass,
+  annotationActiveClass,
   getAnnotations,
   getActiveAnnotationId,
   setActiveAnnotation,
   createAnnotation,
-  delAnnotation
+  delAnnotation,
+  markAnnotationRead
 }
 export type {
   AnnotationSeverity,
+  AnnotationStatus,
   Annotation,
   CreateAnnotationInput,
   DelAnnotationInput,
+  MarkAnnotationReadInput,
   SetActiveAnnotationInput
 }

@@ -9,8 +9,8 @@ import { EditorTabStrip } from '../EditorTabStrip.view'
 import type { EditorTab } from '../editor-tabs-logic'
 
 const tabs: readonly EditorTab[] = [
-  { path: '/a/alpha.md', name: 'Alpha' },
-  { path: '/b/beta.md', name: 'Beta' }
+  { path: '/a/alpha.md', name: 'Alpha', pendingCount: 2 },
+  { path: '/b/beta.md', name: 'Beta', pendingCount: 0 }
 ]
 
 function makeSpies(): {
@@ -28,6 +28,7 @@ function renderStrip(value: string, spies: ReturnType<typeof makeSpies>): void {
         tabs={tabs}
         settingsLabel="Settings"
         closeLabel={(name) => `Close ${name}`}
+        badgeLabel={(count) => `${count} pending suggestions`}
         onClose={spies.onClose}
         onOpenSettings={spies.onOpenSettings}
       />
@@ -38,14 +39,21 @@ function renderStrip(value: string, spies: ReturnType<typeof makeSpies>): void {
 describe('EditorTabStrip', () => {
   it('renders a tab per open file and marks the active one', () => {
     renderStrip('/a/alpha.md', makeSpies())
-    expect(screen.getByRole('tab', { name: 'Alpha' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: /Alpha/ })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Beta' })).toHaveAttribute('aria-selected', 'false')
   })
 
   it('flags the active tab with data-active, which the accent underline styling keys on', () => {
     renderStrip('/a/alpha.md', makeSpies())
-    expect(screen.getByRole('tab', { name: 'Alpha' })).toHaveAttribute('data-active')
+    expect(screen.getByRole('tab', { name: /Alpha/ })).toHaveAttribute('data-active')
     expect(screen.getByRole('tab', { name: 'Beta' })).not.toHaveAttribute('data-active')
+  })
+
+  it('badges a tab with its pending count and aria-label, hiding the badge at zero', () => {
+    renderStrip('/a/alpha.md', makeSpies())
+    const badge = screen.getByLabelText('2 pending suggestions')
+    expect(badge).toHaveTextContent('2')
+    expect(screen.queryByLabelText('0 pending suggestions')).not.toBeInTheDocument()
   })
 
   it('activates a tab through the Tabs root when clicked', () => {

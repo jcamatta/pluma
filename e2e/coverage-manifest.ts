@@ -23,7 +23,8 @@ const FEATURES = [
   'artifacts',
   'artifacts-cross-file',
   'agent-filesystem-approval',
-  'agent-text-authoring'
+  'agent-text-authoring',
+  'inline-suggestion-review'
 ] as const
 
 // A shipped user-facing operation, one per real IPC channel the UI exercises end to end.
