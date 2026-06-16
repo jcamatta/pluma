@@ -75,7 +75,6 @@
     "@tiptap/react": "^3.26.0",
     "@tiptap/suggestion": "^3.26.0",
     "clsx": "^2.1.1",
-    "diff": "^9.0.0",
     "effect": "^3.21.3",
     "i18next": "^26.3.1",
     "lucide-react": "^1.17.0",
