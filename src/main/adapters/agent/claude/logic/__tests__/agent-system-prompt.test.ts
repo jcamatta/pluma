@@ -34,7 +34,7 @@ describe('AGENT_SYSTEM_PROMPT', () => {
   })
 
   it('preserves the author voice by keeping edits surgical', () => {
-    expect(AGENT_SYSTEM_PROMPT).toContain('smallest span')
+    expect(AGENT_SYSTEM_PROMPT).toContain('smallest passage')
   })
 
   it('bans emojis in chat unless the user uses them first', () => {
@@ -59,6 +59,28 @@ describe('AGENT_SYSTEM_PROMPT', () => {
   it('directs re-checking when a path or range lookup fails after a switch', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('no_open_editor')
     expect(AGENT_SYSTEM_PROMPT).toContain('read again rather than guessing')
+  })
+})
+
+describe('AGENT_SYSTEM_PROMPT · acting tools', () => {
+  it('offers insert_at and insert for adding new text', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('insert_at')
+    expect(AGENT_SYSTEM_PROMPT).toContain('insert ')
+  })
+
+  it('teaches insert before and after modes relative to a named block', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('mode "before"')
+    expect(AGENT_SYSTEM_PROMPT).toContain('"after"')
+  })
+
+  it('requires a substantial draft to be produced in one call', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('one call')
+    expect(AGENT_SYSTEM_PROMPT).toContain('One draft is one proposal')
+  })
+
+  it('allows inserted content to be Markdown with headings and lists when the manuscript calls for it', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('Markdown')
+    expect(AGENT_SYSTEM_PROMPT).toContain('headings, lists')
   })
 })
 

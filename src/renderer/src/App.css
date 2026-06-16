@@ -191,6 +191,11 @@ body {
   pointer-events: none;
 }
 
+/* An active proposal preview occupies the empty document, so hide the placeholder it would overlap. */
+.ProseMirror.has-active-proposal .is-editor-empty:first-child::before {
+  content: none;
+}
+
 .ProseMirror h1 {
   margin-block: 2rem 1rem;
   font-size: 2em;
@@ -351,11 +356,22 @@ body {
   text-decoration: line-through;
 }
 
-.ProseMirror .proposal-insert {
+/* The formatted, green "added" preview of a proposal — real headings/lists/paragraphs rendered as a
+   widget between blocks, set off by a green accent so it reads as the incoming content. */
+.ProseMirror .proposal-draft {
   border-radius: 0.1875rem;
-  background: color-mix(in srgb, var(--color-success) 16%, transparent);
-  box-shadow: inset 0 -0.125rem 0 color-mix(in srgb, var(--color-success) 60%, transparent);
+  border-left: 0.1875rem solid color-mix(in srgb, var(--color-success) 60%, transparent);
+  padding-left: 0.5rem;
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
   animation: accept-in 0.18s ease-out;
+}
+
+.ProseMirror .proposal-draft > :first-child {
+  margin-top: 0;
+}
+
+.ProseMirror .proposal-draft > :last-child {
+  margin-bottom: 0;
 }
 
 .ProseMirror .proposal-conflicted {

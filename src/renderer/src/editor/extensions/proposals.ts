@@ -1,10 +1,10 @@
-// Tracks proposed inline edits the user reviews before they apply. Proposal ids (p_1, p_2, …) are
-// minted in plugin state. The active proposal is shown as a word-level diff decoration; accepting it
-// replaces the text, rejecting removes it, and a proposal whose underlying text drifted is conflicted.
+// Tracks proposed edits the user reviews before they apply. Proposal ids (p_1, p_2, …) are minted in
+// plugin state. The active proposal is shown as a block/span-level red-green decoration; accepting it
+// inserts the parsed content, rejecting removes it, and a proposal whose underlying text drifted is
+// conflicted.
 
-import { Extension, type Editor } from '@tiptap/core'
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
-import { Plugin, PluginKey, type Transaction } from '@tiptap/pm/state'
+import { Extension, type Editor, type JSONContent } from '@tiptap/core'
+import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { DecorationSet } from '@tiptap/pm/view'
 import { proposalDecorations } from './proposal-decorations'
 
@@ -16,6 +16,8 @@ type Proposal = {
   readonly to: number
   readonly originalText: string
   readonly replacementText: string
+  // Parsed nodes for what to insert; position-free, so mapProposal carries it unchanged.
+  readonly content: JSONContent
   readonly status: ProposalStatus
 }
 
@@ -124,11 +126,27 @@ function acceptProposal({ editor, id }: ProposalIdInput): void {
     return
   }
 
-  editor.view.dispatch(
-    editor.state.tr
-      .insertText(proposal.replacementText, proposal.from, proposal.to)
-      .setMeta(proposalsPluginKey, { id, type: 'remove' } satisfies ProposalCommand)
-  )
+  // Insert the parsed nodes over [from, to). A single inline-only paragraph is unwrapped to its
+  // inline fragment so small edits stay inline (no spurious paragraph split); multi/block content
+  // lands as blocks. The chain batches the insertion and the proposal removal into one atomic
+  // transaction (one undo step).
+  editor
+    .chain()
+    .insertContentAt({ from: proposal.from, to: proposal.to }, insertionContent(proposal.content))
+    .command(({ tr }) => {
+      tr.setMeta(proposalsPluginKey, { id, type: 'remove' } satisfies ProposalCommand)
+      return true
+    })
+    .run()
+}
+
+// editor.markdown.parse returns a doc node `{ type: 'doc', content: [...] }`. We insert its block
+// children; when the parse is a single paragraph we hand back its inline content so the edit merges
+// inline instead of forcing a paragraph break.
+function insertionContent(content: JSONContent): JSONContent[] {
+  const blocks = content.content ?? []
+  const only = blocks.length === 1 ? blocks[0] : null
+  return only && only.type === 'paragraph' ? (only.content ?? []) : blocks
 }
 
 function mapProposal(proposal: Proposal, transaction: Transaction): Proposal {
@@ -182,13 +200,22 @@ function reduceProposal(state: ProposalsState, command: ProposalCommand): Propos
   }
 }
 
-function activeDecorations(state: ProposalsState, doc: ProseMirrorNode): DecorationSet {
+function activeDecorations(editorState: EditorState): DecorationSet {
+  const state = proposalsPluginKey.getState(editorState) ?? emptyState
   if (!state.activeId) return DecorationSet.empty
 
   const active = state.proposals.find((proposal) => proposal.id === state.activeId)
   if (!active) return DecorationSet.empty
 
-  return DecorationSet.create(doc, proposalDecorations(active))
+  return DecorationSet.create(editorState.doc, proposalDecorations(active, editorState.schema))
+}
+
+// When a proposal occupies an otherwise-empty document its green preview widget sits where the empty
+// editor placeholder also renders, so they overlap. Marking the editor DOM lets the stylesheet hide
+// the placeholder while a proposal is active.
+function editorAttributes(editorState: EditorState): Record<string, string> {
+  const state = proposalsPluginKey.getState(editorState) ?? emptyState
+  return state.activeId ? { class: 'has-active-proposal' } : {}
 }
 
 const ProposalsExtension = Extension.create({
@@ -215,11 +242,12 @@ const ProposalsExtension = Extension.create({
         },
 
         props: {
+          attributes(editorState) {
+            return editorAttributes(editorState)
+          },
+
           decorations(editorState) {
-            return activeDecorations(
-              proposalsPluginKey.getState(editorState) ?? emptyState,
-              editorState.doc
-            )
+            return activeDecorations(editorState)
           }
         }
       })

@@ -81,9 +81,17 @@ function renderPanel(entries: Entries, onOpen?: (path: string) => void): void {
 
 function seed(editor: Editor): void {
   const original = editor.state.doc.textBetween(1, 4)
+  const markdown = editor.markdown
+  if (!markdown) return expect.fail('markdown manager unavailable')
   createProposal({
     editor,
-    proposal: { from: 1, to: 4, originalText: original, replacementText: 'ZZZ' }
+    proposal: {
+      from: 1,
+      to: 4,
+      originalText: original,
+      replacementText: 'ZZZ',
+      content: markdown.parse('ZZZ')
+    }
   })
   createAnnotation({
     editor,

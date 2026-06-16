@@ -7,12 +7,15 @@ import {
   createAnnotationTool,
   getContentTool,
   getCurrentSelectionTool,
+  insertAtTool,
+  insertTool,
   listOpenFilesTool,
   proposeEditTool
 } from '../agent/tools/specs'
 import { createAnnotationTool as runCreateAnnotation } from '../agent/tools/tool-create-annotation'
 import { getContent } from '../agent/tools/tool-get-content'
 import { getCurrentSelection } from '../agent/tools/tool-get-current-selection'
+import { insert, insertAt } from '../agent/tools/tool-insert-text'
 import { listOpenFiles } from '../agent/tools/tool-list-open-files'
 import { proposeEdit } from '../agent/tools/tool-propose-edit'
 import type { AnnotationSeverity } from './extensions/annotations'
@@ -30,6 +33,8 @@ interface EditorToolEntries {
   readonly content: ToolEntry
   readonly annotation: ToolEntry
   readonly proposal: ToolEntry
+  readonly insertAt: ToolEntry
+  readonly insert: ToolEntry
 }
 
 interface ActiveTarget {
@@ -80,10 +85,12 @@ function readEntries(
   }
 }
 
+type AtPath = (path: string, run: (editor: Editor) => AgentToolResult) => AgentToolResult
+
 // The acting tools — annotate a passage or propose an edit, each by the passage's exact text. Each
 // requires the file `path`, resolved to its open editor; a path that is not open is a recoverable error.
 function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotation' | 'proposal'> {
-  const atPath = (path: string, run: (editor: Editor) => AgentToolResult): AgentToolResult => {
+  const atPath: AtPath = (path, run) => {
     const editor = deps.resolve(path)
     return editor ? run(editor) : noOpenEditor(path)
   }
@@ -107,17 +114,59 @@ function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotatio
       handler: (args) => {
         assertWire<{
           readonly path: string
+          readonly passage: string
           readonly text: string
-          readonly replacementText: string
         }>(args, proposeEditTool.name)
-        return atPath(args.path, (live) => proposeEdit(live, args))
+        return atPath(args.path, (live) =>
+          proposeEdit(live, { passage: args.passage, text: args.text })
+        )
+      }
+    }
+  }
+}
+
+// The insert tools — add markdown at a fixed point (start/end) or before/after a named block. Split by
+// tool choice with every field required, so the model never depends on an optional field changing
+// meaning.
+function insertEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'insertAt' | 'insert'> {
+  const atPath: AtPath = (path, run) => {
+    const editor = deps.resolve(path)
+    return editor ? run(editor) : noOpenEditor(path)
+  }
+
+  return {
+    insertAt: {
+      spec: insertAtTool,
+      handler: (args) => {
+        assertWire<{
+          readonly path: string
+          readonly text: string
+          readonly position: 'start' | 'end'
+        }>(args, insertAtTool.name)
+        return atPath(args.path, (live) =>
+          insertAt(live, { position: args.position, text: args.text })
+        )
+      }
+    },
+    insert: {
+      spec: insertTool,
+      handler: (args) => {
+        assertWire<{
+          readonly path: string
+          readonly text: string
+          readonly mode: 'before' | 'after'
+          readonly anchor: string
+        }>(args, insertTool.name)
+        return atPath(args.path, (live) =>
+          insert(live, { mode: args.mode, anchor: args.anchor, text: args.text })
+        )
       }
     }
   }
 }
 
 function editorToolEntries(deps: EditorToolDeps): EditorToolEntries {
-  return { ...readEntries(deps), ...actingEntries(deps) }
+  return { ...readEntries(deps), ...actingEntries(deps), ...insertEntries(deps) }
 }
 
 function useEditorTools(deps: EditorToolDeps): void {
@@ -127,6 +176,8 @@ function useEditorTools(deps: EditorToolDeps): void {
   useFrontendTool(entries.content)
   useFrontendTool(entries.annotation)
   useFrontendTool(entries.proposal)
+  useFrontendTool(entries.insertAt)
+  useFrontendTool(entries.insert)
 }
 
 export { useEditorTools }

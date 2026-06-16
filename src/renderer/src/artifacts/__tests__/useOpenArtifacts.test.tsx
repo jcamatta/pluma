@@ -46,7 +46,13 @@ describe('useOpenArtifacts', () => {
       act(() => {
         createProposal({
           editor,
-          proposal: { from: 2, to: 6, originalText: '', replacementText: 'A' }
+          proposal: {
+            from: 2,
+            to: 6,
+            originalText: '',
+            replacementText: 'A',
+            content: { type: 'doc', content: [] }
+          }
         })
         createAnnotation({ editor, annotation: ANNOTATION })
       })

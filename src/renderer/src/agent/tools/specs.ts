@@ -76,18 +76,75 @@ const createAnnotationTool: Tool = {
 const proposeEditTool: Tool = {
   name: 'propose_edit',
   description:
-    'Propose replacing a passage with new text. Pass the exact text of the passage to replace, copied verbatim from the document. The user reviews the edit inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the text is absent and ambiguous when it occurs more than once — grow the text until it is unique.',
+    'Propose replacing the exact passage with new text (Markdown). The user reviews the edit inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the passage is absent and ambiguous when it occurs more than once — grow the passage until it is unique.',
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['path', 'text', 'replacementText'],
+    required: ['path', 'passage', 'text'],
+    properties: {
+      path: { type: 'string', description: filePathDescription },
+      passage: {
+        type: 'string',
+        description: 'The exact passage to replace, copied verbatim. Must occur exactly once.'
+      },
+      text: {
+        type: 'string',
+        description: 'The new content as Markdown. May be multiple paragraphs, headings, or lists.'
+      }
+    }
+  }
+}
+
+const insertAtTool: Tool = {
+  name: 'insert_at',
+  description:
+    'Insert text (Markdown — may be multiple paragraphs, headings, or lists) at the document start or end. Use it to draft into an empty document or to append. The user reviews the insertion inline and accepts or rejects it; the change is not applied until accepted.',
+  parameters: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['path', 'text', 'position'],
     properties: {
       path: { type: 'string', description: filePathDescription },
       text: {
         type: 'string',
-        description: 'The exact passage to replace, copied verbatim. Must occur exactly once.'
+        description:
+          'The content to insert as Markdown. May be multiple paragraphs, headings, or lists.'
       },
-      replacementText: { type: 'string' }
+      position: {
+        type: 'string',
+        enum: ['start', 'end'],
+        description: "'start' inserts before all existing content; 'end' appends after it."
+      }
+    }
+  }
+}
+
+const insertTool: Tool = {
+  name: 'insert',
+  description:
+    'Insert text (Markdown — may be multiple paragraphs, headings, or lists) before or after the block that contains the exact anchor passage. Use mode "before" to put it ahead of that block (e.g. at the start of a named paragraph) and "after" to follow it. The user reviews the insertion inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the anchor is absent and ambiguous when it occurs more than once — grow the anchor until it is unique.',
+  parameters: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['path', 'text', 'mode', 'anchor'],
+    properties: {
+      path: { type: 'string', description: filePathDescription },
+      text: {
+        type: 'string',
+        description:
+          'The content to insert as Markdown. May be multiple paragraphs, headings, or lists.'
+      },
+      mode: {
+        type: 'string',
+        enum: ['before', 'after'],
+        description:
+          "'before' places the new text ahead of the anchor's block; 'after' places it following the anchor's block."
+      },
+      anchor: {
+        type: 'string',
+        description:
+          'The exact passage the new text goes before or after, copied verbatim. Must occur exactly once.'
+      }
     }
   }
 }
@@ -97,7 +154,9 @@ const agentToolSpecs: readonly Tool[] = [
   getCurrentSelectionTool,
   getContentTool,
   createAnnotationTool,
-  proposeEditTool
+  proposeEditTool,
+  insertAtTool,
+  insertTool
 ]
 
 export {
@@ -106,5 +165,7 @@ export {
   getContentTool,
   createAnnotationTool,
   proposeEditTool,
+  insertAtTool,
+  insertTool,
   agentToolSpecs
 }

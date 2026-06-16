@@ -8,6 +8,8 @@ import {
   agentToolSpecs,
   getContentTool,
   getCurrentSelectionTool,
+  insertAtTool,
+  insertTool,
   listOpenFilesTool,
   proposeEditTool
 } from '../../agent/tools/specs'
@@ -60,7 +62,7 @@ describe('useEditorTools', () => {
 
       const proposed = await registry
         .byName(proposeEditTool.name)
-        ?.handler({ path: PATH, text: 'world', replacementText: 'earth' })
+        ?.handler({ path: PATH, passage: 'world', text: 'earth' })
 
       expect(proposed?.ok).toBe(true)
       expect(getProposals(editor)).toHaveLength(1)
@@ -92,7 +94,7 @@ describe('useEditorTools', () => {
 
       const result = await registry
         .byName(proposeEditTool.name)
-        ?.handler({ path: '/missing.md', text: 'world', replacementText: 'earth' })
+        ?.handler({ path: '/missing.md', passage: 'world', text: 'earth' })
 
       expect(result).toEqual({ ok: false, error: 'no_open_editor:/missing.md' })
     } finally {
@@ -128,5 +130,39 @@ describe('useEditorTools', () => {
     const result = await registry.byName(getCurrentSelectionTool.name)?.handler({})
 
     expect(result).toEqual({ ok: false, error: 'No document is open in the editor.' })
+  })
+})
+
+describe('useEditorTools insert dispatch', () => {
+  it('dispatches insert_at against the live editor', async () => {
+    const editor = createTestEditor('hello world')
+    try {
+      const registry = renderRegistry(depsFor(editor))
+
+      const inserted = await registry
+        .byName(insertAtTool.name)
+        ?.handler({ path: PATH, text: 'tail', position: 'end' })
+
+      expect(inserted?.ok).toBe(true)
+      expect(getProposals(editor)).toHaveLength(1)
+    } finally {
+      editor.destroy()
+    }
+  })
+
+  it('dispatches insert against the live editor', async () => {
+    const editor = createTestEditor('hello world')
+    try {
+      const registry = renderRegistry(depsFor(editor))
+
+      const inserted = await registry
+        .byName(insertTool.name)
+        ?.handler({ path: PATH, text: 'more', mode: 'after', anchor: 'world' })
+
+      expect(inserted?.ok).toBe(true)
+      expect(getProposals(editor)).toHaveLength(1)
+    } finally {
+      editor.destroy()
+    }
   })
 })
