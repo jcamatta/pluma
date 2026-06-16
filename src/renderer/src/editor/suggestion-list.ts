@@ -15,14 +15,25 @@ import type { Proposal } from './extensions/proposals'
 
 type SuggestionType = 'rewrite' | 'insert' | 'note'
 
+// How an item that is no longer pending got resolved while still present in plugin state. Accepted and
+// rejected proposals are removed outright, so the only resolutions the list ever shows are a 'read' note
+// and a 'conflicted' rewrite (a proposal whose underlying text drifted and can no longer be plain-accepted).
+type SuggestionResolution = 'read' | 'conflicted' | null
+
 type Suggestion = {
   readonly id: string
   readonly type: SuggestionType
   readonly from: number
   readonly to: number
   readonly pending: boolean
+  readonly resolution: SuggestionResolution
   // One-line source the sub-topbar/list preview reads: a note's label, an edit's replacement text.
   readonly label: string
+  // The passage a note quotes — rendered italic-quoted in the list preview.
+  readonly quote: string
+  // The edit's original / replacement text — the list preview strikes `before` and greens `after`.
+  readonly before: string
+  readonly after: string
 }
 
 interface SuggestionListInput {
@@ -42,7 +53,11 @@ function annotationToSuggestion(annotation: Annotation): Suggestion {
     from: annotation.from,
     to: annotation.to,
     pending: annotation.status === 'pending',
-    label: annotation.label
+    resolution: annotation.status === 'read' ? 'read' : null,
+    label: annotation.label,
+    quote: annotation.quote,
+    before: '',
+    after: ''
   }
 }
 
@@ -53,7 +68,11 @@ function proposalToSuggestion(proposal: Proposal): Suggestion {
     from: proposal.from,
     to: proposal.to,
     pending: proposal.status === 'ready',
-    label: proposal.replacementText
+    resolution: proposal.status === 'conflicted' ? 'conflicted' : null,
+    label: proposal.replacementText,
+    quote: '',
+    before: proposal.originalText,
+    after: proposal.replacementText
   }
 }
 
@@ -66,4 +85,10 @@ function toSuggestionList({ annotations, proposals }: SuggestionListInput): Sugg
 }
 
 export { toSuggestionList }
-export type { Suggestion, SuggestionType, SuggestionList, SuggestionListInput }
+export type {
+  Suggestion,
+  SuggestionType,
+  SuggestionResolution,
+  SuggestionList,
+  SuggestionListInput
+}
