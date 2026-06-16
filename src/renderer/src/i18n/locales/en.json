@@ -40,7 +40,12 @@
     "annotationCard": {
       "title": "Note",
       "gotIt": "Got it",
-      "read": "Read"
+      "read": "Read",
+      "severity": {
+        "info": "Note",
+        "warning": "Caution",
+        "error": "Issue"
+      }
     },
     "suggestionsBar": {
       "suggestions": "Suggestions",

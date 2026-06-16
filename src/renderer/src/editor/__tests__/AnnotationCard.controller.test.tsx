@@ -52,6 +52,8 @@ describe('AnnotationCardController', () => {
       act(() => setActiveAnnotation({ editor, id: 'a_1' }))
       expect(screen.getByTestId('annotation-card')).toBeInTheDocument()
       expect(screen.getByText('Tension')).toBeInTheDocument()
+      // The warning severity is named in the header so the hue is not the only cue.
+      expect(screen.getByText('Caution')).toBeInTheDocument()
       expect(screen.getByText('Soften the threat.')).toBeInTheDocument()
     } finally {
       editor.destroy()

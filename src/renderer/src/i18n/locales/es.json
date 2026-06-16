@@ -40,7 +40,12 @@
     "annotationCard": {
       "title": "Nota",
       "gotIt": "Entendido",
-      "read": "Leído"
+      "read": "Leído",
+      "severity": {
+        "info": "Nota",
+        "warning": "Atención",
+        "error": "Problema"
+      }
     },
     "suggestionsBar": {
       "suggestions": "Sugerencias",

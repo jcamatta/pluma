@@ -89,6 +89,7 @@ function AnnotationCardController({ editor }: AnnotationCardControllerProps): Re
         <Outside onOutside={close}>
           <AnnotationCard
             label={open.annotation.label}
+            severity={open.annotation.severity}
             quote={open.annotation.quote}
             description={open.annotation.description}
             status={open.annotation.status}
@@ -97,6 +98,7 @@ function AnnotationCardController({ editor }: AnnotationCardControllerProps): Re
             reduceMotion={reduceMotion}
             labels={{
               title: t('editor.annotationCard.title'),
+              severity: t(`editor.annotationCard.severity.${open.annotation.severity}`),
               gotIt: t('editor.annotationCard.gotIt'),
               read: t('editor.annotationCard.read')
             }}
