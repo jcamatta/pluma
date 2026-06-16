@@ -25,6 +25,7 @@ function proposal(id: string, from: number): Proposal {
     to: from + 4,
     originalText: `before-${id}`,
     replacementText: `after-${id}`,
+    content: { type: 'doc', content: [] },
     status: 'ready'
   }
 }

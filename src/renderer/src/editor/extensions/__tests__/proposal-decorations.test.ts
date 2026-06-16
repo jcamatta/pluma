@@ -16,7 +16,8 @@ describe('proposal insert widget', () => {
           from,
           to: from + 'hello'.length,
           originalText: 'hello',
-          replacementText: 'hello there'
+          replacementText: 'hello there',
+          content: { type: 'doc', content: [] }
         }
       })
       expect(created.ok).toBe(true)

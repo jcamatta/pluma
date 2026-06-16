@@ -2,7 +2,7 @@
 // repeated text fails ambiguous, and overlapping proposals fail recoverably.
 
 import { describe, expect, it } from 'vitest'
-import { getProposals } from '../../../editor/extensions/proposals'
+import { acceptProposal, getProposals } from '../../../editor/extensions/proposals'
 import { withEditor } from '../../../editor/extensions/__tests__/editor-test-harness'
 import { proposeEdit } from '../tool-propose-edit'
 
@@ -14,6 +14,36 @@ describe('proposeEdit', () => {
       expect(result.ok).toBe(true)
       expect(getProposals(editor)).toHaveLength(1)
       expect(getProposals(editor)[0]?.replacementText).toBe('earth')
+    })
+  })
+
+  it('applies a single-word replacement inline when accepted', () => {
+    withEditor('hello world', (editor) => {
+      const result = proposeEdit(editor, { text: 'world', replacementText: 'earth' })
+      expect(result.ok).toBe(true)
+
+      const id = getProposals(editor)[0]?.id
+      if (!id) return expect.fail('expected a proposal')
+      acceptProposal({ editor, id })
+
+      expect(editor.state.doc.childCount).toBe(1)
+      expect(editor.state.doc.textContent).toBe('hello earth')
+    })
+  })
+
+  it('applies multi-paragraph markdown as separate paragraphs when accepted', () => {
+    withEditor('hello world', (editor) => {
+      const result = proposeEdit(editor, { text: 'world', replacementText: 'a\n\nb' })
+      expect(result.ok).toBe(true)
+
+      const id = getProposals(editor)[0]?.id
+      if (!id) return expect.fail('expected a proposal')
+      acceptProposal({ editor, id })
+
+      expect(editor.state.doc.childCount).toBe(3)
+      expect(editor.state.doc.child(0).textContent).toBe('hello ')
+      expect(editor.state.doc.child(1).textContent).toBe('a')
+      expect(editor.state.doc.child(2).textContent).toBe('b')
     })
   })
 

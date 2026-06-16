@@ -14,8 +14,15 @@ interface ProposeEditArgs {
 }
 
 export function proposeEdit(editor: Editor, args: ProposeEditArgs): AgentToolResult {
+  const markdown = editor.markdown
+  if (!markdown) return { ok: false, error: 'markdown_unavailable' }
+
   const resolved = resolveAnchor(editor, args.text)
   if (!resolved.ok) return { ok: false, error: resolved.error }
+
+  // Parse the replacement as markdown to real nodes so multi-paragraph / structured content applies
+  // correctly on accept; replacementText is kept as the raw source for the interim rail card.
+  const content = markdown.parse(args.replacementText)
 
   const result = createProposal({
     editor,
@@ -23,7 +30,8 @@ export function proposeEdit(editor: Editor, args: ProposeEditArgs): AgentToolRes
       from: resolved.from,
       to: resolved.to,
       originalText: args.text,
-      replacementText: args.replacementText
+      replacementText: args.replacementText,
+      content
     }
   })
 
