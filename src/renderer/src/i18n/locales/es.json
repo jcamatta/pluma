@@ -3,6 +3,7 @@
   "editor": {
     "untitled": "Sin título",
     "settings": "Configuración",
+    "tabBadge": "{{count}} sugerencias pendientes",
     "tabs": {
       "close": "Cerrar {{name}}"
     },

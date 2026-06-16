@@ -3,6 +3,7 @@
   "editor": {
     "untitled": "Untitled",
     "settings": "Settings",
+    "tabBadge": "{{count}} pending suggestions",
     "tabs": {
       "close": "Close {{name}}"
     },
