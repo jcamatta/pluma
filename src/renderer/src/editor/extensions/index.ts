@@ -27,6 +27,7 @@ import { PlaceholderExtension } from './placeholder'
 import { AnnotationsExtension } from './annotations'
 import { ProposalsExtension } from './proposals'
 import { SlashCommandExtension } from './slash-command'
+import { SuggestionsUiExtension } from './suggestions-ui'
 
 export const editorExtensions: AnyExtension[] = [
   Document,
@@ -53,6 +54,7 @@ export const editorExtensions: AnyExtension[] = [
   Gapcursor,
   FileHandlerExtension,
   UndoRedo,
+  SuggestionsUiExtension,
   AnnotationsExtension,
   ProposalsExtension,
   SlashCommandExtension,

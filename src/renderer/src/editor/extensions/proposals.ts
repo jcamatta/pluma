@@ -7,6 +7,7 @@ import { Extension, type Editor, type JSONContent } from '@tiptap/core'
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { DecorationSet } from '@tiptap/pm/view'
 import { proposalDecorations } from './proposal-decorations'
+import { readSuggestionsUiState } from './suggestions-ui'
 
 type ProposalStatus = 'ready' | 'conflicted'
 
@@ -200,14 +201,17 @@ function reduceProposal(state: ProposalsState, command: ProposalCommand): Propos
   }
 }
 
-function activeDecorations(editorState: EditorState): DecorationSet {
+// When suggestions are visible, every proposal renders its red-green preview at once; hiding them
+// clears the set so the manuscript reads clean. Each proposal's own decorations (built by
+// proposal-decorations.ts) are flattened into one set.
+function visibleDecorations(editorState: EditorState): DecorationSet {
+  if (!readSuggestionsUiState(editorState).visible) return DecorationSet.empty
+
   const state = proposalsPluginKey.getState(editorState) ?? emptyState
-  if (!state.activeId) return DecorationSet.empty
-
-  const active = state.proposals.find((proposal) => proposal.id === state.activeId)
-  if (!active) return DecorationSet.empty
-
-  return DecorationSet.create(editorState.doc, proposalDecorations(active, editorState.schema))
+  const decorations = state.proposals.flatMap((proposal) =>
+    proposalDecorations(proposal, editorState.schema)
+  )
+  return DecorationSet.create(editorState.doc, decorations)
 }
 
 // When a proposal occupies an otherwise-empty document its green preview widget sits where the empty
@@ -247,7 +251,7 @@ const ProposalsExtension = Extension.create({
           },
 
           decorations(editorState) {
-            return activeDecorations(editorState)
+            return visibleDecorations(editorState)
           }
         }
       })

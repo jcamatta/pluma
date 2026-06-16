@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Editor } from '@tiptap/core'
 import {
+  annotationReadClass,
   createAnnotation,
   delAnnotation,
   getActiveAnnotationId,
@@ -10,13 +11,29 @@ import {
   markAnnotationRead,
   setActiveAnnotation
 } from '../annotations'
+import { setSuggestionsVisible } from '../suggestions-ui'
 import { withEditor } from './editor-test-harness'
 
-function annotate(editor: Editor, label: string): ReturnType<typeof createAnnotation> {
+function annotate(
+  editor: Editor,
+  options: { label: string; from?: number; to?: number }
+): ReturnType<typeof createAnnotation> {
   return createAnnotation({
     editor,
-    annotation: { from: 1, to: 3, label, description: 'note', severity: 'warning', quote: 'he' }
+    annotation: {
+      from: options.from ?? 1,
+      to: options.to ?? 3,
+      label: options.label,
+      description: 'note',
+      severity: 'warning',
+      quote: 'he'
+    }
   })
+}
+
+// Counts the annotation highlight spans the plugin renders into the editor DOM.
+function highlightCount(editor: Editor): number {
+  return editor.view.dom.querySelectorAll('.annotation-warning').length
 }
 
 function statusOf(editor: Editor, id: string): string | undefined {
@@ -26,8 +43,8 @@ function statusOf(editor: Editor, id: string): string | undefined {
 describe('annotations extension', () => {
   it('mints sequential ids and stores annotations', () => {
     withEditor('hello world', (editor) => {
-      const first = annotate(editor, 'one')
-      const second = annotate(editor, 'two')
+      const first = annotate(editor, { label: 'one' })
+      const second = annotate(editor, { label: 'two' })
 
       expect(first.id).toBe('a_1')
       expect(second.id).toBe('a_2')
@@ -37,15 +54,15 @@ describe('annotations extension', () => {
 
   it('mints new annotations as pending', () => {
     withEditor('hello world', (editor) => {
-      const annotation = annotate(editor, 'one')
+      const annotation = annotate(editor, { label: 'one' })
       expect(statusOf(editor, annotation.id)).toBe('pending')
     })
   })
 
   it('marks one annotation read and leaves others untouched', () => {
     withEditor('hello world', (editor) => {
-      const first = annotate(editor, 'one')
-      const second = annotate(editor, 'two')
+      const first = annotate(editor, { label: 'one' })
+      const second = annotate(editor, { label: 'two' })
 
       markAnnotationRead({ editor, id: first.id })
 
@@ -56,7 +73,7 @@ describe('annotations extension', () => {
 
   it('toggles the active annotation', () => {
     withEditor('hello world', (editor) => {
-      const annotation = annotate(editor, 'one')
+      const annotation = annotate(editor, { label: 'one' })
 
       setActiveAnnotation({ editor, id: annotation.id })
       expect(getActiveAnnotationId(editor)).toBe(annotation.id)
@@ -68,7 +85,7 @@ describe('annotations extension', () => {
 
   it('clears the active id when the active annotation is removed', () => {
     withEditor('hello world', (editor) => {
-      const annotation = annotate(editor, 'one')
+      const annotation = annotate(editor, { label: 'one' })
       setActiveAnnotation({ editor, id: annotation.id })
 
       delAnnotation({ editor, id: annotation.id })
@@ -80,13 +97,49 @@ describe('annotations extension', () => {
 
   it('keeps the active id when a different annotation is removed', () => {
     withEditor('hello world', (editor) => {
-      const first = annotate(editor, 'one')
-      const second = annotate(editor, 'two')
+      const first = annotate(editor, { label: 'one' })
+      const second = annotate(editor, { label: 'two' })
       setActiveAnnotation({ editor, id: second.id })
 
       delAnnotation({ editor, id: first.id })
 
       expect(getActiveAnnotationId(editor)).toBe(second.id)
+    })
+  })
+})
+
+describe('annotations extension render-all visibility', () => {
+  it('highlights every annotation at once without any active selection', () => {
+    withEditor('hello world', (editor) => {
+      annotate(editor, { label: 'one', from: 1, to: 3 })
+      annotate(editor, { label: 'two', from: 7, to: 12 })
+
+      expect(getActiveAnnotationId(editor)).toBeNull()
+      expect(highlightCount(editor)).toBe(2)
+    })
+  })
+
+  it('clears every highlight when suggestions are hidden and restores them on show', () => {
+    withEditor('hello world', (editor) => {
+      annotate(editor, { label: 'one', from: 1, to: 3 })
+      annotate(editor, { label: 'two', from: 7, to: 12 })
+
+      setSuggestionsVisible({ editor, visible: false })
+      expect(highlightCount(editor)).toBe(0)
+
+      setSuggestionsVisible({ editor, visible: true })
+      expect(highlightCount(editor)).toBe(2)
+    })
+  })
+
+  it('adds the read recipe class to a highlight once its annotation is marked read', () => {
+    withEditor('hello world', (editor) => {
+      const annotation = annotate(editor, { label: 'one', from: 1, to: 3 })
+
+      markAnnotationRead({ editor, id: annotation.id })
+
+      const span = editor.view.dom.querySelector(`.${annotationReadClass}`)
+      expect(span?.classList.contains('annotation-warning')).toBe(true)
     })
   })
 })

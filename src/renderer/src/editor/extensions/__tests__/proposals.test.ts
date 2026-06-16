@@ -11,7 +11,14 @@ import {
   setActiveProposal
 } from '../proposals'
 import type { CreateProposalInput } from '../proposals'
+import { setSuggestionsVisible } from '../suggestions-ui'
 import { withEditor } from './editor-test-harness'
+
+// Counts the proposal draft widgets the plugin currently renders into the editor DOM, which equals
+// the number of proposals previewed at once.
+function draftCount(editor: Editor): number {
+  return editor.view.dom.querySelectorAll('.proposal-draft').length
+}
 
 function spanOf(editor: Editor, text: string): { from: number; to: number } {
   const start = editor.state.doc.textContent.indexOf(text)
@@ -150,6 +157,43 @@ describe('proposals extension conflict and lifecycle', () => {
 
       setActiveProposal({ editor, id: null })
       expect(editor.view.dom.classList.contains('has-active-proposal')).toBe(false)
+    })
+  })
+})
+
+describe('proposals extension render-all visibility', () => {
+  it('previews every proposal at once without any active selection', () => {
+    withEditor('hello world', (editor) => {
+      createProposal({
+        editor,
+        proposal: replacement(editor, { original: 'hello', markdown: 'hi' })
+      })
+      createProposal({
+        editor,
+        proposal: replacement(editor, { original: 'world', markdown: 'earth' })
+      })
+
+      expect(getActiveProposalId(editor)).toBeNull()
+      expect(draftCount(editor)).toBe(2)
+    })
+  })
+
+  it('clears every preview when suggestions are hidden and restores them on show', () => {
+    withEditor('hello world', (editor) => {
+      createProposal({
+        editor,
+        proposal: replacement(editor, { original: 'hello', markdown: 'hi' })
+      })
+      createProposal({
+        editor,
+        proposal: replacement(editor, { original: 'world', markdown: 'earth' })
+      })
+
+      setSuggestionsVisible({ editor, visible: false })
+      expect(draftCount(editor)).toBe(0)
+
+      setSuggestionsVisible({ editor, visible: true })
+      expect(draftCount(editor)).toBe(2)
     })
   })
 })

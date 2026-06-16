@@ -4,9 +4,9 @@
 // do not swallow the annotation.
 
 import { Extension, type Editor } from '@tiptap/core'
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
-import { Plugin, PluginKey, type Transaction } from '@tiptap/pm/state'
+import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import { readSuggestionsUiState } from './suggestions-ui'
 
 const annotationSeverities = ['info', 'warning', 'error'] as const
 
@@ -180,15 +180,20 @@ function reduceAnnotation(state: AnnotationsState, command: AnnotationCommand): 
   }
 }
 
-function activeDecorations(state: AnnotationsState, doc: ProseMirrorNode): DecorationSet {
-  if (!state.activeId) return DecorationSet.empty
+// One inline highlight per annotation across its range, carrying its severity class plus the read
+// recipe once it has been marked read.
+function annotationDecoration(annotation: Annotation): Decoration {
+  const severity = annotationSeverityClass[annotation.severity]
+  const className = annotation.status === 'read' ? `${severity} ${annotationReadClass}` : severity
+  return Decoration.inline(annotation.from, annotation.to, { class: className })
+}
 
-  const active = state.annotations.find((annotation) => annotation.id === state.activeId)
-  if (!active) return DecorationSet.empty
+// When suggestions are visible, every annotation is highlighted at once; hiding them clears the set.
+function visibleDecorations(editorState: EditorState): DecorationSet {
+  if (!readSuggestionsUiState(editorState).visible) return DecorationSet.empty
 
-  return DecorationSet.create(doc, [
-    Decoration.inline(active.from, active.to, { class: annotationSeverityClass[active.severity] })
-  ])
+  const state = annotationsPluginKey.getState(editorState) ?? emptyState
+  return DecorationSet.create(editorState.doc, state.annotations.map(annotationDecoration))
 }
 
 const AnnotationsExtension = Extension.create({
@@ -218,10 +223,7 @@ const AnnotationsExtension = Extension.create({
 
         props: {
           decorations(editorState) {
-            return activeDecorations(
-              annotationsPluginKey.getState(editorState) ?? emptyState,
-              editorState.doc
-            )
+            return visibleDecorations(editorState)
           }
         }
       })
