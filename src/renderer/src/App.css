@@ -350,6 +350,12 @@ body {
   border-color: color-mix(in srgb, var(--annotation-color) 55%, transparent);
 }
 
+/* The suggestions sub-topbar (editor header row 2): a faint accent wash over the surface so it reads as
+   part of the editor chrome while signalling the inline-review context. */
+.suggestions-bar {
+  background: color-mix(in srgb, var(--action-primary) 4%, var(--surface-3));
+}
+
 /* The live editor selection while composing a request to the agent. */
 .ProseMirror .selection-active {
   border-radius: 0.1875rem;

@@ -41,6 +41,14 @@
       "title": "Nota",
       "gotIt": "Entendido",
       "read": "Leído"
+    },
+    "suggestionsBar": {
+      "suggestions": "Sugerencias",
+      "toReview": "{{count}} por revisar",
+      "allReviewed": "Todo revisado",
+      "hideAll": "Ocultar todo",
+      "showAll": "Mostrar todo",
+      "list": "Lista"
     }
   },
   "launcher": {

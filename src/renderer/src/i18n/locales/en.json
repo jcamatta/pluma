@@ -41,6 +41,14 @@
       "title": "Note",
       "gotIt": "Got it",
       "read": "Read"
+    },
+    "suggestionsBar": {
+      "suggestions": "Suggestions",
+      "toReview": "{{count}} to review",
+      "allReviewed": "All reviewed",
+      "hideAll": "Hide all",
+      "showAll": "Show all",
+      "list": "List"
     }
   },
   "launcher": {

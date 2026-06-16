@@ -7,7 +7,9 @@
 // reads whichever file the user is editing without several mounted editors clobbering the slot. It also
 // adds itself (by path) to the open-editors map so the panel can read every open file's artifacts. The
 // panel chrome (the file tabs + settings) is the shared strip above the stack, not part of this surface.
-// The editor's frontend tools are contributed once at the shell (EditorToolsBridge), not here.
+// The editor's frontend tools are contributed once at the shell (EditorToolsBridge), not here. Each editor
+// owns its own header row 2 — the suggestions sub-topbar — above its manuscript, so only the active editor's
+// (and thus its bar) is visible; the bar renders only when the file has suggestions.
 
 import { useEffect } from 'react'
 import { useEditorZoom } from './useEditorZoom'
@@ -15,6 +17,7 @@ import { useManuscriptEditor } from './useManuscriptEditor'
 import { useActiveEditor } from './ActiveEditorContext'
 import { useEditorFileSync } from './useEditorFileSync'
 import { EditorManuscript } from './EditorManuscript'
+import { SuggestionsBarController } from './SuggestionsBar.controller'
 
 type EditorControllerProps = {
   readonly path: string | null
@@ -44,5 +47,10 @@ export function EditorController({
 
   if (!editor) return null
 
-  return <EditorManuscript editor={editor} zoom={zoom} containerRef={containerRef} />
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <SuggestionsBarController editor={editor} />
+      <EditorManuscript editor={editor} zoom={zoom} containerRef={containerRef} />
+    </div>
+  )
 }
