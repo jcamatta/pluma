@@ -1,25 +1,67 @@
-// Builds the decorations for an active proposal: a block/span-level red-green preview for a ready
-// proposal — the replaced span struck/red and the new content rendered formatted/green in a widget —
-// or a single conflicted mark when its underlying text drifted.
+// Builds the decorations for a proposal: a block/span-level red-green preview for a ready proposal —
+// the replaced span struck/red and the new content rendered formatted/green in a widget — or a single
+// conflicted mark when its underlying text drifted. The active proposal additionally gets a 2px accent
+// ring (the `proposal-active` class, styled in App.css) and a floating accept/reject pill widget.
 
+import { renderToStaticMarkup } from 'react-dom/server'
+import { createElement } from 'react'
+import { Check, X } from 'lucide-react'
 import { DOMSerializer, type Schema } from '@tiptap/pm/model'
 import { Decoration } from '@tiptap/pm/view'
 import type { Proposal } from './proposals'
+
+// The pill's translated labels, resolved by the caller (the proposals plugin reads the i18n singleton
+// the same way placeholder.ts does, since this runs outside React).
+type PillLabels = {
+  readonly rewrite: string
+  readonly insert: string
+  readonly accept: string
+  readonly reject: string
+  readonly conflicted: string
+}
+
+// The accept/reject/toggle actions are passed in (bound to this proposal by the plugin) rather than
+// imported, so the command logic stays single-sourced in proposals.ts and this module avoids a runtime
+// import cycle with it.
+type ProposalActions = {
+  readonly onAccept: () => void
+  readonly onReject: () => void
+  readonly onToggleActive: () => void
+}
 
 type ProposalDecorationsInput = {
   readonly proposal: Proposal
   readonly schema: Schema
   readonly active: boolean
+  readonly labels: PillLabels
+  readonly actions: ProposalActions
 }
+
+// lucide icons rendered to static SVG markup once at module load — no live React tree mounts inside the
+// imperative widget DOM, and no SVG paths are hand-drawn (the markup comes straight from lucide-react).
+const checkSvg = renderToStaticMarkup(createElement(Check, { size: 15 }))
+const xSvg = renderToStaticMarkup(createElement(X, { size: 15 }))
 
 // Renders the proposal's parsed content (a `{ type: 'doc', content: [...] }` JSON) to real formatted
 // DOM via the editor schema, so the preview shows actual headings/lists/paragraphs rather than the
 // raw markdown source.
-function draftElement({ proposal, schema, active }: ProposalDecorationsInput): HTMLElement {
+function draftElement({
+  proposal,
+  schema,
+  active,
+  actions
+}: ProposalDecorationsInput): HTMLElement {
   const node = schema.nodeFromJSON(proposal.content)
   const fragment = DOMSerializer.fromSchema(schema).serializeFragment(node.content)
   const element = document.createElement('div')
   element.className = withActive('proposal-draft', active)
+  // Clicking the green preview toggles this proposal's activation; the struck red span of a replace is
+  // covered by the plugin's handleClickOn, but a pure insert has no doc range to click, so the widget
+  // itself carries the toggle.
+  element.addEventListener('mousedown', (event) => {
+    event.preventDefault()
+    actions.onToggleActive()
+  })
   element.appendChild(fragment)
   return element
 }
@@ -38,19 +80,99 @@ function draftDecoration(input: ProposalDecorationsInput): Decoration {
   })
 }
 
-// Appends the active marker class when this proposal is the cross-type active suggestion; the ring it
-// styles is wired in a later step, this step only emits the class.
+type IconButtonInput = {
+  readonly className: string
+  readonly label: string
+  readonly svg: string
+  readonly onClick: () => void
+}
+
+function iconButton({ className, label, svg, onClick }: IconButtonInput): HTMLButtonElement {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = className
+  button.title = label
+  button.setAttribute('aria-label', label)
+  button.innerHTML = svg
+  // Stop the click from reaching the document, which would otherwise toggle the proposal off before the
+  // accept/reject runs.
+  button.addEventListener('mousedown', (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    onClick()
+  })
+  return button
+}
+
+function spanWithClass(className: string, text?: string): HTMLSpanElement {
+  const span = document.createElement('span')
+  span.className = className
+  if (text !== undefined) span.textContent = text
+  return span
+}
+
+// The accept/reject controls plus their divider, shown only on a ready proposal (a conflicted one can no
+// longer apply, so it offers none).
+function pillActions({ labels, actions }: ProposalDecorationsInput): readonly HTMLElement[] {
+  return [
+    spanWithClass('suggestion-pill-sep'),
+    iconButton({
+      className: 'suggestion-pill-accept',
+      label: labels.accept,
+      svg: checkSvg,
+      onClick: actions.onAccept
+    }),
+    iconButton({
+      className: 'suggestion-pill-reject',
+      label: labels.reject,
+      svg: xSvg,
+      onClick: actions.onReject
+    })
+  ]
+}
+
+// Floats above the active suggestion (`bottom: 100%`) and offers accept/reject. A conflicted proposal —
+// its underlying text drifted, so it can no longer apply — renders muted with only the conflicted label,
+// matching the artifacts surface (no plain Accept affordance).
+function pillElement(input: ProposalDecorationsInput): HTMLElement {
+  const { proposal, labels } = input
+  const conflicted = proposal.status === 'conflicted'
+
+  const pill = spanWithClass(conflicted ? 'suggestion-pill conflicted' : 'suggestion-pill')
+  const typeLabel = proposal.from === proposal.to ? labels.insert : labels.rewrite
+  pill.appendChild(
+    spanWithClass('suggestion-pill-label', conflicted ? labels.conflicted : typeLabel)
+  )
+  if (!conflicted) pillActions(input).forEach((node) => pill.appendChild(node))
+
+  const wrap = spanWithClass('suggestion-pill-wrap')
+  wrap.appendChild(pill)
+  return wrap
+}
+
+function pillDecoration(input: ProposalDecorationsInput): Decoration {
+  return Decoration.widget(input.proposal.from, () => pillElement(input), {
+    side: -1,
+    key: `${input.proposal.id}:pill`
+  })
+}
+
+// Appends the active marker class when this proposal is the cross-type active suggestion; App.css styles
+// the accent ring on that class.
 function withActive(className: string, active: boolean): string {
   return active ? `${className} proposal-active` : className
 }
 
 function proposalDecorations(input: ProposalDecorationsInput): Decoration[] {
   const { proposal, active } = input
+  const pill = active ? [pillDecoration(input)] : []
+
   if (proposal.status === 'conflicted') {
     return [
       Decoration.inline(proposal.from, proposal.to, {
         class: withActive('proposal-conflicted', active)
-      })
+      }),
+      ...pill
     ]
   }
 
@@ -65,8 +187,8 @@ function proposalDecorations(input: ProposalDecorationsInput): Decoration[] {
         ]
       : []
 
-  return [...removed, draftDecoration(input)]
+  return [...removed, ...pill, draftDecoration(input)]
 }
 
 export { proposalDecorations }
-export type { ProposalDecorationsInput }
+export type { ProposalDecorationsInput, PillLabels }

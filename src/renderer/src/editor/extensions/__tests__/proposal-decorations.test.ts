@@ -6,9 +6,29 @@ import { describe, expect, it } from 'vitest'
 import type { Editor } from '@tiptap/core'
 import type { Decoration } from '@tiptap/pm/view'
 import { proposalDecorations } from '../proposal-decorations'
+import type { PillLabels } from '../proposal-decorations'
 import type { Proposal } from '../proposals'
-import { createProposal, setActiveProposal } from '../proposals'
+import { acceptProposal, createProposal, getProposals, setActiveProposal } from '../proposals'
+import {
+  getActiveSuggestionId,
+  setActiveSuggestion,
+  setSuggestionsVisible
+} from '../suggestions-ui'
 import { withEditor } from './editor-test-harness'
+
+const labels: PillLabels = {
+  rewrite: 'Rewrite',
+  insert: 'Insert',
+  accept: 'Accept',
+  reject: 'Reject',
+  conflicted: 'Conflicted'
+}
+
+const noopActions = {
+  onAccept: () => {},
+  onReject: () => {},
+  onToggleActive: () => {}
+}
 
 function parse(
   editor: Editor,
@@ -42,7 +62,13 @@ function isRemovedSpan(decoration: Decoration): boolean {
 }
 
 function inactiveDecorations(editor: Editor, proposal: Proposal): Decoration[] {
-  return proposalDecorations({ proposal, schema: editor.state.schema, active: false })
+  return proposalDecorations({
+    proposal,
+    schema: editor.state.schema,
+    active: false,
+    labels,
+    actions: noopActions
+  })
 }
 
 // Creates a heading insert at the document end (without activating it) and returns its id. Both
@@ -131,6 +157,131 @@ describe('proposalDecorations', () => {
 
       editor.view.dispatch(editor.state.tr.setMeta('unrelated', true))
       expect(editor.view.dom.querySelector('.proposal-draft')).toBe(first)
+    })
+  })
+})
+
+// Replaces `hello` with a one-word rewrite and returns the proposal id, without activating it.
+function createRewriteId(editor: Editor): string | null {
+  const from = editor.state.doc.textContent.indexOf('hello') + 1
+  const created = createProposal({
+    editor,
+    proposal: {
+      from,
+      to: from + 'hello'.length,
+      originalText: 'hello',
+      replacementText: 'hi',
+      content: parse(editor, 'hi')
+    }
+  })
+  return created.ok ? created.proposal.id : null
+}
+
+describe('proposal accept/reject pill', () => {
+  it('shows the pill only for the active proposal', () => {
+    withEditor('hello world', (editor) => {
+      const id = createRewriteId(editor)
+      if (id === null) return expect.fail('proposal not created')
+
+      expect(editor.view.dom.querySelector('.suggestion-pill')).toBeNull()
+
+      setActiveProposal({ editor, id })
+      expect(editor.view.dom.querySelectorAll('.suggestion-pill')).toHaveLength(1)
+
+      setActiveProposal({ editor, id: null })
+      expect(editor.view.dom.querySelector('.suggestion-pill')).toBeNull()
+    })
+  })
+
+  it('hides the pill when suggestions are hidden even while one is active', () => {
+    withEditor('hello world', (editor) => {
+      const id = createRewriteId(editor)
+      if (id === null) return expect.fail('proposal not created')
+
+      setActiveProposal({ editor, id })
+      setSuggestionsVisible({ editor, visible: false })
+      expect(editor.view.dom.querySelector('.suggestion-pill')).toBeNull()
+    })
+  })
+
+  it('labels a replace Rewrite and a pure insert Insert', () => {
+    withEditor('hello world', (editor) => {
+      const rewriteId = createRewriteId(editor)
+      if (rewriteId === null) return expect.fail('rewrite not created')
+      setActiveProposal({ editor, id: rewriteId })
+      expect(editor.view.dom.querySelector('.suggestion-pill-label')?.textContent).toBe('Rewrite')
+    })
+
+    withEditor('hello world', (editor) => {
+      const insertId = createDraftId(editor)
+      if (insertId === null) return expect.fail('insert not created')
+      setActiveProposal({ editor, id: insertId })
+      expect(editor.view.dom.querySelector('.suggestion-pill-label')?.textContent).toBe('Insert')
+    })
+  })
+})
+
+describe('proposal accept/reject pill actions', () => {
+  it('accepts on the accept button and removes the proposal', () => {
+    withEditor('hello world', (editor) => {
+      const id = createRewriteId(editor)
+      if (id === null) return expect.fail('proposal not created')
+      setActiveProposal({ editor, id })
+
+      const accept = editor.view.dom.querySelector('.suggestion-pill-accept')
+      accept?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+
+      expect(editor.state.doc.textContent).toBe('hi world')
+      expect(getProposals(editor)).toHaveLength(0)
+    })
+  })
+
+  it('rejects on the reject button and removes the proposal without applying', () => {
+    withEditor('hello world', (editor) => {
+      const id = createRewriteId(editor)
+      if (id === null) return expect.fail('proposal not created')
+      setActiveProposal({ editor, id })
+
+      const reject = editor.view.dom.querySelector('.suggestion-pill-reject')
+      reject?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+
+      expect(editor.state.doc.textContent).toBe('hello world')
+      expect(getProposals(editor)).toHaveLength(0)
+    })
+  })
+
+  it('toggles activation when the green preview is clicked', () => {
+    withEditor('hello world', (editor) => {
+      const id = createDraftId(editor)
+      if (id === null) return expect.fail('proposal not created')
+
+      const draft = editor.view.dom.querySelector('.proposal-draft')
+      draft?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+      expect(getActiveSuggestionId(editor)).toBe(id)
+
+      editor.view.dom
+        .querySelector('.proposal-draft')
+        ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+      expect(getActiveSuggestionId(editor)).toBeNull()
+    })
+  })
+
+  it('renders a conflicted proposal as a muted pill with no accept button', () => {
+    withEditor('hello world', (editor) => {
+      const id = createRewriteId(editor)
+      if (id === null) return expect.fail('proposal not created')
+
+      // Drift the underlying text, then attempt accept so the plugin flags the proposal conflicted.
+      editor.commands.insertContentAt(2, 'Z')
+      acceptProposal({ editor, id })
+      expect(getProposals(editor)[0]?.status).toBe('conflicted')
+
+      setActiveSuggestion({ editor, id })
+      expect(editor.view.dom.querySelector('.suggestion-pill.conflicted')).not.toBeNull()
+      expect(editor.view.dom.querySelector('.suggestion-pill-accept')).toBeNull()
+      expect(editor.view.dom.querySelector('.suggestion-pill-label')?.textContent).toBe(
+        'Conflicted'
+      )
     })
   })
 })
