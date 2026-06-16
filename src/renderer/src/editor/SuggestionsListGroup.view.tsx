@@ -1,7 +1,8 @@
 // One section of the grouped List popover plus its rows. A pending edit row carries accept/reject buttons and
 // a pending note row a mark-read button; resolved rows (a read note, a conflicted rewrite) show their status
-// label and no action — so a conflicted edit never exposes a plain accept. Row action buttons stop
-// propagation so they never also trigger the row's jump. Pure: layout and the callbacks passed in.
+// label and no action — so a conflicted edit never exposes a plain accept. The group header shows a bulk
+// "Accept all" (edits) / "Mark all read" (notes) only while the group has a pending item. Row action buttons
+// stop propagation so they never also trigger the row's jump. Pure: layout and the callbacks passed in.
 
 import { Replace, TextCursorInput, MessageSquareText, Check, X } from 'lucide-react'
 import { Button } from '@base-ui/react'
@@ -116,6 +117,32 @@ function SuggestionRow({
   )
 }
 
+// The bulk action a group offers over its pending items: edits accept all, notes mark all read. Hidden when
+// the group has no pending item. Conflicted edits are pending=false, so they are excluded here automatically.
+function GroupAction({
+  type,
+  pendingCount,
+  labels,
+  actions
+}: {
+  readonly type: SuggestionType
+  readonly pendingCount: number
+  readonly labels: SuggestionsListLabels
+  readonly actions: SuggestionsListActions
+}): React.JSX.Element | null {
+  if (pendingCount === 0) return null
+  const isNote = type === 'note'
+  return (
+    <Button
+      type="button"
+      onClick={() => (isNote ? actions.onMarkAllRead() : actions.onAcceptGroup(type))}
+      className="ml-auto flex-none rounded px-1 font-ui text-xs font-semibold text-action-primary hover:underline"
+    >
+      {isNote ? labels.markAllRead : labels.acceptAll}
+    </Button>
+  )
+}
+
 function SuggestionsGroup({
   type,
   title,
@@ -130,6 +157,7 @@ function SuggestionsGroup({
   readonly actions: SuggestionsListActions
 }): React.JSX.Element {
   const Icon = groupIcon[type]
+  const pendingCount = items.filter((item) => item.pending).length
   return (
     <div className="mb-1">
       <div className="flex items-center gap-2 px-2 pb-1 pt-2">
@@ -138,6 +166,7 @@ function SuggestionsGroup({
           {title}
         </span>
         <span className="text-xs text-text-muted">{items.length}</span>
+        <GroupAction type={type} pendingCount={pendingCount} labels={labels} actions={actions} />
       </div>
       {items.map((item) => (
         <SuggestionRow key={item.id} item={item} labels={labels} actions={actions} />

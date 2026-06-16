@@ -56,7 +56,9 @@
       "notes": "Notes",
       "read": "read",
       "conflicted": "conflicted",
-      "markRead": "Mark read"
+      "markRead": "Mark read",
+      "acceptAll": "Accept all",
+      "markAllRead": "Mark all read"
     }
   },
   "launcher": {

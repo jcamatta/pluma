@@ -10,7 +10,7 @@ import type { Editor } from '@tiptap/core'
 import { i18n } from '../../i18n'
 import { createTestEditor } from '../extensions/__tests__/editor-test-harness'
 import { createAnnotation, getAnnotations } from '../extensions/annotations'
-import { createProposal, getProposals } from '../extensions/proposals'
+import { acceptProposal, createProposal, getProposals } from '../extensions/proposals'
 import {
   getActiveSuggestionId,
   getSuggestionsVisible,
@@ -235,6 +235,53 @@ describe('SuggestionsBarController list single-row actions', () => {
       })
 
       expect(getAnnotations(editor)[0]?.status).toBe('read')
+    } finally {
+      editor.destroy()
+    }
+  })
+})
+
+describe('SuggestionsBarController list bulk actions', () => {
+  it('accepts only pending non-conflicted rewrites on Accept all, leaving a conflicted one', () => {
+    const editor = createTestEditor(CONTENT)
+    try {
+      act(() => {
+        const conflicted = seedReplacement(editor, { original: 'brown', markdown: 'tan' })
+        // Drift the underlying text so accept flips this proposal to conflicted (no plain accept).
+        editor.commands.insertContentAt(editor.state.doc.textContent.indexOf('brown') + 2, 'Z')
+        acceptProposal({ editor, id: conflicted })
+        seedReplacement(editor, { original: 'lazy', markdown: 'sleepy' })
+      })
+      expect(getProposals(editor).some((p) => p.status === 'conflicted')).toBe(true)
+      openList(editor)
+
+      act(() => {
+        fireEvent.click(screen.getByRole('button', { name: 'Accept all' }))
+      })
+
+      const remaining = getProposals(editor)
+      expect(remaining).toHaveLength(1)
+      expect(remaining[0]?.status).toBe('conflicted')
+      expect(editor.state.doc.textContent).toContain('sleepy')
+    } finally {
+      editor.destroy()
+    }
+  })
+
+  it('marks every pending note read on Mark all read', () => {
+    const editor = createTestEditor(CONTENT)
+    try {
+      act(() => {
+        seedNote(editor, 'quick')
+        seedNote(editor, 'lazy')
+      })
+      openList(editor)
+
+      act(() => {
+        fireEvent.click(screen.getByRole('button', { name: 'Mark all read' }))
+      })
+
+      expect(getAnnotations(editor).every((a) => a.status === 'read')).toBe(true)
     } finally {
       editor.destroy()
     }

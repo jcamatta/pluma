@@ -1,9 +1,9 @@
 // The grouped List popover: a right-aligned Base UI popover, anchored to the sub-topbar's List button, that
 // lists one editor's suggestions in three sections — Rewrites · Inserts · Notes (empty sections omitted).
-// Each row shows a one-line MiniPreview and jumps to the suggestion on click; pending rows carry per-row
-// accept / reject / mark-read actions (see SuggestionsListGroup.view). Pure props — open state, the live
-// list, the anchor, and every callback are owned by the controller; this only lays out the popover shell,
-// animates it, and splits the list into its ordered groups.
+// Each row shows a one-line MiniPreview and jumps to the suggestion on click; pending rows carry per-row and
+// the group header per-group accept / reject / mark-read actions (see SuggestionsListGroup.view). Pure props —
+// open state, the live list, the anchor, and every callback are owned by the controller; this only lays out
+// the popover shell, animates it, and splits the list into its ordered groups.
 
 import { Popover } from '@base-ui/react/popover'
 import { motion } from 'motion/react'
@@ -19,14 +19,18 @@ interface SuggestionsListLabels {
   readonly accept: string
   readonly reject: string
   readonly markRead: string
+  readonly acceptAll: string
+  readonly markAllRead: string
 }
 
-// The four per-row review callbacks, bundled so each row passes one prop instead of drilling all of them.
+// The five review callbacks, bundled so each group/row passes one prop instead of drilling all of them.
 interface SuggestionsListActions {
   readonly onJump: (item: Suggestion) => void
   readonly onAccept: (item: Suggestion) => void
   readonly onReject: (item: Suggestion) => void
   readonly onMarkRead: (item: Suggestion) => void
+  readonly onAcceptGroup: (type: SuggestionType) => void
+  readonly onMarkAllRead: () => void
 }
 
 interface SuggestionsListProps {

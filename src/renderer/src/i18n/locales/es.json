@@ -56,7 +56,9 @@
       "notes": "Notas",
       "read": "leída",
       "conflicted": "en conflicto",
-      "markRead": "Marcar leída"
+      "markRead": "Marcar leída",
+      "acceptAll": "Aceptar todo",
+      "markAllRead": "Marcar todas leídas"
     }
   },
   "launcher": {

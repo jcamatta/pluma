@@ -17,7 +17,9 @@ const labels = {
   conflicted: 'conflicted',
   accept: 'Accept',
   reject: 'Reject',
-  markRead: 'Mark read'
+  markRead: 'Mark read',
+  acceptAll: 'Accept all',
+  markAllRead: 'Mark all read'
 }
 
 function rewrite(over: Partial<Suggestion> = {}): Suggestion {
@@ -77,6 +79,8 @@ function renderList(
     onAccept: vi.fn(),
     onReject: vi.fn(),
     onMarkRead: vi.fn(),
+    onAcceptGroup: vi.fn(),
+    onMarkAllRead: vi.fn(),
     ...over
   }
   const anchor = createRef<HTMLDivElement>()
@@ -181,5 +185,31 @@ describe('SuggestionsList actions', () => {
     expect(screen.queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Mark read' })).not.toBeInTheDocument()
+  })
+
+  it('fires onAcceptGroup for the Rewrites group bulk action', () => {
+    const { onAcceptGroup } = renderList([rewrite()])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Accept all' }))
+
+    expect(onAcceptGroup).toHaveBeenCalledWith('rewrite')
+  })
+
+  it('fires onMarkAllRead for the Notes group bulk action', () => {
+    const { onMarkAllRead } = renderList([note()])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark all read' }))
+
+    expect(onMarkAllRead).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides a group bulk action when the group has no pending item', () => {
+    renderList([
+      rewrite({ id: 'p_9', pending: false, resolution: 'conflicted' }),
+      note({ id: 'a_9', pending: false, resolution: 'read' })
+    ])
+
+    expect(screen.queryByRole('button', { name: 'Accept all' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Mark all read' })).not.toBeInTheDocument()
   })
 })

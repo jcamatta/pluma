@@ -50,7 +50,7 @@ function SuggestionsBarController({
     [editor]
   )
 
-  const actions = useSuggestionListActions({ editor, onJump })
+  const actions = useSuggestionListActions({ editor, items, onJump })
 
   if (items.length === 0) return null
 
@@ -87,7 +87,9 @@ function SuggestionsBarController({
           conflicted: t('editor.suggestionsList.conflicted'),
           accept: t('editor.suggestionPill.accept'),
           reject: t('editor.suggestionPill.reject'),
-          markRead: t('editor.suggestionsList.markRead')
+          markRead: t('editor.suggestionsList.markRead'),
+          acceptAll: t('editor.suggestionsList.acceptAll'),
+          markAllRead: t('editor.suggestionsList.markAllRead')
         }}
         actions={actions}
       />
