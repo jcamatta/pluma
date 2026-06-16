@@ -25,6 +25,9 @@ interface SuggestionsBarProps {
   readonly labels: SuggestionsBarLabels
   readonly onToggleVisible: () => void
   readonly onOpenList: () => void
+  // Anchors the list popover (owned by the controller) to the List button without lifting its layout out.
+  readonly listButtonRef?: React.Ref<HTMLButtonElement>
+  readonly listOpen?: boolean
 }
 
 const tap = { scale: 0.97 }
@@ -35,7 +38,9 @@ function SuggestionsBar({
   reduceMotion,
   labels,
   onToggleVisible,
-  onOpenList
+  onOpenList,
+  listButtonRef,
+  listOpen = false
 }: SuggestionsBarProps): React.JSX.Element {
   const reviewed = count === 0
   const toggleLabel = visible ? labels.hideAll : labels.showAll
@@ -76,9 +81,10 @@ function SuggestionsBar({
           type="button"
           onClick={onOpenList}
           aria-label={labels.list}
+          aria-expanded={listOpen}
           className="flex h-7 items-center gap-1 rounded-lg border border-(--line2) px-2 text-xs font-semibold text-text-secondary"
           render={
-            <motion.button whileTap={tapProps}>
+            <motion.button ref={listButtonRef} whileTap={tapProps}>
               <ListChecks aria-hidden="true" size={14} />
               {labels.list}
               <ChevronDown aria-hidden="true" size={13} className="text-text-muted" />

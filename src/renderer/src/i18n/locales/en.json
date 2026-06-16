@@ -49,6 +49,13 @@
       "hideAll": "Hide all",
       "showAll": "Show all",
       "list": "List"
+    },
+    "suggestionsList": {
+      "rewrites": "Rewrites",
+      "inserts": "Inserts",
+      "notes": "Notes",
+      "read": "read",
+      "conflicted": "conflicted"
     }
   },
   "launcher": {
