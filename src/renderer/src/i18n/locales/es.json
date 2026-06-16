@@ -35,6 +35,11 @@
       "accept": "Aceptar",
       "reject": "Rechazar",
       "conflicted": "En conflicto"
+    },
+    "annotationCard": {
+      "title": "Nota",
+      "gotIt": "Entendido",
+      "read": "Leído"
     }
   },
   "launcher": {
