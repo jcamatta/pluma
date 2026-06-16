@@ -112,7 +112,7 @@ function createAnnotation({ editor, annotation }: CreateAnnotationInput): Annota
   )
 
   const created = getState(editor).annotations.find((candidate) => candidate.id === `a_${idBefore}`)
-  return created ?? { ...annotation, id: `a_${idBefore}` }
+  return created ?? { ...annotation, id: `a_${idBefore}`, status: 'pending' }
 }
 
 function delAnnotation({ editor, id }: DelAnnotationInput): void {
