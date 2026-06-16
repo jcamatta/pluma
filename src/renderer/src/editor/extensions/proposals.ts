@@ -1,10 +1,10 @@
-// Tracks proposed inline edits the user reviews before they apply. Proposal ids (p_1, p_2, …) are
-// minted in plugin state. The active proposal is shown as a word-level diff decoration; accepting it
-// replaces the text, rejecting removes it, and a proposal whose underlying text drifted is conflicted.
+// Tracks proposed edits the user reviews before they apply. Proposal ids (p_1, p_2, …) are minted in
+// plugin state. The active proposal is shown as a block/span-level red-green decoration; accepting it
+// inserts the parsed content, rejecting removes it, and a proposal whose underlying text drifted is
+// conflicted.
 
 import { Extension, type Editor, type JSONContent } from '@tiptap/core'
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
-import { Plugin, PluginKey, type Transaction } from '@tiptap/pm/state'
+import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { DecorationSet } from '@tiptap/pm/view'
 import { proposalDecorations } from './proposal-decorations'
 
@@ -200,13 +200,14 @@ function reduceProposal(state: ProposalsState, command: ProposalCommand): Propos
   }
 }
 
-function activeDecorations(state: ProposalsState, doc: ProseMirrorNode): DecorationSet {
+function activeDecorations(editorState: EditorState): DecorationSet {
+  const state = proposalsPluginKey.getState(editorState) ?? emptyState
   if (!state.activeId) return DecorationSet.empty
 
   const active = state.proposals.find((proposal) => proposal.id === state.activeId)
   if (!active) return DecorationSet.empty
 
-  return DecorationSet.create(doc, proposalDecorations(active))
+  return DecorationSet.create(editorState.doc, proposalDecorations(active, editorState.schema))
 }
 
 const ProposalsExtension = Extension.create({
@@ -234,10 +235,7 @@ const ProposalsExtension = Extension.create({
 
         props: {
           decorations(editorState) {
-            return activeDecorations(
-              proposalsPluginKey.getState(editorState) ?? emptyState,
-              editorState.doc
-            )
+            return activeDecorations(editorState)
           }
         }
       })

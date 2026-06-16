@@ -1,74 +1,47 @@
-// Builds the inline decorations for an active proposal: a word-level diff (insert widgets + delete
-// marks) for a ready proposal, or a single conflicted mark when its underlying text drifted.
+// Builds the decorations for an active proposal: a block/span-level red-green preview for a ready
+// proposal — the replaced span struck/red and the new content rendered formatted/green in a widget —
+// or a single conflicted mark when its underlying text drifted.
 
+import { DOMSerializer, type Schema } from '@tiptap/pm/model'
 import { Decoration } from '@tiptap/pm/view'
-import { diffWords } from 'diff'
 import type { Proposal } from './proposals'
 
-type DiffAccumulator = {
-  readonly offset: number
-  readonly decorations: readonly Decoration[]
+// Renders the proposal's parsed content (a `{ type: 'doc', content: [...] }` JSON) to real formatted
+// DOM via the editor schema, so the preview shows actual headings/lists/paragraphs rather than the
+// raw markdown source.
+function draftElement(proposal: Proposal, schema: Schema): HTMLElement {
+  const node = schema.nodeFromJSON(proposal.content)
+  const fragment = DOMSerializer.fromSchema(schema).serializeFragment(node.content)
+  const element = document.createElement('div')
+  element.className = 'proposal-draft'
+  element.appendChild(fragment)
+  return element
 }
 
-type InsertSpec = {
-  readonly from: number
-  readonly value: string
-  readonly key: string
+// The key lets ProseMirror reuse the widget's DOM node across unrelated transactions instead of
+// destroying and recreating it on every state change — without it the node remounts each transaction
+// and replays its entry animation, which reads as a flicker. The proposal id is stable across edits
+// (the widget's mapped position is not, so it must not feed the key).
+function draftDecoration(proposal: Proposal, schema: Schema): Decoration {
+  return Decoration.widget(proposal.to, () => draftElement(proposal, schema), {
+    side: 1,
+    key: proposal.id
+  })
 }
 
-// The key is what lets ProseMirror reuse the widget's DOM node across transactions instead of
-// destroying and recreating it on every state change — without it the node remounts each
-// transaction and replays its entry animation, which reads as a flicker. It is derived from the
-// proposal id and the insert's offset within the original text, both stable across edits (the
-// widget's mapped position is not, so it must not feed the key).
-function insertDecoration({ from, value, key }: InsertSpec): Decoration {
-  return Decoration.widget(
-    from,
-    () => {
-      const element = document.createElement('span')
-      element.className = 'proposal-insert'
-      element.textContent = value
-      return element
-    },
-    { side: 1, key }
-  )
-}
-
-function deleteDecoration(from: number, length: number): Decoration {
-  return Decoration.inline(from, from + length, { class: 'proposal-delete' })
-}
-
-function proposalDecorations(proposal: Proposal): Decoration[] {
+function proposalDecorations(proposal: Proposal, schema: Schema): Decoration[] {
   if (proposal.status === 'conflicted') {
     return [Decoration.inline(proposal.from, proposal.to, { class: 'proposal-conflicted' })]
   }
 
-  return diffWords(proposal.originalText, proposal.replacementText)
-    .reduce<DiffAccumulator>(
-      (acc, part) => {
-        if (part.added) {
-          return {
-            offset: acc.offset,
-            decorations: [
-              ...acc.decorations,
-              insertDecoration({
-                from: proposal.from + acc.offset,
-                value: part.value,
-                key: `${proposal.id}:${acc.offset}`
-              })
-            ]
-          }
-        }
+  // A pure insert (`from === to`) replaces nothing, so it shows only the green added preview; a
+  // replace also strikes the removed span red.
+  const removed =
+    proposal.from < proposal.to
+      ? [Decoration.inline(proposal.from, proposal.to, { class: 'proposal-delete' })]
+      : []
 
-        const next = part.removed
-          ? [...acc.decorations, deleteDecoration(proposal.from + acc.offset, part.value.length)]
-          : acc.decorations
-
-        return { offset: acc.offset + part.value.length, decorations: next }
-      },
-      { offset: 0, decorations: [] }
-    )
-    .decorations.slice()
+  return [...removed, draftDecoration(proposal, schema)]
 }
 
 export { proposalDecorations }
