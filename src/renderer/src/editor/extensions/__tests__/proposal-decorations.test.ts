@@ -213,9 +213,9 @@ describe('proposal accept/reject pill', () => {
       setActiveProposal({ editor, id })
 
       // The pill rides inside the green block (an absolute overlay) so it adds no flow height — unlike a
-      // rewrite, whose pill floats over the struck span.
+      // rewrite, whose pill floats over the struck span. The block reserves headroom for it at all times.
       expect(
-        editor.view.dom.querySelector('.proposal-draft .suggestion-pill-overlay')
+        editor.view.dom.querySelector('.proposal-draft.proposal-insert .suggestion-pill-overlay')
       ).not.toBeNull()
     })
   })

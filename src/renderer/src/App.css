@@ -387,6 +387,18 @@ body {
   margin-top: 0;
 }
 
+/* An insert reserves headroom for its accept/reject pill at all times, so activating it (which adds the
+   pill) fills reserved space instead of shifting the document below. */
+.ProseMirror .proposal-draft.proposal-insert {
+  margin-top: 1.75rem;
+}
+
+/* The embedded pill is prepended, so the block's real first child is no longer :first-child — restore its
+   margin reset here, otherwise its top margin would reappear only while the pill is shown. */
+.ProseMirror .proposal-draft > .suggestion-pill-overlay + * {
+  margin-top: 0;
+}
+
 .ProseMirror .proposal-draft > :last-child {
   margin-bottom: 0;
 }

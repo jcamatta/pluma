@@ -50,7 +50,10 @@ function draftElement(input: ProposalDecorationsInput, embedPill: boolean): HTML
   const node = schema.nodeFromJSON(proposal.content)
   const fragment = DOMSerializer.fromSchema(schema).serializeFragment(node.content)
   const element = document.createElement('div')
-  element.className = withActive('proposal-draft', active)
+  // A pure insert reserves headroom for its embedded pill at all times (the `proposal-insert` class),
+  // so the pill appearing on activation fills already-reserved space rather than shifting the document.
+  const base = proposal.from === proposal.to ? 'proposal-draft proposal-insert' : 'proposal-draft'
+  element.className = withActive(base, active)
   // Clicking the green preview toggles this proposal's activation; the struck red span of a replace is
   // covered by the plugin's handleClickOn, but a pure insert has no doc range to click, so the widget
   // itself carries the toggle.
@@ -59,7 +62,8 @@ function draftElement(input: ProposalDecorationsInput, embedPill: boolean): HTML
     actions.onToggleActive()
   })
   // A pure insert has no struck span to float a pill over, so its accept/reject pill rides inside the
-  // block as an absolute overlay — it sits above the block without displacing the document below it.
+  // block as an absolute overlay, sitting in the reserved headroom above the block. It is prepended so
+  // its zero-height absolute wrap does not displace the block's :last-child margin reset.
   if (embedPill) element.appendChild(pillElement(input, true))
   element.appendChild(fragment)
   return element
