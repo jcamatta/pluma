@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import type { Editor } from '@tiptap/core'
 import { useEditorSuggestions } from './useEditorSuggestions'
 import { useSuggestionsVisible } from './useSuggestionsVisible'
+import { useSuggestionListActions } from './useSuggestionListActions'
 import { setActiveSuggestion, setSuggestionsVisible } from './extensions/suggestions-ui'
 import { reveal } from './suggestion-scroll'
 import { SuggestionsBar } from './SuggestionsBar.view'
@@ -49,6 +50,8 @@ function SuggestionsBarController({
     [editor]
   )
 
+  const actions = useSuggestionListActions({ editor, onJump })
+
   if (items.length === 0) return null
 
   return (
@@ -81,9 +84,12 @@ function SuggestionsBarController({
           inserts: t('editor.suggestionsList.inserts'),
           notes: t('editor.suggestionsList.notes'),
           read: t('editor.suggestionsList.read'),
-          conflicted: t('editor.suggestionsList.conflicted')
+          conflicted: t('editor.suggestionsList.conflicted'),
+          accept: t('editor.suggestionPill.accept'),
+          reject: t('editor.suggestionPill.reject'),
+          markRead: t('editor.suggestionsList.markRead')
         }}
-        onJump={onJump}
+        actions={actions}
       />
     </>
   )

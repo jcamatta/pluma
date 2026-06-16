@@ -55,7 +55,8 @@
       "inserts": "Inserts",
       "notes": "Notes",
       "read": "read",
-      "conflicted": "conflicted"
+      "conflicted": "conflicted",
+      "markRead": "Mark read"
     }
   },
   "launcher": {

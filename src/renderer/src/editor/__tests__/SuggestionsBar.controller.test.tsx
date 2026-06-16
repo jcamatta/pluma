@@ -9,8 +9,8 @@ import { I18nextProvider } from 'react-i18next'
 import type { Editor } from '@tiptap/core'
 import { i18n } from '../../i18n'
 import { createTestEditor } from '../extensions/__tests__/editor-test-harness'
-import { createAnnotation } from '../extensions/annotations'
-import { createProposal } from '../extensions/proposals'
+import { createAnnotation, getAnnotations } from '../extensions/annotations'
+import { createProposal, getProposals } from '../extensions/proposals'
 import {
   getActiveSuggestionId,
   getSuggestionsVisible,
@@ -46,17 +46,42 @@ function seed(editor: Editor): void {
   })
 }
 
-function seedRewrite(editor: Editor): void {
-  createProposal({
+function spanOf(editor: Editor, text: string): { from: number; to: number } {
+  const from = editor.state.doc.textContent.indexOf(text) + 1
+  return { from, to: from + text.length }
+}
+
+// A rewrite whose parsed content lets acceptProposal apply real nodes over `original`'s span.
+function seedReplacement(
+  editor: Editor,
+  edit: { readonly original: string; readonly markdown: string }
+): string {
+  const span = spanOf(editor, edit.original)
+  const manager = editor.markdown
+  const content = manager ? manager.parse(edit.markdown) : { type: 'doc', content: [] }
+  const result = createProposal({
     editor,
     proposal: {
-      from: 5,
-      to: 10,
-      originalText: editor.state.doc.textBetween(5, 10, '\n'),
-      replacementText: 'swift',
-      content: { type: 'doc', content: [{ type: 'paragraph', content: [] }] }
+      ...span,
+      originalText: edit.original,
+      replacementText: edit.markdown,
+      content
     }
   })
+  return result.ok ? result.proposal.id : ''
+}
+
+function seedNote(editor: Editor, quote: string): string {
+  return createAnnotation({
+    editor,
+    annotation: {
+      ...spanOf(editor, quote),
+      label: 'note',
+      description: 'note body',
+      severity: 'warning',
+      quote
+    }
+  }).id
 }
 
 describe('SuggestionsBarController', () => {
@@ -108,7 +133,9 @@ describe('SuggestionsBarController list popover', () => {
     const editor = createTestEditor(CONTENT)
     try {
       renderController(editor)
-      act(() => seedRewrite(editor))
+      act(() => {
+        seedReplacement(editor, { original: 'quick', markdown: 'swift' })
+      })
       expect(screen.queryByText('Rewrites')).not.toBeInTheDocument()
 
       act(() => {
@@ -129,7 +156,7 @@ describe('SuggestionsBarController list popover', () => {
     try {
       renderController(editor)
       act(() => {
-        seedRewrite(editor)
+        seedReplacement(editor, { original: 'quick', markdown: 'swift' })
         setSuggestionsVisible({ editor, visible: false })
       })
       act(() => {
@@ -143,6 +170,71 @@ describe('SuggestionsBarController list popover', () => {
       expect(getSuggestionsVisible(editor)).toBe(true)
       expect(getActiveSuggestionId(editor)).toBe('p_1')
       expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center', behavior: 'smooth' })
+    } finally {
+      editor.destroy()
+    }
+  })
+})
+
+function openList(editor: Editor): void {
+  renderController(editor)
+  act(() => {
+    fireEvent.click(screen.getByRole('button', { name: 'List' }))
+  })
+}
+
+describe('SuggestionsBarController list single-row actions', () => {
+  it('accepts a single edit row from its Accept button', () => {
+    const editor = createTestEditor(CONTENT)
+    try {
+      act(() => {
+        seedReplacement(editor, { original: 'quick', markdown: 'swift' })
+      })
+      openList(editor)
+
+      act(() => {
+        fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
+      })
+
+      expect(getProposals(editor)).toHaveLength(0)
+      expect(editor.state.doc.textContent).toContain('swift')
+    } finally {
+      editor.destroy()
+    }
+  })
+
+  it('rejects a single edit row from its Reject button', () => {
+    const editor = createTestEditor(CONTENT)
+    try {
+      act(() => {
+        seedReplacement(editor, { original: 'quick', markdown: 'swift' })
+      })
+      openList(editor)
+
+      act(() => {
+        fireEvent.click(screen.getByRole('button', { name: 'Reject' }))
+      })
+
+      expect(getProposals(editor)).toHaveLength(0)
+      expect(editor.state.doc.textContent).toContain('quick')
+    } finally {
+      editor.destroy()
+    }
+  })
+
+  it('marks a single note read from its Mark read button', () => {
+    const editor = createTestEditor(CONTENT)
+    try {
+      act(() => {
+        seedNote(editor, 'quick')
+      })
+      openList(editor)
+
+      act(() => {
+        fireEvent.click(screen.getByRole('button', { name: 'Mark read' }))
+      })
+
+      expect(getAnnotations(editor)[0]?.status).toBe('read')
     } finally {
       editor.destroy()
     }

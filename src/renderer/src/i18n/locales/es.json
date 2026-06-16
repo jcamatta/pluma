@@ -55,7 +55,8 @@
       "inserts": "Inserciones",
       "notes": "Notas",
       "read": "leída",
-      "conflicted": "en conflicto"
+      "conflicted": "en conflicto",
+      "markRead": "Marcar leída"
     }
   },
   "launcher": {

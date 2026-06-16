@@ -1,14 +1,13 @@
 // The grouped List popover: a right-aligned Base UI popover, anchored to the sub-topbar's List button, that
 // lists one editor's suggestions in three sections — Rewrites · Inserts · Notes (empty sections omitted).
-// Each row shows a one-line MiniPreview of the suggestion and jumps to it in the manuscript on click;
-// resolved rows (a read note, a conflicted rewrite) are dimmed and show their status label. This is the
-// read-only navigator: per-row and per-group actions arrive in step 7b. Pure props — open state, the live
-// list, the anchor, and onJump are owned by the controller; this only lays out and animates.
+// Each row shows a one-line MiniPreview and jumps to the suggestion on click; pending rows carry per-row
+// accept / reject / mark-read actions (see SuggestionsListGroup.view). Pure props — open state, the live
+// list, the anchor, and every callback are owned by the controller; this only lays out the popover shell,
+// animates it, and splits the list into its ordered groups.
 
-import { Replace, TextCursorInput, MessageSquareText } from 'lucide-react'
-import { Button } from '@base-ui/react'
 import { Popover } from '@base-ui/react/popover'
 import { motion } from 'motion/react'
+import { SuggestionsGroup } from './SuggestionsListGroup.view'
 import type { Suggestion, SuggestionType } from './suggestion-list'
 
 interface SuggestionsListLabels {
@@ -17,6 +16,17 @@ interface SuggestionsListLabels {
   readonly notes: string
   readonly read: string
   readonly conflicted: string
+  readonly accept: string
+  readonly reject: string
+  readonly markRead: string
+}
+
+// The four per-row review callbacks, bundled so each row passes one prop instead of drilling all of them.
+interface SuggestionsListActions {
+  readonly onJump: (item: Suggestion) => void
+  readonly onAccept: (item: Suggestion) => void
+  readonly onReject: (item: Suggestion) => void
+  readonly onMarkRead: (item: Suggestion) => void
 }
 
 interface SuggestionsListProps {
@@ -25,7 +35,7 @@ interface SuggestionsListProps {
   readonly anchor: React.RefObject<HTMLElement | null>
   readonly items: readonly Suggestion[]
   readonly labels: SuggestionsListLabels
-  readonly onJump: (item: Suggestion) => void
+  readonly actions: SuggestionsListActions
   readonly reduceMotion: boolean
 }
 
@@ -40,12 +50,6 @@ const groupOrder: readonly GroupSpec[] = [
   { type: 'insert', title: 'inserts' },
   { type: 'note', title: 'notes' }
 ]
-
-const groupIcon: Record<SuggestionType, typeof Replace> = {
-  rewrite: Replace,
-  insert: TextCursorInput,
-  note: MessageSquareText
-}
 
 // One-line rendering of a suggestion: a rewrite strikes its `before` and greens its `after`; an insert is
 // green; a note is its quoted passage in the editor face. No interactivity — the row owns the click.
@@ -64,75 +68,13 @@ function MiniPreview({ item }: { readonly item: Suggestion }): React.JSX.Element
   )
 }
 
-function statusLabel(item: Suggestion, labels: SuggestionsListLabels): string | null {
-  if (item.resolution === 'read') return labels.read
-  if (item.resolution === 'conflicted') return labels.conflicted
-  return null
-}
-
-function SuggestionRow({
-  item,
-  labels,
-  onJump
-}: {
-  readonly item: Suggestion
-  readonly labels: SuggestionsListLabels
-  readonly onJump: (item: Suggestion) => void
-}): React.JSX.Element {
-  const status = statusLabel(item, labels)
-  return (
-    <Button
-      type="button"
-      onClick={() => onJump(item)}
-      className={`flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-(--hover) ${item.pending ? '' : 'opacity-50'}`}
-    >
-      <span className="min-w-0 flex-1 truncate text-xs">
-        <MiniPreview item={item} />
-      </span>
-      {status !== null && (
-        <span className="flex-none font-ui text-xs text-text-muted">{status}</span>
-      )}
-    </Button>
-  )
-}
-
-function SuggestionsGroup({
-  type,
-  title,
-  items,
-  labels,
-  onJump
-}: {
-  readonly type: SuggestionType
-  readonly title: string
-  readonly items: readonly Suggestion[]
-  readonly labels: SuggestionsListLabels
-  readonly onJump: (item: Suggestion) => void
-}): React.JSX.Element {
-  const Icon = groupIcon[type]
-  return (
-    <div className="mb-1">
-      <div className="flex items-center gap-2 px-2 pb-1 pt-2">
-        <Icon aria-hidden="true" size={12} className="text-text-secondary" />
-        <span className="text-xs font-bold uppercase tracking-wide text-text-secondary">
-          {title}
-        </span>
-        <span className="text-xs text-text-muted">{items.length}</span>
-      </div>
-      {items.map((item) => (
-        <SuggestionRow key={item.id} item={item} labels={labels} onJump={onJump} />
-      ))}
-    </div>
-  )
-}
-
 function SuggestionsList({
   open,
   onOpenChange,
   anchor,
   items,
   labels,
-  onJump,
+  actions,
   reduceMotion
 }: SuggestionsListProps): React.JSX.Element {
   const groups = groupOrder
@@ -162,7 +104,7 @@ function SuggestionsList({
                 title={labels[group.title]}
                 items={group.items}
                 labels={labels}
-                onJump={onJump}
+                actions={actions}
               />
             ))}
           </Popover.Popup>
@@ -173,4 +115,4 @@ function SuggestionsList({
 }
 
 export { SuggestionsList, MiniPreview }
-export type { SuggestionsListProps, SuggestionsListLabels }
+export type { SuggestionsListProps, SuggestionsListLabels, SuggestionsListActions }
