@@ -191,6 +191,11 @@ body {
   pointer-events: none;
 }
 
+/* An active proposal preview occupies the empty document, so hide the placeholder it would overlap. */
+.ProseMirror.has-active-proposal .is-editor-empty:first-child::before {
+  content: none;
+}
+
 .ProseMirror h1 {
   margin-block: 2rem 1rem;
   font-size: 2em;

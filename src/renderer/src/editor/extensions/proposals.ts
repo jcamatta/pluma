@@ -210,6 +210,14 @@ function activeDecorations(editorState: EditorState): DecorationSet {
   return DecorationSet.create(editorState.doc, proposalDecorations(active, editorState.schema))
 }
 
+// When a proposal occupies an otherwise-empty document its green preview widget sits where the empty
+// editor placeholder also renders, so they overlap. Marking the editor DOM lets the stylesheet hide
+// the placeholder while a proposal is active.
+function editorAttributes(editorState: EditorState): Record<string, string> {
+  const state = proposalsPluginKey.getState(editorState) ?? emptyState
+  return state.activeId ? { class: 'has-active-proposal' } : {}
+}
+
 const ProposalsExtension = Extension.create({
   name: 'proposals',
 
@@ -234,6 +242,10 @@ const ProposalsExtension = Extension.create({
         },
 
         props: {
+          attributes(editorState) {
+            return editorAttributes(editorState)
+          },
+
           decorations(editorState) {
             return activeDecorations(editorState)
           }

@@ -132,6 +132,26 @@ describe('proposals extension conflict and lifecycle', () => {
       expect(getActiveProposalId(editor)).toBeNull()
     })
   })
+
+  // The marker class lets the stylesheet suppress the empty-doc placeholder that the active proposal's
+  // green preview would otherwise overlap; it must appear only while a proposal is active.
+  it('marks the editor dom while a proposal is active', () => {
+    withEditor('hello world', (editor) => {
+      const created = createProposal({
+        editor,
+        proposal: replacement(editor, { original: 'hello', markdown: 'hi' })
+      })
+      if (!created.ok) return
+
+      expect(editor.view.dom.classList.contains('has-active-proposal')).toBe(false)
+
+      setActiveProposal({ editor, id: created.proposal.id })
+      expect(editor.view.dom.classList.contains('has-active-proposal')).toBe(true)
+
+      setActiveProposal({ editor, id: null })
+      expect(editor.view.dom.classList.contains('has-active-proposal')).toBe(false)
+    })
+  })
 })
 
 describe('proposals extension applies content as real nodes', () => {
