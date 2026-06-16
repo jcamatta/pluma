@@ -148,3 +148,6 @@ vite.config.ts.timestamp-*
 test-results/
 playwright-report/
 e2e/.artifacts/
+
+# Perf suite results (measurements + rendered report; never committed, like coverage/)
+perf-results/

@@ -13,7 +13,7 @@
 // This block does not touch app code and adds no new exemption to any src/ file.
 
 export const e2e = {
-  files: ['e2e/**/*.ts', 'playwright.config.ts'],
+  files: ['e2e/**/*.ts', 'playwright.config.ts', 'playwright.perf.config.ts'],
   rules: {
     'no-param-reassign': 'off',
     'import-x/no-default-export': 'off'
