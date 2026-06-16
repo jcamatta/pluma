@@ -17,6 +17,7 @@ import { useManuscriptEditor } from './useManuscriptEditor'
 import { useActiveEditor } from './ActiveEditorContext'
 import { useEditorFileSync } from './useEditorFileSync'
 import { EditorManuscript } from './EditorManuscript'
+import { EditorSurface } from './EditorSurface.view'
 import { SuggestionsBarController } from './SuggestionsBar.controller'
 
 type EditorControllerProps = {
@@ -48,9 +49,9 @@ export function EditorController({
   if (!editor) return null
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <SuggestionsBarController editor={editor} />
-      <EditorManuscript editor={editor} zoom={zoom} containerRef={containerRef} />
-    </div>
+    <EditorSurface
+      bar={<SuggestionsBarController editor={editor} />}
+      body={<EditorManuscript editor={editor} zoom={zoom} containerRef={containerRef} />}
+    />
   )
 }
