@@ -67,7 +67,7 @@ function AnnotationCard({
         </div>
         <p className="text-sm leading-normal text-text-primary">{description}</p>
         <div className="mt-4 flex items-center gap-2">
-          <span className="font-mono text-xs text-text-muted">create_annotation</span>
+          <span className="font-ui text-xs text-text-muted">create_annotation</span>
           <Button
             type="button"
             disabled={read}

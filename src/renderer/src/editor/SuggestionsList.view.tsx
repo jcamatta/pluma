@@ -90,7 +90,7 @@ function SuggestionRow({
         <MiniPreview item={item} />
       </span>
       {status !== null && (
-        <span className="flex-none font-mono text-xs text-text-muted">{status}</span>
+        <span className="flex-none font-ui text-xs text-text-muted">{status}</span>
       )}
     </Button>
   )
