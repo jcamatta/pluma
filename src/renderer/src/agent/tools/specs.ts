@@ -119,14 +119,14 @@ const insertAtTool: Tool = {
   }
 }
 
-const insertAfterTool: Tool = {
-  name: 'insert_after',
+const insertTool: Tool = {
+  name: 'insert',
   description:
-    'Insert text (Markdown — may be multiple paragraphs, headings, or lists) immediately after the block that contains the exact anchor passage. The user reviews the insertion inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the anchor is absent and ambiguous when it occurs more than once — grow the anchor until it is unique.',
+    'Insert text (Markdown — may be multiple paragraphs, headings, or lists) before or after the block that contains the exact anchor passage. Use mode "before" to put it ahead of that block (e.g. at the start of a named paragraph) and "after" to follow it. The user reviews the insertion inline and accepts or rejects it; the change is not applied until accepted. Returns not_found when the anchor is absent and ambiguous when it occurs more than once — grow the anchor until it is unique.',
   parameters: {
     type: 'object',
     additionalProperties: false,
-    required: ['path', 'text', 'anchor'],
+    required: ['path', 'text', 'mode', 'anchor'],
     properties: {
       path: { type: 'string', description: filePathDescription },
       text: {
@@ -134,10 +134,16 @@ const insertAfterTool: Tool = {
         description:
           'The content to insert as Markdown. May be multiple paragraphs, headings, or lists.'
       },
+      mode: {
+        type: 'string',
+        enum: ['before', 'after'],
+        description:
+          "'before' places the new text ahead of the anchor's block; 'after' places it following the anchor's block."
+      },
       anchor: {
         type: 'string',
         description:
-          'The exact passage the new text goes after, copied verbatim. Must occur exactly once.'
+          'The exact passage the new text goes before or after, copied verbatim. Must occur exactly once.'
       }
     }
   }
@@ -150,7 +156,7 @@ const agentToolSpecs: readonly Tool[] = [
   createAnnotationTool,
   proposeEditTool,
   insertAtTool,
-  insertAfterTool
+  insertTool
 ]
 
 export {
@@ -160,6 +166,6 @@ export {
   createAnnotationTool,
   proposeEditTool,
   insertAtTool,
-  insertAfterTool,
+  insertTool,
   agentToolSpecs
 }

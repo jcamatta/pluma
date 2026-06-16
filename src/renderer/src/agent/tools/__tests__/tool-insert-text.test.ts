@@ -1,13 +1,13 @@
-// insert_at / insert_after: each stages a zero-width content proposal that, on accept, lands the
-// drafted markdown as real nodes. A start insert into an empty doc must yield exactly the drafted
-// paragraphs (no stray empty block); insert_after must place the new block after the anchor's block,
+// insert_at / insert: each stages a zero-width content proposal that, on accept, lands the drafted
+// markdown as real nodes. A start insert into an empty doc must yield exactly the drafted paragraphs
+// (no stray empty block); insert must place the new block before or after the anchor's block (per mode),
 // not split it. Absent / repeated anchors fail recoverably.
 
 import type { Editor } from '@tiptap/core'
 import { describe, expect, it } from 'vitest'
 import { acceptProposal, getProposals } from '../../../editor/extensions/proposals'
 import { withEditor } from '../../../editor/extensions/__tests__/editor-test-harness'
-import { insertAfter, insertAt } from '../tool-insert-text'
+import { insert, insertAt } from '../tool-insert-text'
 
 // Accept the proposal the handler created and return so callers can assert the resulting document.
 function acceptStaged(editor: Editor): void {
@@ -55,10 +55,10 @@ describe('insertAt end', () => {
   })
 })
 
-describe('insertAfter', () => {
+describe('insert after', () => {
   it('places the new block after the anchor block, not splitting it', () => {
     withEditor('alpha\n\nbeta', (editor) => {
-      const result = insertAfter(editor, { anchor: 'alpha', text: 'middle' })
+      const result = insert(editor, { mode: 'after', anchor: 'alpha', text: 'middle' })
       expect(result.ok).toBe(true)
 
       acceptStaged(editor)
@@ -71,14 +71,44 @@ describe('insertAfter', () => {
 
   it('fails not_found when the anchor is absent', () => {
     withEditor('alpha', (editor) => {
-      const result = insertAfter(editor, { anchor: 'missing', text: 'x' })
+      const result = insert(editor, { mode: 'after', anchor: 'missing', text: 'x' })
       expect(result).toEqual({ ok: false, error: 'not_found' })
     })
   })
 
   it('fails ambiguous when the anchor occurs more than once', () => {
     withEditor('the cat sat on the mat', (editor) => {
-      const result = insertAfter(editor, { anchor: 'the', text: 'x' })
+      const result = insert(editor, { mode: 'after', anchor: 'the', text: 'x' })
+      if (result.ok) return expect.fail('expected failure')
+      expect(result.error.startsWith('ambiguous\n')).toBe(true)
+    })
+  })
+})
+
+describe('insert before', () => {
+  it('places the new block before the anchor block, not splitting it', () => {
+    withEditor('alpha\n\nbeta', (editor) => {
+      const result = insert(editor, { mode: 'before', anchor: 'beta', text: 'middle' })
+      expect(result.ok).toBe(true)
+
+      acceptStaged(editor)
+      expect(editor.state.doc.childCount).toBe(3)
+      expect(editor.state.doc.child(0).textContent).toBe('alpha')
+      expect(editor.state.doc.child(1).textContent).toBe('middle')
+      expect(editor.state.doc.child(2).textContent).toBe('beta')
+    })
+  })
+
+  it('fails not_found when the anchor is absent', () => {
+    withEditor('alpha', (editor) => {
+      const result = insert(editor, { mode: 'before', anchor: 'missing', text: 'x' })
+      expect(result).toEqual({ ok: false, error: 'not_found' })
+    })
+  })
+
+  it('fails ambiguous when the anchor occurs more than once', () => {
+    withEditor('the cat sat on the mat', (editor) => {
+      const result = insert(editor, { mode: 'before', anchor: 'the', text: 'x' })
       if (result.ok) return expect.fail('expected failure')
       expect(result.error.startsWith('ambiguous\n')).toBe(true)
     })

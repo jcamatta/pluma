@@ -1,6 +1,6 @@
-// Handlers for `insert_at` and `insert_after`: stage a zero-width content insertion for the user to
-// accept or reject inline. Both parse the agent's markdown `text` to real nodes (so multi-paragraph /
-// structured content applies correctly on accept) and create a proposal whose span is a single point
+// Handlers for `insert_at` and `insert`: stage a zero-width content insertion for the user to accept or
+// reject inline. Both parse the agent's markdown `text` to real nodes (so multi-paragraph / structured
+// content applies correctly on accept) and create a proposal whose span is a single point
 // (`from === to`) — a pure insert that Step 1's accept path turns into real nodes.
 //
 // `insert_at` resolves the point from `position`: 'end' appends after the last block; 'start' prepends
@@ -9,9 +9,10 @@
 // block. There we replace that empty block's whole range instead, so the result is exactly the drafted
 // nodes.
 //
-// `insert_after` resolves the anchor to a span, then lifts to the END of the anchor's containing block
-// (`$pos.after($pos.depth)`) rather than the raw char position, so the new block lands after the block
-// instead of splitting it. A missing or repeated anchor (not_found / ambiguous) fails recoverably.
+// `insert` resolves the anchor to a span, then lifts to a BLOCK BOUNDARY of the anchor's containing
+// block rather than the raw char position, so the new block lands beside the block instead of splitting
+// it: mode 'after' uses the block's END (`$to.after($to.depth)`), mode 'before' its START
+// (`$from.before($from.depth)`). A missing or repeated anchor (not_found / ambiguous) fails recoverably.
 
 import type { Editor } from '@tiptap/core'
 import { createProposal } from '../../editor/extensions/proposals'
@@ -23,7 +24,8 @@ interface InsertAtArgs {
   readonly text: string
 }
 
-interface InsertAfterArgs {
+interface InsertArgs {
+  readonly mode: 'before' | 'after'
   readonly anchor: string
   readonly text: string
 }
@@ -77,13 +79,31 @@ function insertAt(editor: Editor, args: InsertAtArgs): AgentToolResult {
   return stageInsertion(editor, { point: insertAtPoint(editor, args.position), text: args.text })
 }
 
-function insertAfter(editor: Editor, args: InsertAfterArgs): AgentToolResult {
+interface AnchorBoundary {
+  readonly mode: 'before' | 'after'
+  readonly span: InsertPoint
+}
+
+// Lift the resolved anchor span to a block boundary so the new block lands beside the anchor's block
+// rather than splitting it: 'after' uses the block's end, 'before' its start.
+function anchorBoundary(editor: Editor, { mode, span }: AnchorBoundary): number {
+  if (mode === 'after') {
+    const $to = editor.state.doc.resolve(span.to)
+    return $to.after($to.depth)
+  }
+  const $from = editor.state.doc.resolve(span.from)
+  return $from.before($from.depth)
+}
+
+function insert(editor: Editor, args: InsertArgs): AgentToolResult {
   const resolved = resolveAnchor(editor, args.anchor)
   if (!resolved.ok) return { ok: false, error: resolved.error }
 
-  const $to = editor.state.doc.resolve(resolved.to)
-  const pos = $to.after($to.depth)
+  const pos = anchorBoundary(editor, {
+    mode: args.mode,
+    span: { from: resolved.from, to: resolved.to }
+  })
   return stageInsertion(editor, { point: { from: pos, to: pos }, text: args.text })
 }
 
-export { insertAt, insertAfter }
+export { insertAt, insert }

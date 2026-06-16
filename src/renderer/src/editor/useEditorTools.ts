@@ -7,15 +7,15 @@ import {
   createAnnotationTool,
   getContentTool,
   getCurrentSelectionTool,
-  insertAfterTool,
   insertAtTool,
+  insertTool,
   listOpenFilesTool,
   proposeEditTool
 } from '../agent/tools/specs'
 import { createAnnotationTool as runCreateAnnotation } from '../agent/tools/tool-create-annotation'
 import { getContent } from '../agent/tools/tool-get-content'
 import { getCurrentSelection } from '../agent/tools/tool-get-current-selection'
-import { insertAfter, insertAt } from '../agent/tools/tool-insert-text'
+import { insert, insertAt } from '../agent/tools/tool-insert-text'
 import { listOpenFiles } from '../agent/tools/tool-list-open-files'
 import { proposeEdit } from '../agent/tools/tool-propose-edit'
 import type { AnnotationSeverity } from './extensions/annotations'
@@ -34,7 +34,7 @@ interface EditorToolEntries {
   readonly annotation: ToolEntry
   readonly proposal: ToolEntry
   readonly insertAt: ToolEntry
-  readonly insertAfter: ToolEntry
+  readonly insert: ToolEntry
 }
 
 interface ActiveTarget {
@@ -125,9 +125,10 @@ function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotatio
   }
 }
 
-// The insert tools — add markdown at a fixed point (start/end) or after a named block. Split by tool
-// choice with every field required, so the model never depends on an optional field changing meaning.
-function insertEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'insertAt' | 'insertAfter'> {
+// The insert tools — add markdown at a fixed point (start/end) or before/after a named block. Split by
+// tool choice with every field required, so the model never depends on an optional field changing
+// meaning.
+function insertEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'insertAt' | 'insert'> {
   const atPath: AtPath = (path, run) => {
     const editor = deps.resolve(path)
     return editor ? run(editor) : noOpenEditor(path)
@@ -147,16 +148,17 @@ function insertEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'insertAt'
         )
       }
     },
-    insertAfter: {
-      spec: insertAfterTool,
+    insert: {
+      spec: insertTool,
       handler: (args) => {
         assertWire<{
           readonly path: string
           readonly text: string
+          readonly mode: 'before' | 'after'
           readonly anchor: string
-        }>(args, insertAfterTool.name)
+        }>(args, insertTool.name)
         return atPath(args.path, (live) =>
-          insertAfter(live, { anchor: args.anchor, text: args.text })
+          insert(live, { mode: args.mode, anchor: args.anchor, text: args.text })
         )
       }
     }
@@ -175,7 +177,7 @@ function useEditorTools(deps: EditorToolDeps): void {
   useFrontendTool(entries.annotation)
   useFrontendTool(entries.proposal)
   useFrontendTool(entries.insertAt)
-  useFrontendTool(entries.insertAfter)
+  useFrontendTool(entries.insert)
 }
 
 export { useEditorTools }

@@ -8,8 +8,8 @@ import {
   agentToolSpecs,
   getContentTool,
   getCurrentSelectionTool,
-  insertAfterTool,
   insertAtTool,
+  insertTool,
   listOpenFilesTool,
   proposeEditTool
 } from '../../agent/tools/specs'
@@ -150,14 +150,14 @@ describe('useEditorTools insert dispatch', () => {
     }
   })
 
-  it('dispatches insert_after against the live editor', async () => {
+  it('dispatches insert against the live editor', async () => {
     const editor = createTestEditor('hello world')
     try {
       const registry = renderRegistry(depsFor(editor))
 
       const inserted = await registry
-        .byName(insertAfterTool.name)
-        ?.handler({ path: PATH, text: 'more', anchor: 'world' })
+        .byName(insertTool.name)
+        ?.handler({ path: PATH, text: 'more', mode: 'after', anchor: 'world' })
 
       expect(inserted?.ok).toBe(true)
       expect(getProposals(editor)).toHaveLength(1)
