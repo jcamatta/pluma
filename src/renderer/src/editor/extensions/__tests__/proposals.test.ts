@@ -11,7 +11,8 @@ import {
   setActiveProposal
 } from '../proposals'
 import type { CreateProposalInput } from '../proposals'
-import { setSuggestionsVisible } from '../suggestions-ui'
+import { createAnnotation, setActiveAnnotation } from '../annotations'
+import { getActiveSuggestionId, setSuggestionsVisible } from '../suggestions-ui'
 import { withEditor } from './editor-test-harness'
 
 // Counts the proposal draft widgets the plugin currently renders into the editor DOM, which equals
@@ -194,6 +195,69 @@ describe('proposals extension render-all visibility', () => {
 
       setSuggestionsVisible({ editor, visible: true })
       expect(draftCount(editor)).toBe(2)
+    })
+  })
+})
+
+describe('proposals extension shared cross-type active id', () => {
+  it('delegates the active proposal id to the shared suggestions-ui state', () => {
+    withEditor('hello world', (editor) => {
+      const created = createProposal({
+        editor,
+        proposal: replacement(editor, { original: 'hello', markdown: 'hi' })
+      })
+      if (!created.ok) return
+
+      setActiveProposal({ editor, id: created.proposal.id })
+      expect(getActiveSuggestionId(editor)).toBe(created.proposal.id)
+      expect(getActiveProposalId(editor)).toBe(created.proposal.id)
+    })
+  })
+
+  it('returns null from getActiveProposalId when the shared id names an annotation', () => {
+    withEditor('hello world', (editor) => {
+      const created = createProposal({
+        editor,
+        proposal: replacement(editor, { original: 'hello', markdown: 'hi' })
+      })
+      if (!created.ok) return
+      const annotation = createAnnotation({
+        editor,
+        annotation: {
+          from: 7,
+          to: 12,
+          label: 'note',
+          description: 'note',
+          severity: 'warning',
+          quote: 'world'
+        }
+      })
+
+      setActiveProposal({ editor, id: created.proposal.id })
+      setActiveAnnotation({ editor, id: annotation.id })
+
+      // A single shared active id means activating the annotation deactivates the proposal.
+      expect(getActiveProposalId(editor)).toBeNull()
+    })
+  })
+
+  it('tags only the active proposal preview with the active class', () => {
+    withEditor('hello world', (editor) => {
+      createProposal({
+        editor,
+        proposal: replacement(editor, { original: 'hello', markdown: 'hi' })
+      })
+      const second = createProposal({
+        editor,
+        proposal: replacement(editor, { original: 'world', markdown: 'earth' })
+      })
+      if (!second.ok) return
+
+      setActiveProposal({ editor, id: second.proposal.id })
+
+      // Exactly one of the two previews carries the active marker; both still render.
+      expect(editor.view.dom.querySelectorAll('.proposal-draft.proposal-active')).toHaveLength(1)
+      expect(editor.view.dom.querySelectorAll('.proposal-draft')).toHaveLength(2)
     })
   })
 })

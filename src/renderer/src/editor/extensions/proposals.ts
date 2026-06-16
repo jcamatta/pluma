@@ -7,7 +7,11 @@ import { Extension, type Editor, type JSONContent } from '@tiptap/core'
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { DecorationSet } from '@tiptap/pm/view'
 import { proposalDecorations } from './proposal-decorations'
-import { readSuggestionsUiState } from './suggestions-ui'
+import {
+  getActiveSuggestionId,
+  readSuggestionsUiState,
+  setActiveSuggestion
+} from './suggestions-ui'
 
 type ProposalStatus = 'ready' | 'conflicted'
 
@@ -43,7 +47,6 @@ type SetActiveProposalInput = {
 
 type ProposalsState = {
   readonly proposals: readonly Proposal[]
-  readonly activeId: string | null
   readonly nextId: number
 }
 
@@ -51,11 +54,10 @@ type ProposalCommand =
   | { readonly type: 'add'; readonly proposal: Omit<Proposal, 'id' | 'status'> }
   | { readonly type: 'remove'; readonly id: string }
   | { readonly type: 'conflict'; readonly id: string }
-  | { readonly type: 'activate'; readonly id: string | null }
 
 const proposalsPluginKey = new PluginKey<ProposalsState>('proposals')
 
-const emptyState: ProposalsState = { proposals: [], activeId: null, nextId: 1 }
+const emptyState: ProposalsState = { proposals: [], nextId: 1 }
 
 function getState(editor: Editor): ProposalsState {
   return proposalsPluginKey.getState(editor.state) ?? emptyState
@@ -65,17 +67,18 @@ function getProposals(editor: Editor): readonly Proposal[] {
   return getState(editor).proposals
 }
 
+// The active suggestion id is shared across proposals and annotations (held in suggestions-ui), so a
+// proposal is "active" only when that single id names one of this editor's proposals; otherwise an
+// annotation (or nothing) is active and this reader yields null.
 function getActiveProposalId(editor: Editor): string | null {
-  return getState(editor).activeId
+  const activeId = getActiveSuggestionId(editor)
+  return activeId !== null && getProposals(editor).some((proposal) => proposal.id === activeId)
+    ? activeId
+    : null
 }
 
 function setActiveProposal({ editor, id }: SetActiveProposalInput): void {
-  editor.view.dispatch(
-    editor.state.tr.setMeta(proposalsPluginKey, {
-      id,
-      type: 'activate'
-    } satisfies ProposalCommand)
-  )
+  setActiveSuggestion({ editor, id })
 }
 
 function createProposal({ editor, proposal }: CreateProposalInput): CreateProposalResult {
@@ -161,7 +164,7 @@ function mapProposal(proposal: Proposal, transaction: Transaction): Proposal {
 function isProposalCommand(value: unknown): value is ProposalCommand {
   if (typeof value !== 'object' || value === null || !('type' in value)) return false
   const { type } = value
-  return type === 'add' || type === 'remove' || type === 'conflict' || type === 'activate'
+  return type === 'add' || type === 'remove' || type === 'conflict'
 }
 
 function readProposalCommand(transaction: Transaction): ProposalCommand | null {
@@ -181,10 +184,6 @@ function reduceProposal(state: ProposalsState, command: ProposalCommand): Propos
     }
   }
 
-  if (command.type === 'activate') {
-    return { ...state, activeId: command.id }
-  }
-
   if (command.type === 'conflict') {
     return {
       ...state,
@@ -196,8 +195,7 @@ function reduceProposal(state: ProposalsState, command: ProposalCommand): Propos
 
   return {
     ...state,
-    proposals: state.proposals.filter((proposal) => proposal.id !== command.id),
-    activeId: state.activeId === command.id ? null : state.activeId
+    proposals: state.proposals.filter((proposal) => proposal.id !== command.id)
   }
 }
 
@@ -205,11 +203,16 @@ function reduceProposal(state: ProposalsState, command: ProposalCommand): Propos
 // clears the set so the manuscript reads clean. Each proposal's own decorations (built by
 // proposal-decorations.ts) are flattened into one set.
 function visibleDecorations(editorState: EditorState): DecorationSet {
-  if (!readSuggestionsUiState(editorState).visible) return DecorationSet.empty
+  const ui = readSuggestionsUiState(editorState)
+  if (!ui.visible) return DecorationSet.empty
 
   const state = proposalsPluginKey.getState(editorState) ?? emptyState
   const decorations = state.proposals.flatMap((proposal) =>
-    proposalDecorations(proposal, editorState.schema)
+    proposalDecorations({
+      proposal,
+      schema: editorState.schema,
+      active: proposal.id === ui.activeId
+    })
   )
   return DecorationSet.create(editorState.doc, decorations)
 }
@@ -218,8 +221,10 @@ function visibleDecorations(editorState: EditorState): DecorationSet {
 // editor placeholder also renders, so they overlap. Marking the editor DOM lets the stylesheet hide
 // the placeholder while a proposal is active.
 function editorAttributes(editorState: EditorState): Record<string, string> {
+  const { activeId } = readSuggestionsUiState(editorState)
   const state = proposalsPluginKey.getState(editorState) ?? emptyState
-  return state.activeId ? { class: 'has-active-proposal' } : {}
+  const proposalActive = activeId !== null && state.proposals.some((p) => p.id === activeId)
+  return proposalActive ? { class: 'has-active-proposal' } : {}
 }
 
 const ProposalsExtension = Extension.create({

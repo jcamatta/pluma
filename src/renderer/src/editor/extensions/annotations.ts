@@ -6,7 +6,11 @@
 import { Extension, type Editor } from '@tiptap/core'
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
-import { readSuggestionsUiState } from './suggestions-ui'
+import {
+  getActiveSuggestionId,
+  readSuggestionsUiState,
+  setActiveSuggestion
+} from './suggestions-ui'
 
 const annotationSeverities = ['info', 'warning', 'error'] as const
 
@@ -33,6 +37,10 @@ const annotationSeverityClass: Record<AnnotationSeverity, string> = {
 
 const annotationReadClass = 'annotation-read'
 
+// Marks the single cross-type active annotation; the ring it styles is wired in a later step, this
+// step only emits the class.
+const annotationActiveClass = 'annotation-active'
+
 type CreateAnnotationInput = {
   readonly editor: Editor
   readonly annotation: Omit<Annotation, 'id' | 'status'>
@@ -55,7 +63,6 @@ type SetActiveAnnotationInput = {
 
 type AnnotationsState = {
   readonly annotations: readonly Annotation[]
-  readonly activeId: string | null
   readonly nextId: number
 }
 
@@ -64,17 +71,12 @@ type AddAnnotationCommand = {
   readonly annotation: Omit<Annotation, 'id' | 'status'>
 }
 type RemoveAnnotationCommand = { readonly type: 'remove'; readonly id: string }
-type ActivateAnnotationCommand = { readonly type: 'activate'; readonly id: string | null }
 type ReadAnnotationCommand = { readonly type: 'read'; readonly id: string }
-type AnnotationCommand =
-  | AddAnnotationCommand
-  | RemoveAnnotationCommand
-  | ActivateAnnotationCommand
-  | ReadAnnotationCommand
+type AnnotationCommand = AddAnnotationCommand | RemoveAnnotationCommand | ReadAnnotationCommand
 
 const annotationsPluginKey = new PluginKey<AnnotationsState>('annotations')
 
-const emptyState: AnnotationsState = { annotations: [], activeId: null, nextId: 1 }
+const emptyState: AnnotationsState = { annotations: [], nextId: 1 }
 
 function getState(editor: Editor): AnnotationsState {
   return annotationsPluginKey.getState(editor.state) ?? emptyState
@@ -84,17 +86,19 @@ function getAnnotations(editor: Editor): readonly Annotation[] {
   return getState(editor).annotations
 }
 
+// The active suggestion id is shared across proposals and annotations (held in suggestions-ui), so an
+// annotation is "active" only when that single id names one of this editor's annotations; otherwise a
+// proposal (or nothing) is active and this reader yields null.
 function getActiveAnnotationId(editor: Editor): string | null {
-  return getState(editor).activeId
+  const activeId = getActiveSuggestionId(editor)
+  return activeId !== null &&
+    getAnnotations(editor).some((annotation) => annotation.id === activeId)
+    ? activeId
+    : null
 }
 
 function setActiveAnnotation({ editor, id }: SetActiveAnnotationInput): void {
-  editor.view.dispatch(
-    editor.state.tr.setMeta(annotationsPluginKey, {
-      id,
-      type: 'activate'
-    } satisfies AnnotationCommand)
-  )
+  setActiveSuggestion({ editor, id })
 }
 
 function createAnnotation({ editor, annotation }: CreateAnnotationInput): Annotation {
@@ -140,7 +144,7 @@ function mapAnnotation(annotation: Annotation, transaction: Transaction): Annota
 function isAnnotationCommand(value: unknown): value is AnnotationCommand {
   if (typeof value !== 'object' || value === null || !('type' in value)) return false
   const { type } = value
-  return type === 'add' || type === 'remove' || type === 'activate' || type === 'read'
+  return type === 'add' || type === 'remove' || type === 'read'
 }
 
 function readAnnotationCommand(transaction: Transaction): AnnotationCommand | null {
@@ -160,10 +164,6 @@ function reduceAnnotation(state: AnnotationsState, command: AnnotationCommand): 
     }
   }
 
-  if (command.type === 'activate') {
-    return { ...state, activeId: command.id }
-  }
-
   if (command.type === 'read') {
     return {
       ...state,
@@ -175,25 +175,31 @@ function reduceAnnotation(state: AnnotationsState, command: AnnotationCommand): 
 
   return {
     ...state,
-    annotations: state.annotations.filter((annotation) => annotation.id !== command.id),
-    activeId: state.activeId === command.id ? null : state.activeId
+    annotations: state.annotations.filter((annotation) => annotation.id !== command.id)
   }
 }
 
-// One inline highlight per annotation across its range, carrying its severity class plus the read
-// recipe once it has been marked read.
-function annotationDecoration(annotation: Annotation): Decoration {
-  const severity = annotationSeverityClass[annotation.severity]
-  const className = annotation.status === 'read' ? `${severity} ${annotationReadClass}` : severity
-  return Decoration.inline(annotation.from, annotation.to, { class: className })
+// One inline highlight per annotation across its range, carrying its severity class, the read recipe
+// once it has been marked read, and the active marker when it is the cross-type active suggestion.
+function annotationDecoration(annotation: Annotation, active: boolean): Decoration {
+  const classes = [annotationSeverityClass[annotation.severity]]
+  if (annotation.status === 'read') classes.push(annotationReadClass)
+  if (active) classes.push(annotationActiveClass)
+  return Decoration.inline(annotation.from, annotation.to, { class: classes.join(' ') })
 }
 
 // When suggestions are visible, every annotation is highlighted at once; hiding them clears the set.
 function visibleDecorations(editorState: EditorState): DecorationSet {
-  if (!readSuggestionsUiState(editorState).visible) return DecorationSet.empty
+  const ui = readSuggestionsUiState(editorState)
+  if (!ui.visible) return DecorationSet.empty
 
   const state = annotationsPluginKey.getState(editorState) ?? emptyState
-  return DecorationSet.create(editorState.doc, state.annotations.map(annotationDecoration))
+  return DecorationSet.create(
+    editorState.doc,
+    state.annotations.map((annotation) =>
+      annotationDecoration(annotation, annotation.id === ui.activeId)
+    )
+  )
 }
 
 const AnnotationsExtension = Extension.create({
@@ -237,6 +243,7 @@ export {
   annotationSeverities,
   annotationSeverityClass,
   annotationReadClass,
+  annotationActiveClass,
   getAnnotations,
   getActiveAnnotationId,
   setActiveAnnotation,

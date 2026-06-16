@@ -1,13 +1,14 @@
 // Per-editor UI state for the inline suggestion surface, held in ProseMirror plugin state so the
-// decoration builders in proposals.ts / annotations.ts recompute when it changes. For now it owns a
-// single global `visible` flag (default on) toggled via setMeta; the cross-type active id arrives in
-// a later step.
+// decoration builders in proposals.ts / annotations.ts recompute when it changes. It owns a single
+// global `visible` flag (default on) and a single cross-type `activeId` (the one active suggestion
+// across both proposals and annotations), both toggled via setMeta.
 
 import { Extension, type Editor } from '@tiptap/core'
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state'
 
 type SuggestionsUiState = {
   readonly visible: boolean
+  readonly activeId: string | null
 }
 
 type SetSuggestionsVisibleInput = {
@@ -15,11 +16,18 @@ type SetSuggestionsVisibleInput = {
   readonly visible: boolean
 }
 
-type SuggestionsUiCommand = { readonly type: 'setVisible'; readonly visible: boolean }
+type SetActiveSuggestionInput = {
+  readonly editor: Editor
+  readonly id: string | null
+}
+
+type SuggestionsUiCommand =
+  | { readonly type: 'setVisible'; readonly visible: boolean }
+  | { readonly type: 'setActive'; readonly id: string | null }
 
 const suggestionsUiPluginKey = new PluginKey<SuggestionsUiState>('suggestions-ui')
 
-const initialState: SuggestionsUiState = { visible: true }
+const initialState: SuggestionsUiState = { visible: true, activeId: null }
 
 function readSuggestionsUiState(editorState: EditorState): SuggestionsUiState {
   return suggestionsUiPluginKey.getState(editorState) ?? initialState
@@ -27,6 +35,10 @@ function readSuggestionsUiState(editorState: EditorState): SuggestionsUiState {
 
 function getSuggestionsVisible(editor: Editor): boolean {
   return readSuggestionsUiState(editor.state).visible
+}
+
+function getActiveSuggestionId(editor: Editor): string | null {
+  return readSuggestionsUiState(editor.state).activeId
 }
 
 function setSuggestionsVisible({ editor, visible }: SetSuggestionsVisibleInput): void {
@@ -38,15 +50,27 @@ function setSuggestionsVisible({ editor, visible }: SetSuggestionsVisibleInput):
   )
 }
 
-function isSuggestionsUiCommand(value: unknown): value is SuggestionsUiCommand {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'type' in value &&
-    value.type === 'setVisible' &&
-    'visible' in value &&
-    typeof value.visible === 'boolean'
+function setActiveSuggestion({ editor, id }: SetActiveSuggestionInput): void {
+  editor.view.dispatch(
+    editor.state.tr.setMeta(suggestionsUiPluginKey, {
+      type: 'setActive',
+      id
+    } satisfies SuggestionsUiCommand)
   )
+}
+
+function isSetVisibleCommand(value: object): value is { type: 'setVisible'; visible: boolean } {
+  return 'visible' in value && typeof value.visible === 'boolean'
+}
+
+function isSetActiveCommand(value: object): value is { type: 'setActive'; id: string | null } {
+  return 'id' in value && (typeof value.id === 'string' || value.id === null)
+}
+
+function isSuggestionsUiCommand(value: unknown): value is SuggestionsUiCommand {
+  if (typeof value !== 'object' || value === null || !('type' in value)) return false
+  if (value.type === 'setVisible') return isSetVisibleCommand(value)
+  return value.type === 'setActive' && isSetActiveCommand(value)
 }
 
 function readSuggestionsUiCommand(transaction: Transaction): SuggestionsUiCommand | null {
@@ -58,7 +82,9 @@ function reduceSuggestionsUi(
   state: SuggestionsUiState,
   command: SuggestionsUiCommand
 ): SuggestionsUiState {
-  return { ...state, visible: command.visible }
+  return command.type === 'setVisible'
+    ? { ...state, visible: command.visible }
+    : { ...state, activeId: command.id }
 }
 
 const SuggestionsUiExtension = Extension.create({
@@ -89,6 +115,8 @@ export {
   suggestionsUiPluginKey,
   readSuggestionsUiState,
   getSuggestionsVisible,
-  setSuggestionsVisible
+  getActiveSuggestionId,
+  setSuggestionsVisible,
+  setActiveSuggestion
 }
-export type { SuggestionsUiState, SetSuggestionsVisibleInput }
+export type { SuggestionsUiState, SetSuggestionsVisibleInput, SetActiveSuggestionInput }

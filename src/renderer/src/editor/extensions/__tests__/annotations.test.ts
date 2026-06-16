@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Editor } from '@tiptap/core'
 import {
+  annotationActiveClass,
   annotationReadClass,
   createAnnotation,
   delAnnotation,
@@ -11,7 +12,8 @@ import {
   markAnnotationRead,
   setActiveAnnotation
 } from '../annotations'
-import { setSuggestionsVisible } from '../suggestions-ui'
+import { setActiveProposal } from '../proposals'
+import { getActiveSuggestionId, setSuggestionsVisible } from '../suggestions-ui'
 import { withEditor } from './editor-test-harness'
 
 function annotate(
@@ -104,6 +106,42 @@ describe('annotations extension', () => {
       delAnnotation({ editor, id: first.id })
 
       expect(getActiveAnnotationId(editor)).toBe(second.id)
+    })
+  })
+})
+
+describe('annotations extension shared cross-type active id', () => {
+  it('delegates the active annotation id to the shared suggestions-ui state', () => {
+    withEditor('hello world', (editor) => {
+      const annotation = annotate(editor, { label: 'one' })
+
+      setActiveAnnotation({ editor, id: annotation.id })
+      expect(getActiveSuggestionId(editor)).toBe(annotation.id)
+      expect(getActiveAnnotationId(editor)).toBe(annotation.id)
+    })
+  })
+
+  it('returns null from getActiveAnnotationId when the shared id names a proposal', () => {
+    withEditor('hello world', (editor) => {
+      const annotation = annotate(editor, { label: 'one' })
+
+      setActiveAnnotation({ editor, id: annotation.id })
+      // Activating a proposal (an id this editor's annotations do not own) deactivates the annotation.
+      setActiveProposal({ editor, id: 'p_1' })
+
+      expect(getActiveAnnotationId(editor)).toBeNull()
+    })
+  })
+
+  it('tags only the active annotation highlight with the active class', () => {
+    withEditor('hello world', (editor) => {
+      const first = annotate(editor, { label: 'one', from: 1, to: 3 })
+      annotate(editor, { label: 'two', from: 7, to: 12 })
+
+      setActiveAnnotation({ editor, id: first.id })
+
+      expect(editor.view.dom.querySelectorAll(`.${annotationActiveClass}`)).toHaveLength(1)
+      expect(highlightCount(editor)).toBe(2)
     })
   })
 })

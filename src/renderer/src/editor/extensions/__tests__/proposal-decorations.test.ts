@@ -41,13 +41,34 @@ function isRemovedSpan(decoration: Decoration): boolean {
   return !isWidget(decoration)
 }
 
+function inactiveDecorations(editor: Editor, proposal: Proposal): Decoration[] {
+  return proposalDecorations({ proposal, schema: editor.state.schema, active: false })
+}
+
+// Creates a heading insert at the document end (without activating it) and returns its id. Both
+// active-marker tests need the same draft, so the shared setup lives here.
+function createDraftId(editor: Editor): string | null {
+  const at = editor.state.doc.content.size
+  const created = createProposal({
+    editor,
+    proposal: {
+      from: at,
+      to: at,
+      originalText: '',
+      replacementText: '# Heading\n\nBody',
+      content: parse(editor, '# Heading\n\nBody')
+    }
+  })
+  return created.ok ? created.proposal.id : null
+}
+
 describe('proposalDecorations', () => {
   it('yields only a green widget for a pure insert', () => {
     withEditor('hello world', (editor) => {
       const at = editor.state.doc.content.size
       const proposal = readyProposal(editor, { from: at, to: at })
 
-      const decorations = proposalDecorations(proposal, editor.state.schema)
+      const decorations = inactiveDecorations(editor, proposal)
 
       expect(decorations).toHaveLength(1)
       expect(isWidget(decorations[0])).toBe(true)
@@ -59,7 +80,7 @@ describe('proposalDecorations', () => {
       const from = editor.state.doc.textContent.indexOf('hello') + 1
       const proposal = readyProposal(editor, { from, to: from + 'hello'.length })
 
-      const decorations = proposalDecorations(proposal, editor.state.schema)
+      const decorations = inactiveDecorations(editor, proposal)
 
       expect(decorations).toHaveLength(2)
       expect(decorations.filter(isWidget)).toHaveLength(1)
@@ -77,30 +98,34 @@ describe('proposalDecorations', () => {
         status: 'conflicted'
       }
 
-      const decorations = proposalDecorations(proposal, editor.state.schema)
+      const decorations = inactiveDecorations(editor, proposal)
 
       expect(decorations).toHaveLength(1)
       expect(isWidget(decorations[0])).toBe(false)
     })
   })
 
+  it('tags the active proposal preview with the active marker class through the plugin', () => {
+    withEditor('hello world', (editor) => {
+      const id = createDraftId(editor)
+      if (id === null) return expect.fail('proposal not created')
+
+      expect(editor.view.dom.querySelector('.proposal-active')).toBeNull()
+
+      setActiveProposal({ editor, id })
+      expect(editor.view.dom.querySelector('.proposal-draft.proposal-active')).not.toBeNull()
+
+      setActiveProposal({ editor, id: null })
+      expect(editor.view.dom.querySelector('.proposal-active')).toBeNull()
+    })
+  })
+
   it('renders the active proposal content as formatted DOM, reused across transactions', () => {
     withEditor('hello world', (editor) => {
-      const at = editor.state.doc.content.size
-      const created = createProposal({
-        editor,
-        proposal: {
-          from: at,
-          to: at,
-          originalText: '',
-          replacementText: '# Heading\n\nBody',
-          content: parse(editor, '# Heading\n\nBody')
-        }
-      })
-      expect(created.ok).toBe(true)
-      if (!created.ok) return
+      const id = createDraftId(editor)
+      if (id === null) return expect.fail('proposal not created')
 
-      setActiveProposal({ editor, id: created.proposal.id })
+      setActiveProposal({ editor, id })
       const first = editor.view.dom.querySelector('.proposal-draft')
       expect(first?.querySelector('h1')).not.toBeNull()
 
