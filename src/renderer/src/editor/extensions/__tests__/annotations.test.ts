@@ -7,6 +7,7 @@ import {
   delAnnotation,
   getActiveAnnotationId,
   getAnnotations,
+  markAnnotationRead,
   setActiveAnnotation
 } from '../annotations'
 import { withEditor } from './editor-test-harness'
@@ -18,6 +19,10 @@ function annotate(editor: Editor, label: string): ReturnType<typeof createAnnota
   })
 }
 
+function statusOf(editor: Editor, id: string): string | undefined {
+  return getAnnotations(editor).find((annotation) => annotation.id === id)?.status
+}
+
 describe('annotations extension', () => {
   it('mints sequential ids and stores annotations', () => {
     withEditor('hello world', (editor) => {
@@ -27,6 +32,25 @@ describe('annotations extension', () => {
       expect(first.id).toBe('a_1')
       expect(second.id).toBe('a_2')
       expect(getAnnotations(editor)).toHaveLength(2)
+    })
+  })
+
+  it('mints new annotations as pending', () => {
+    withEditor('hello world', (editor) => {
+      const annotation = annotate(editor, 'one')
+      expect(statusOf(editor, annotation.id)).toBe('pending')
+    })
+  })
+
+  it('marks one annotation read and leaves others untouched', () => {
+    withEditor('hello world', (editor) => {
+      const first = annotate(editor, 'one')
+      const second = annotate(editor, 'two')
+
+      markAnnotationRead({ editor, id: first.id })
+
+      expect(statusOf(editor, first.id)).toBe('read')
+      expect(statusOf(editor, second.id)).toBe('pending')
     })
   })
 

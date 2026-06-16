@@ -12,6 +12,8 @@ const annotationSeverities = ['info', 'warning', 'error'] as const
 
 type AnnotationSeverity = (typeof annotationSeverities)[number]
 
+type AnnotationStatus = 'pending' | 'read'
+
 type Annotation = {
   readonly id: string
   readonly from: number
@@ -20,6 +22,7 @@ type Annotation = {
   readonly description: string
   readonly severity: AnnotationSeverity
   readonly quote: string
+  readonly status: AnnotationStatus
 }
 
 const annotationSeverityClass: Record<AnnotationSeverity, string> = {
@@ -28,12 +31,19 @@ const annotationSeverityClass: Record<AnnotationSeverity, string> = {
   error: 'annotation-error'
 }
 
+const annotationReadClass = 'annotation-read'
+
 type CreateAnnotationInput = {
   readonly editor: Editor
-  readonly annotation: Omit<Annotation, 'id'>
+  readonly annotation: Omit<Annotation, 'id' | 'status'>
 }
 
 type DelAnnotationInput = {
+  readonly editor: Editor
+  readonly id: string
+}
+
+type MarkAnnotationReadInput = {
   readonly editor: Editor
   readonly id: string
 }
@@ -49,10 +59,18 @@ type AnnotationsState = {
   readonly nextId: number
 }
 
-type AddAnnotationCommand = { readonly type: 'add'; readonly annotation: Omit<Annotation, 'id'> }
+type AddAnnotationCommand = {
+  readonly type: 'add'
+  readonly annotation: Omit<Annotation, 'id' | 'status'>
+}
 type RemoveAnnotationCommand = { readonly type: 'remove'; readonly id: string }
 type ActivateAnnotationCommand = { readonly type: 'activate'; readonly id: string | null }
-type AnnotationCommand = AddAnnotationCommand | RemoveAnnotationCommand | ActivateAnnotationCommand
+type ReadAnnotationCommand = { readonly type: 'read'; readonly id: string }
+type AnnotationCommand =
+  | AddAnnotationCommand
+  | RemoveAnnotationCommand
+  | ActivateAnnotationCommand
+  | ReadAnnotationCommand
 
 const annotationsPluginKey = new PluginKey<AnnotationsState>('annotations')
 
@@ -102,6 +120,15 @@ function delAnnotation({ editor, id }: DelAnnotationInput): void {
   )
 }
 
+function markAnnotationRead({ editor, id }: MarkAnnotationReadInput): void {
+  editor.view.dispatch(
+    editor.state.tr.setMeta(annotationsPluginKey, {
+      id,
+      type: 'read'
+    } satisfies AnnotationCommand)
+  )
+}
+
 function mapAnnotation(annotation: Annotation, transaction: Transaction): Annotation {
   return {
     ...annotation,
@@ -113,7 +140,7 @@ function mapAnnotation(annotation: Annotation, transaction: Transaction): Annota
 function isAnnotationCommand(value: unknown): value is AnnotationCommand {
   if (typeof value !== 'object' || value === null || !('type' in value)) return false
   const { type } = value
-  return type === 'add' || type === 'remove' || type === 'activate'
+  return type === 'add' || type === 'remove' || type === 'activate' || type === 'read'
 }
 
 function readAnnotationCommand(transaction: Transaction): AnnotationCommand | null {
@@ -126,12 +153,24 @@ function reduceAnnotation(state: AnnotationsState, command: AnnotationCommand): 
     return {
       ...state,
       nextId: state.nextId + 1,
-      annotations: [...state.annotations, { ...command.annotation, id: `a_${state.nextId}` }]
+      annotations: [
+        ...state.annotations,
+        { ...command.annotation, id: `a_${state.nextId}`, status: 'pending' }
+      ]
     }
   }
 
   if (command.type === 'activate') {
     return { ...state, activeId: command.id }
+  }
+
+  if (command.type === 'read') {
+    return {
+      ...state,
+      annotations: state.annotations.map((annotation) =>
+        annotation.id === command.id ? { ...annotation, status: 'read' } : annotation
+      )
+    }
   }
 
   return {
@@ -195,16 +234,20 @@ export {
   annotationsPluginKey,
   annotationSeverities,
   annotationSeverityClass,
+  annotationReadClass,
   getAnnotations,
   getActiveAnnotationId,
   setActiveAnnotation,
   createAnnotation,
-  delAnnotation
+  delAnnotation,
+  markAnnotationRead
 }
 export type {
   AnnotationSeverity,
+  AnnotationStatus,
   Annotation,
   CreateAnnotationInput,
   DelAnnotationInput,
+  MarkAnnotationReadInput,
   SetActiveAnnotationInput
 }
