@@ -71,8 +71,6 @@
     "heading": "Abre una carpeta.\nEmpieza a escribir.",
     "description": "Apunta Pluma a cualquier carpeta y se convertirá en tu espacio de trabajo: sus archivos aparecen en el explorador de la izquierda, listos para abrir y editar.",
     "openFolder": "Abrir carpeta…",
-    "previewBadge": "Un vistazo a tu espacio de trabajo",
-    "previewHeading": "La página en blanco\nte espera.",
     "preview": "Vista previa del espacio de trabajo de Pluma"
   },
   "settings": {
