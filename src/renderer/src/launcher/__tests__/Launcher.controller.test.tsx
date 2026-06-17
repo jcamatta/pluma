@@ -1,30 +1,32 @@
-// Controller test for the launcher: wires the real useFolderPick hook over a faked window.api and
-// asserts that clicking Open Folder triggers folder:pick and reports the chosen path up via onPicked. A
+// Controller test for the launcher: wires the real useFolderPick hook over a fake picker port and
+// asserts that clicking Open Folder picks a folder and reports the chosen path up via onPicked. A
 // cancelled/failed pick leaves onPicked uncalled.
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
-import { FOLDER_PICK_CHANNEL } from '../../../../shared/ipc/ipc-contract/folder'
 import { i18n } from '../../i18n'
 import { LauncherController } from '../Launcher.controller'
-import { installFakeWindowApi } from '../../explorer/__tests__/fake-window-api'
+import { RepositoriesContext } from '../../explorer/RepositoriesContext'
+import { createFakeFolderRepository } from '../../explorer/__tests__/fake-folder-repository'
+import type { FakeRepository } from '../../explorer/__tests__/fake-folder-repository'
 
-afterEach(() => vi.unstubAllGlobals())
-
-const renderController = (onPicked: (path: string) => void): void => {
+const renderController = (repo: FakeRepository, onPicked: (path: string) => void): void => {
   render(
     <I18nextProvider i18n={i18n}>
-      <LauncherController onPicked={onPicked} />
+      <RepositoriesContext.Provider value={repo}>
+        <LauncherController onPicked={onPicked} />
+      </RepositoriesContext.Provider>
     </I18nextProvider>
   )
 }
 
 describe('Launcher controller', () => {
   it('reports the picked folder up on a successful pick', async () => {
-    installFakeWindowApi({ [FOLDER_PICK_CHANNEL]: () => ({ ok: true, value: '/workspace' }) })
+    const repo = createFakeFolderRepository({})
+    vi.spyOn(repo.picker, 'pick').mockResolvedValue({ ok: true, value: '/workspace' })
     const onPicked = vi.fn()
-    renderController(onPicked)
+    renderController(repo, onPicked)
 
     fireEvent.click(screen.getByText('Open Folder…'))
 
@@ -32,17 +34,14 @@ describe('Launcher controller', () => {
   })
 
   it('does not report when the pick is cancelled', async () => {
-    const api = installFakeWindowApi({
-      [FOLDER_PICK_CHANNEL]: () => ({ ok: false, error: { _tag: 'FolderSelectionCancelled' } })
-    })
+    const repo = createFakeFolderRepository({})
+    const pick = vi.spyOn(repo.picker, 'pick')
     const onPicked = vi.fn()
-    renderController(onPicked)
+    renderController(repo, onPicked)
 
     fireEvent.click(screen.getByText('Open Folder…'))
 
-    await waitFor(() =>
-      expect(api.calls()).toContainEqual({ channel: FOLDER_PICK_CHANNEL, input: undefined })
-    )
+    await waitFor(() => expect(pick).toHaveBeenCalled())
     expect(onPicked).not.toHaveBeenCalled()
   })
 })

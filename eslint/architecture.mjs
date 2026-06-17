@@ -153,6 +153,29 @@ export const views = {
   }
 }
 
+// Hooks and plain modules (.ts) must reach IPC through a port, not the window.api bridge — the same
+// boundary the .tsx rule below enforces for components, which it could not see because it only matches
+// .tsx. Only the renderer adapters own window.api; a hook gets its data from a port via useRepos (see
+// folder-repository.ipc / RepositoriesContext). The selector bans a *call* on window.api
+// (`window.api.invoke(...)`), which is the leak, while leaving the injected-seam default a hook may
+// declare (`api: WindowApi = window.api`) — already swappable and faked in tests — untouched.
+export const noDirectIpcInModules = {
+  files: ['src/renderer/**/*.ts'],
+  ignores: ['src/renderer/**/adapters/**', 'src/renderer/**/__tests__/**', 'src/renderer/**/*.test.ts'],
+  rules: {
+    'no-restricted-syntax': [
+      'error',
+      ...baseRestrictedSyntax,
+      {
+        selector:
+          "CallExpression[callee.object.object.name='window'][callee.object.property.name='api']",
+        message:
+          'Only renderer adapters may call window.api. A hook gets its data from a port (see useRepos / RepositoriesContext); declare the port and route the call through the adapter.'
+      }
+    ]
+  }
+}
+
 // Plain/visual components and views never reach IPC directly. Only controllers (via hooks) and the
 // renderer adapters may use window.api. This block bans window.api in renderer components that are
 // neither controllers nor adapters.
