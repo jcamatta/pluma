@@ -40,10 +40,8 @@ function AnnotationCard({
       onClick={onClick}
       className={cn(
         annotationSeverityClass[artifact.severity],
-        'cursor-pointer rounded-xl border bg-surface-1 p-3 transition-colors',
-        active
-          ? 'border-action-primary ring-2 ring-action-primary/50'
-          : 'border-(--line) hover:bg-(--hover)'
+        'rounded-xl border bg-surface-2 p-3 transition-colors',
+        active ? 'border-action-primary ring-2 ring-action-primary/50' : 'border-(--line)'
       )}
     >
       <div className="mb-2 flex items-center gap-2">
