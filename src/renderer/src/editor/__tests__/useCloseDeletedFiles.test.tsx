@@ -14,6 +14,7 @@ describe('useCloseDeletedFiles', () => {
     const nav: OpenFilesNav = {
       activePath: '/a.md',
       open: () => undefined,
+      openInBackground: () => undefined,
       close: (path) => closed.push(path)
     }
     function wrapper({ children }: { readonly children: ReactNode }): React.JSX.Element {
@@ -36,6 +37,7 @@ describe('useCloseDeletedFiles', () => {
     const nav: OpenFilesNav = {
       activePath: '/a.md',
       open: () => undefined,
+      openInBackground: () => undefined,
       close: (path) => closed.push(path)
     }
     function wrapper({ children }: { readonly children: ReactNode }): React.JSX.Element {
@@ -59,6 +61,7 @@ describe('useCloseDeletedFiles', () => {
     const nav: OpenFilesNav = {
       activePath: '/a.md',
       open: () => undefined,
+      openInBackground: () => undefined,
       close: (path) => closed.push(path)
     }
     function wrapper({ children }: { readonly children: ReactNode }): React.JSX.Element {

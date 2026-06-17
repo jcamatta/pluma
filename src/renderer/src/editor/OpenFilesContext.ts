@@ -10,6 +10,8 @@ import { invariant } from '../../../shared/invariant'
 interface OpenFilesNav {
   readonly activePath: string | null
   readonly open: (path: string) => void
+  // Opens a tab without making it active, so the user's current editor keeps focus.
+  readonly openInBackground: (path: string) => void
   readonly close: (path: string) => void
 }
 

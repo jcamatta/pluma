@@ -19,7 +19,12 @@ function Providers({
   return (
     <ReposHarness repos={repos}>
       <OpenFilesContext.Provider
-        value={{ activePath: null, open: (path) => opened.push(path), close: () => undefined }}
+        value={{
+          activePath: null,
+          open: (path) => opened.push(path),
+          openInBackground: () => undefined,
+          close: () => undefined
+        }}
       >
         {children}
       </OpenFilesContext.Provider>

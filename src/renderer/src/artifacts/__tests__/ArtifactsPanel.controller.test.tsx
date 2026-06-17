@@ -56,6 +56,7 @@ function Shell({
         onOpen?.(path)
         setActivePath(path)
       },
+      openInBackground: (): void => undefined,
       close: (): void => undefined
     }),
     [activePath, onOpen]

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { noOpenFiles, openFile, closeFile } from '../open-files-logic'
+import { noOpenFiles, openFile, openFileInBackground, closeFile } from '../open-files-logic'
 
 describe('open-files logic', () => {
   it('opens a file: adds it and makes it active', () => {
@@ -14,6 +14,23 @@ describe('open-files logic', () => {
   it('reopening an already-open file does not duplicate it, only reactivates', () => {
     const opened = openFile(openFile(openFile(noOpenFiles, '/a.md'), '/b.md'), '/a.md')
     expect(opened).toEqual({ paths: ['/a.md', '/b.md'], active: '/a.md' })
+  })
+
+  it('opens a file in the background: adds it without changing the active file', () => {
+    const opened = openFile(noOpenFiles, '/a.md')
+    expect(openFileInBackground(opened, '/b.md')).toEqual({
+      paths: ['/a.md', '/b.md'],
+      active: '/a.md'
+    })
+  })
+
+  it('opening an already-open file in the background returns the identical reference', () => {
+    const opened = openFile(openFile(noOpenFiles, '/a.md'), '/b.md')
+    expect(openFileInBackground(opened, '/a.md')).toBe(opened)
+  })
+
+  it('opening the first file in the background adds it but leaves no active file', () => {
+    expect(openFileInBackground(noOpenFiles, '/a.md')).toEqual({ paths: ['/a.md'], active: null })
   })
 
   it('closing the only open file empties the set and clears the active file', () => {
