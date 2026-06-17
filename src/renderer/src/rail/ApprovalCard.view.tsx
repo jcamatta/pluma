@@ -85,7 +85,7 @@ function ApprovalCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className="rounded-xl border border-(--line) bg-surface-1 p-3"
+      className="rounded-xl border border-(--line) bg-surface-2 p-3"
     >
       <div className="mb-2 flex items-center gap-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-action-primary">
