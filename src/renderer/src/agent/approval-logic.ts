@@ -3,6 +3,12 @@
 // a mismatch yields null paths rather than throwing — the card then falls back to a generic label keyed
 // off the raw tool name. The action-label key is chosen here too so the card stays a pure renderer.
 
+import {
+  CREATE_FILE_TOOL,
+  RENAME_FILE_TOOL,
+  DELETE_FILE_TOOL
+} from '../../../shared/agent/gated-tools'
+
 interface CreatePaths {
   readonly kind: 'create'
   readonly path: string
@@ -35,17 +41,17 @@ function hasStringProp<K extends string>(value: unknown, key: K): value is Recor
 }
 
 function describeApproval(toolName: string, args: unknown): ApprovalPaths {
-  if (toolName === 'create_file' && hasStringProp(args, 'path')) {
+  if (toolName === CREATE_FILE_TOOL && hasStringProp(args, 'path')) {
     return { kind: 'create', path: args.path }
   }
   if (
-    toolName === 'rename_file' &&
+    toolName === RENAME_FILE_TOOL &&
     hasStringProp(args, 'oldPath') &&
     hasStringProp(args, 'newPath')
   ) {
     return { kind: 'rename', oldPath: args.oldPath, newPath: args.newPath }
   }
-  if (toolName === 'delete_file' && hasStringProp(args, 'path')) {
+  if (toolName === DELETE_FILE_TOOL && hasStringProp(args, 'path')) {
     return { kind: 'delete', path: args.path }
   }
   return { kind: 'unknown' }
