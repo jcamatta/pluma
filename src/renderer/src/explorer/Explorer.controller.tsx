@@ -2,6 +2,7 @@
 // folder/file IPC operations, and this controller resolves the i18n labels and renders the pure
 // ExplorerView. File selection is lifted to the shell via props so the editor can read it.
 
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ExplorerView } from './Explorer.view'
 import { useExplorerTree } from './useExplorerTree'
@@ -13,7 +14,7 @@ type ExplorerControllerProps = {
   readonly onClose: () => void
 }
 
-export function ExplorerController({
+const ExplorerController = memo(function ExplorerController({
   root,
   selected,
   onSelect,
@@ -67,4 +68,6 @@ export function ExplorerController({
       onCancelRename={cancelRename}
     />
   )
-}
+})
+
+export { ExplorerController }
