@@ -62,7 +62,7 @@ interface ThreadsPanelViewProps {
 function rowSurface(editing: boolean, active: boolean): string {
   if (editing) return 'border-transparent'
   if (active) return 'border-action-primary bg-surface-2 text-text-primary'
-  return 'cursor-pointer border-transparent text-text-secondary hover:bg-(--hover)'
+  return 'border-transparent text-text-secondary hover:bg-(--hover)'
 }
 
 function ThreadRowView({

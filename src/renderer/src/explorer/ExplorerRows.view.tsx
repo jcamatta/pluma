@@ -113,7 +113,7 @@ function FolderRow({
         data-testid={`folder-row:${node.path}`}
         onClick={renaming ? undefined : () => ctx.onToggle(node.path)}
         style={{ paddingLeft: 11 + depth * 15 }}
-        className="mb-px flex w-full cursor-pointer items-center gap-2 rounded-xl py-2 pr-2 text-text-secondary transition-colors hover:bg-(--hover)"
+        className="mb-px flex w-full items-center gap-2 rounded-xl py-2 pr-2 text-text-secondary transition-colors hover:bg-(--hover)"
       >
         <span
           className="flex flex-none text-text-muted transition-transform"
@@ -206,7 +206,7 @@ function FileRow({
       data-testid={`file-row:${node.path}`}
       onClick={renaming ? undefined : () => ctx.onSelect(node.path)}
       style={{ paddingLeft: 11 + depth * 15 }}
-      className={`mb-px flex w-full cursor-pointer items-center gap-2 rounded-xl border py-2 pr-2 transition-colors ${
+      className={`mb-px flex w-full items-center gap-2 rounded-xl border py-2 pr-2 transition-colors ${
         selected
           ? 'border-action-primary bg-[color-mix(in_srgb,var(--color-action-primary)_10%,transparent)] text-text-primary shadow-[0_0_0_2px_color-mix(in_srgb,var(--color-action-primary)_18%,transparent)]'
           : 'border-transparent text-text-secondary hover:bg-(--hover)'
