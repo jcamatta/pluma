@@ -12,6 +12,7 @@ import {
   architecture,
   rendererNoMainImports,
   domainNoSharedImports,
+  rendererNoDomTreeReaching,
   views,
   noDirectIpcInComponents
 } from './eslint/architecture.mjs'
@@ -34,6 +35,7 @@ export default defineConfig(
   architecture,
   rendererNoMainImports,
   domainNoSharedImports,
+  rendererNoDomTreeReaching,
   limits,
   comments,
   effect,

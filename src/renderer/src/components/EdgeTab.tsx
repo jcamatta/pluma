@@ -23,7 +23,7 @@ export function EdgeTab({ side, label, icon, onOpen, count = 0 }: EdgeTabProps):
       onClick={onOpen}
       aria-label={label}
       className={cn(
-        'absolute top-1/2 z-30 flex -translate-y-1/2 cursor-pointer flex-col items-center gap-2 border border-(--line) bg-surface-3 px-2 py-3 text-text-secondary transition-colors hover:text-text-primary',
+        'absolute top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 border border-(--line) bg-surface-3 px-2 py-3 text-text-secondary transition-colors hover:text-text-primary',
         left ? 'left-0 rounded-r-xl border-l-0' : 'right-0 rounded-l-xl border-r-0'
       )}
       render={

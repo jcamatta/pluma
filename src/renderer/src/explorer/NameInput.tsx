@@ -47,6 +47,7 @@ export function NameInput({
     <Input
       ref={ref}
       value={value}
+      data-name-input
       data-type={type}
       onChange={(e) => setValue(e.target.value)}
       onKeyDown={(e) => {

@@ -45,7 +45,7 @@ export function RailComposer({
 
   return (
     <div className="flex-none border-t border-(--line) px-4 pb-4 pt-3">
-      <div className="overflow-hidden rounded-2xl border border-(--line2) bg-surface-1">
+      <div className="overflow-hidden rounded-2xl border border-(--line2) bg-surface-2">
         <ComposerField
           placeholder={placeholder}
           value={value}

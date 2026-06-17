@@ -31,8 +31,8 @@ import type { Artifact } from './artifact'
 // viewport that ProseMirror's own scrollIntoView does not reach, so scroll the resolved DOM element
 // natively — it walks every scrollable ancestor and centers the range.
 function reveal(editor: Editor, from: number): void {
-  const { node } = editor.view.domAtPos(from)
-  scrollTargetOf(node)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  const { node, offset } = editor.view.domAtPos(from)
+  scrollTargetOf(node, offset)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 
 // Make exactly one artifact active in its own editor across both kinds: clear the other kind, then toggle

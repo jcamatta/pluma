@@ -4,8 +4,9 @@
 // ScrollArea takes over and the wheel scrolls the overflow. (CSS field-sizing grows the textarea but
 // leaves the ScrollArea unaware of the overflow, so the wheel can't scroll — hence the JS height.)
 
-import { useLayoutEffect, useRef, type KeyboardEvent } from 'react'
+import { useContext, useLayoutEffect, useRef, type KeyboardEvent } from 'react'
 import { Scrollable } from '../components/Scrollable'
+import { ComposerFocusContext } from './ComposerFocusContext'
 
 interface ComposerFieldProps {
   readonly placeholder: string
@@ -21,6 +22,10 @@ export function ComposerField({
   onKeyDown
 }: ComposerFieldProps): React.JSX.Element {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  // The composer works on its own; the focus seam is an optional enhancement, so register only when the
+  // shell provides it (it always does in the app). The consumer that needs it — the Ctrl/Cmd+K bridge —
+  // hard-requires the provider via useComposerFocus.
+  const composerFocus = useContext(ComposerFocusContext)
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current
@@ -28,6 +33,19 @@ export function ComposerField({
     textarea.style.height = 'auto'
     textarea.style.height = `${textarea.scrollHeight}px`
   }, [value])
+
+  // Register this textarea as the composer the shell can focus imperatively (the Ctrl/Cmd+K shortcut).
+  // A layout effect, not a passive one, so the handle is in place before the shortcut's next-frame focus
+  // runs when it opens a previously-collapsed rail.
+  useLayoutEffect(() => {
+    if (!composerFocus) return
+    composerFocus.register({
+      focus: () => textareaRef.current?.focus(),
+      isFocused: () =>
+        textareaRef.current !== null && document.activeElement === textareaRef.current
+    })
+    return () => composerFocus.register(null)
+  }, [composerFocus])
 
   return (
     <Scrollable className="max-h-40">

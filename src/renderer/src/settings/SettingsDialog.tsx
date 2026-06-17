@@ -132,7 +132,7 @@ function SegmentedField<T extends string>({
     >
       {options.map((option) => (
         <Radio.Root
-          className="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-text-secondary outline-none transition-colors data-checked:bg-surface-3 data-checked:text-text-primary data-checked:shadow-sm"
+          className="rounded-lg px-4 py-2 text-sm font-semibold text-text-secondary outline-none transition-colors data-checked:bg-surface-3 data-checked:text-text-primary data-checked:shadow-sm"
           key={option.value}
           value={option.value}
         >

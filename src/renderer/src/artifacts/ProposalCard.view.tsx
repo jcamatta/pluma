@@ -45,10 +45,8 @@ function ProposalCard({
       exit={{ opacity: 0, y: -8 }}
       onClick={onClick}
       className={cn(
-        'cursor-pointer rounded-xl border bg-surface-1 p-3 transition-colors',
-        active
-          ? 'border-action-primary ring-2 ring-action-primary/50'
-          : 'border-(--line) hover:bg-(--hover)'
+        'rounded-xl border bg-surface-2 p-3 transition-colors',
+        active ? 'border-action-primary ring-2 ring-action-primary/50' : 'border-(--line)'
       )}
     >
       <div className="mb-2 flex items-center gap-2">

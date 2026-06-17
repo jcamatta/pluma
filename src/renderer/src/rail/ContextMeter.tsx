@@ -38,7 +38,7 @@ function Ring({ ratio }: { readonly ratio: number }): React.JSX.Element {
       initial={{ scale: 0.6, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
     >
-      <span data-testid="context-ring" className="size-3 rounded-full bg-surface-1" />
+      <span data-testid="context-ring" className="size-3 rounded-full bg-surface-2" />
     </motion.span>
   )
 }
@@ -82,7 +82,7 @@ export function ContextMeter({ usage, labels }: ContextMeterProps): React.JSX.El
           />
           <Popover.Portal>
             <Popover.Positioner side="top" align="end" sideOffset={8}>
-              <Popover.Popup className="flex w-56 flex-col gap-2 rounded-xl border border-border bg-surface-1 p-3 text-sm shadow-lg transition-all duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+              <Popover.Popup className="flex w-56 flex-col gap-2 rounded-xl border border-border bg-surface-2 p-3 text-sm shadow-lg transition-all duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
                 <div className="flex items-baseline justify-between gap-4">
                   <Popover.Title className="font-semibold text-text-primary">
                     {labels.title}

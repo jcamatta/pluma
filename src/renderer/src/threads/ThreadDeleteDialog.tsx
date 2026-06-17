@@ -52,12 +52,12 @@ export function ThreadDeleteDialog({
             {labels.message}
           </AlertDialog.Description>
           <div className="mt-5 flex justify-end gap-2">
-            <AlertDialog.Close className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-(--hover)">
+            <AlertDialog.Close className="rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-(--hover)">
               {labels.cancel}
             </AlertDialog.Close>
             <Button
               onClick={onConfirm}
-              className="cursor-pointer rounded-lg bg-action-destructive px-3 py-2 text-sm font-semibold text-text-on-accent"
+              className="rounded-lg bg-action-destructive px-3 py-2 text-sm font-semibold text-text-on-accent"
             >
               {labels.confirm}
             </Button>
