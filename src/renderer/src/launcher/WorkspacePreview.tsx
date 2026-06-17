@@ -4,26 +4,9 @@
 // Pure visual component (no state, no IPC). Every shimmer line pulses on a staggered loop via Motion so
 // the preview feels alive without being literal.
 
-import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ArrowUp, Folder, Sparkles } from 'lucide-react'
-
-type ShimmerProps = {
-  readonly className: string
-  readonly delay: number
-}
-
-function Shimmer({ className, delay }: ShimmerProps): React.JSX.Element {
-  const reduce = useReducedMotion()
-  return (
-    <motion.span
-      aria-hidden="true"
-      className={className}
-      animate={reduce ? undefined : { opacity: [0.4, 0.85, 0.4] }}
-      transition={{ repeat: Infinity, repeatType: 'loop', duration: 2.4, ease: 'easeInOut', delay }}
-    />
-  )
-}
+import { Shimmer } from '../components/Shimmer'
 
 const EXPLORER_ROWS = [0, 0.15, 0.3, 0.45, 0.6] as const
 const PAGE_LINES = [0.2, 0.35, 0.5, 0.65] as const

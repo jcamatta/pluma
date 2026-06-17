@@ -6,6 +6,7 @@ import { FilePlus, FolderPlus, PanelLeft } from 'lucide-react'
 import { IconButton } from '../components/IconButton'
 import { Scrollable } from '../components/Scrollable'
 import { DraftRow, TreeNode } from './ExplorerRows.view'
+import { ExplorerSkeleton } from './ExplorerSkeleton.view'
 import type {
   DraftNode,
   ExplorerCallbacks,
@@ -17,13 +18,14 @@ import type {
 type ExplorerViewProps = ExplorerCallbacks & {
   readonly labels: ExplorerLabels
   readonly tree: readonly TreeNodeModel[]
+  readonly isLoading: boolean
   readonly selected: string | null
   readonly draft: DraftNode | null
   readonly renamingPath: string | null
 }
 
 export function ExplorerView(props: ExplorerViewProps): React.JSX.Element {
-  const { labels, tree, selected, draft, renamingPath, onClose, onCreate } = props
+  const { labels, tree, isLoading, selected, draft, renamingPath, onClose, onCreate } = props
   const ctx: RowContext = {
     labels,
     selected,
@@ -66,9 +68,13 @@ export function ExplorerView(props: ExplorerViewProps): React.JSX.Element {
         {tree.map((node) => (
           <TreeNode key={node.path} node={node} depth={0} ctx={ctx} />
         ))}
-        {tree.length === 0 && !draft && (
-          <div className="px-4 py-6 text-sm leading-relaxed text-text-muted">{labels.empty}</div>
-        )}
+        {tree.length === 0 &&
+          !draft &&
+          (isLoading ? (
+            <ExplorerSkeleton label={labels.loading} />
+          ) : (
+            <div className="px-4 py-6 text-sm leading-relaxed text-text-muted">{labels.empty}</div>
+          ))}
       </Scrollable>
     </div>
   )

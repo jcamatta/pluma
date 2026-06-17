@@ -29,6 +29,7 @@ type ExplorerLabels = {
   readonly collapse: string
   readonly untitled: string
   readonly empty: string
+  readonly loading: string
 }
 
 type ExplorerCallbacks = {

@@ -104,6 +104,7 @@
     "open": "Open files",
     "untitled": "Untitled",
     "empty": "No files yet. Use the buttons above to add a file or folder.",
+    "loading": "Loading files…",
     "noFolder": "No folder open. Pick one to start.",
     "pickFolder": "Open folder"
   },

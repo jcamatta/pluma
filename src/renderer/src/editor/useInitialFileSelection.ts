@@ -12,8 +12,8 @@ import { firstMarkdownFile } from './first-markdown-file'
 
 function useInitialFileSelection(root: string | null): void {
   const { open } = useOpenFiles()
-  const listing = useFolderListings(root === null ? [] : [root])
-  const entries = root === null ? undefined : listing(root)
+  const { lookup } = useFolderListings(root === null ? [] : [root])
+  const entries = root === null ? undefined : lookup(root)
   const initializedRoot = useRef<string | null>(null)
 
   useEffect(() => {

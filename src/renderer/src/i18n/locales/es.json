@@ -104,6 +104,7 @@
     "open": "Abrir archivos",
     "untitled": "Sin título",
     "empty": "Aún no hay archivos. Usa los botones de arriba para agregar un archivo o una carpeta.",
+    "loading": "Cargando archivos…",
     "noFolder": "No hay ninguna carpeta abierta. Elige una para empezar.",
     "pickFolder": "Abrir carpeta"
   },

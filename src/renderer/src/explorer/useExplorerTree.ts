@@ -18,6 +18,7 @@ import { useExplorerCommands } from './useExplorerCommands'
 
 type ExplorerTree = {
   readonly tree: readonly TreeNodeModel[]
+  readonly isLoading: boolean
   readonly draft: DraftNode | null
   readonly renamingPath: string | null
   readonly toggle: (path: string) => void
@@ -42,7 +43,7 @@ export function useExplorerTree(root: string, selection: Selection): ExplorerTre
   const [renamingPath, setRenamingPath] = useState<string | null>(null)
 
   const paths = useMemo(() => [root, ...openPaths], [root, openPaths])
-  const lookup = useFolderListings(paths)
+  const { lookup, isPending } = useFolderListings(paths)
   const tree = useMemo(() => buildTree({ root, openPaths, lookup }), [root, openPaths, lookup])
 
   const toggle = useCallback((path: string): void => {
@@ -98,6 +99,7 @@ export function useExplorerTree(root: string, selection: Selection): ExplorerTre
 
   return {
     tree,
+    isLoading: isPending(root),
     draft,
     renamingPath,
     toggle,
