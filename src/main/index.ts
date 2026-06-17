@@ -26,6 +26,10 @@ function createWindow(): BrowserWindow {
     }
   })
 
+  // Spellcheck Spanish and English together: a word is only flagged when it's wrong in BOTH
+  // dictionaries, so Spanish prose stops getting underlined.
+  mainWindow.webContents.session.setSpellCheckerLanguages(['es', 'en-US'])
+
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
