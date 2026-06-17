@@ -11,7 +11,7 @@ import {
   listOpenFilesTool,
   proposeEditTool
 } from '../agent/tools/specs'
-import { createAnnotationTool as runCreateAnnotation } from '../agent/tools/tool-create-annotation'
+import { createAnnotation } from '../agent/tools/tool-create-annotation'
 import { getCurrentSelection } from '../agent/tools/tool-get-current-selection'
 import { insert, insertAt } from '../agent/tools/tool-insert-text'
 import { listOpenFiles } from '../agent/tools/tool-list-open-files'
@@ -101,7 +101,15 @@ function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotatio
           readonly description: string
           readonly severity?: AnnotationSeverity
         }>(args, createAnnotationTool.name)
-        return atPath(args.path, (live) => runCreateAnnotation(live, args))
+        return atPath(args.path, (editor) =>
+          createAnnotation({
+            editor,
+            text: args.text,
+            label: args.label,
+            description: args.description,
+            severity: args.severity
+          })
+        )
       }
     },
     proposal: {
@@ -112,8 +120,8 @@ function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotatio
           readonly passage: string
           readonly text: string
         }>(args, proposeEditTool.name)
-        return atPath(args.path, (live) =>
-          proposeEdit(live, { passage: args.passage, text: args.text })
+        return atPath(args.path, (editor) =>
+          proposeEdit({ editor, passage: args.passage, text: args.text })
         )
       }
     }
@@ -135,8 +143,8 @@ function insertEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'insertAt'
           readonly text: string
           readonly position: 'start' | 'end'
         }>(args, insertAtTool.name)
-        return atPath(args.path, (live) =>
-          insertAt(live, { position: args.position, text: args.text })
+        return atPath(args.path, (editor) =>
+          insertAt({ editor, position: args.position, text: args.text })
         )
       }
     },
@@ -149,8 +157,8 @@ function insertEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'insertAt'
           readonly mode: 'before' | 'after'
           readonly anchor: string
         }>(args, insertTool.name)
-        return atPath(args.path, (live) =>
-          insert(live, { mode: args.mode, anchor: args.anchor, text: args.text })
+        return atPath(args.path, (editor) =>
+          insert({ editor, mode: args.mode, anchor: args.anchor, text: args.text })
         )
       }
     }

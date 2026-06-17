@@ -4,32 +4,45 @@
 // 'warning' when the model omits it.
 
 import type { Editor } from '@tiptap/core'
-import { createAnnotation, type AnnotationSeverity } from '../../editor/extensions/annotations'
+import {
+  createAnnotation as addAnnotation,
+  type AnnotationSeverity
+} from '../../editor/extensions/annotations'
 import { resolveAnchor } from './resolve-anchor'
 import type { AgentToolResult } from './types'
 
-interface CreateAnnotationArgs {
+interface CreateAnnotationInput {
+  readonly editor: Editor
   readonly text: string
   readonly label: string
   readonly description: string
   readonly severity?: AnnotationSeverity
 }
 
-export function createAnnotationTool(editor: Editor, args: CreateAnnotationArgs): AgentToolResult {
-  const resolved = resolveAnchor(editor, args.text)
+function createAnnotation({
+  editor,
+  text,
+  label,
+  description,
+  severity
+}: CreateAnnotationInput): AgentToolResult {
+  const resolved = resolveAnchor(editor, text)
   if (!resolved.ok) return { ok: false, error: resolved.error }
 
-  const annotation = createAnnotation({
+  const annotation = addAnnotation({
     editor,
     annotation: {
       from: resolved.from,
       to: resolved.to,
-      label: args.label,
-      description: args.description,
-      severity: args.severity ?? 'warning',
-      quote: args.text
+      label,
+      description,
+      severity: severity ?? 'warning',
+      quote: text
     }
   })
 
   return { ok: true, output: { type: 'json', value: { annotationId: annotation.id } } }
 }
+
+export { createAnnotation }
+export type { CreateAnnotationInput }

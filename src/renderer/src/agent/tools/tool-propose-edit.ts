@@ -8,29 +8,30 @@ import { createProposal } from '../../editor/extensions/proposals'
 import { resolveAnchor } from './resolve-anchor'
 import type { AgentToolResult } from './types'
 
-interface ProposeEditArgs {
+interface ProposeEditInput {
+  readonly editor: Editor
   readonly passage: string
   readonly text: string
 }
 
-export function proposeEdit(editor: Editor, args: ProposeEditArgs): AgentToolResult {
+function proposeEdit({ editor, passage, text }: ProposeEditInput): AgentToolResult {
   const markdown = editor.markdown
   if (!markdown) return { ok: false, error: 'markdown_unavailable' }
 
-  const resolved = resolveAnchor(editor, args.passage)
+  const resolved = resolveAnchor(editor, passage)
   if (!resolved.ok) return { ok: false, error: resolved.error }
 
   // Parse the new text as markdown to real nodes so multi-paragraph / structured content applies
   // correctly on accept; the raw source is kept as replacementText for the interim rail card.
-  const content = markdown.parse(args.text)
+  const content = markdown.parse(text)
 
   const result = createProposal({
     editor,
     proposal: {
       from: resolved.from,
       to: resolved.to,
-      originalText: args.passage,
-      replacementText: args.text,
+      originalText: passage,
+      replacementText: text,
       content
     }
   })
@@ -42,3 +43,6 @@ export function proposeEdit(editor: Editor, args: ProposeEditArgs): AgentToolRes
     output: { type: 'json', value: { proposalId: result.proposal.id, status: 'proposed' } }
   }
 }
+
+export { proposeEdit }
+export type { ProposeEditInput }
