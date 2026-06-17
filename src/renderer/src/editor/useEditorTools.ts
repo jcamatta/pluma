@@ -22,7 +22,9 @@ import type { EditorResolverPort } from './editor-resolver.port'
 interface EditorToolDeps {
   readonly resolve: EditorResolverPort
   readonly activePath: string | null
-  readonly openPaths: readonly string[]
+  // A getter, not a captured array: list_open_files must report the open set fresh at call time, so a
+  // file opened mid-turn (a 'loading' background tab) still appears.
+  readonly openPaths: () => readonly string[]
 }
 
 interface EditorToolEntries {
@@ -60,7 +62,7 @@ function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'se
   return {
     list: {
       spec: listOpenFilesTool,
-      handler: () => listOpenFiles({ openPaths: deps.openPaths, activePath: deps.activePath })
+      handler: () => listOpenFiles({ openPaths: deps.openPaths(), activePath: deps.activePath })
     },
     selection: {
       spec: getCurrentSelectionTool,

@@ -1,16 +1,17 @@
-// The artifacts panel's live read across every open file: subscribes to all registered editors'
+// The artifacts panel's live read across every open file: subscribes to all open editors'
 // transactions and folds each one's annotation/proposal plugin state into a single path-tagged Artifact
-// list plus the set of active composite keys (`path::id`). Reads the editors map from ActiveEditorContext.
-// useSyncExternalStore is the right tool — each editor is an external store, its `transaction` event is the
-// change stream, and the snapshot is cached against the per-editor list of EditorState identities (a fresh
-// state per transaction) so reads between transactions are referentially stable.
+// list plus the set of active composite keys (`path::id`). Reads the open editors from the store via
+// useOpenEditors. useSyncExternalStore is the right tool — each editor is an external store, its
+// `transaction` event is the change stream, and the snapshot is cached against the per-editor list of
+// EditorState identities (a fresh state per transaction) so reads between transactions are referentially
+// stable.
 
-import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react'
 import type { Editor } from '@tiptap/core'
 import type { EditorState } from '@tiptap/pm/state'
 import { getActiveAnnotationId, getAnnotations } from '../editor/extensions/annotations'
 import { getActiveProposalId, getProposals } from '../editor/extensions/proposals'
-import { useActiveEditor } from '../editor/ActiveEditorContext'
+import { useOpenEditors } from '../editor/useOpenEditors'
 import { toArtifacts } from './to-artifacts'
 import { artifactKey } from './artifact-key'
 import type { Artifact } from './artifact'
@@ -48,7 +49,13 @@ function sameStates(left: readonly EditorState[], right: readonly EditorState[])
 }
 
 function useOpenArtifacts(): OpenArtifacts {
-  const { editors } = useActiveEditor()
+  const entries = useOpenEditors()
+  // Project the entry map to an editor-only map; the readers below only need the editor, and keying the
+  // memo on the snapshot keeps this map referentially stable until a real open/close/ready transition.
+  const editors = useMemo<ReadonlyMap<string, Editor>>(
+    () => new Map([...entries].map(([path, entry]) => [path, entry.editor])),
+    [entries]
+  )
   const cache = useRef<Snapshot>({ key: [], value: empty })
 
   const subscribe = useCallback(

@@ -27,7 +27,7 @@ function depsFor(editor: Editor | null): Parameters<typeof useEditorTools>[0] {
   return {
     resolve: (path: string) => (editor !== null && path === PATH ? editor : null),
     activePath: editor === null ? null : PATH,
-    openPaths: editor === null ? [] : [PATH]
+    openPaths: () => (editor === null ? [] : [PATH])
   }
 }
 

@@ -7,7 +7,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useActiveEditor } from '../editor/ActiveEditorContext'
+import { useOpenEditors } from '../editor/useOpenEditors'
 import { useOpenFiles } from '../editor/OpenFilesContext'
 import {
   delAnnotation,
@@ -65,27 +65,27 @@ function deactivate(editor: Editor): void {
 
 function ArtifactsPanelController(): React.JSX.Element {
   const { t } = useTranslation()
-  const { editors } = useActiveEditor()
+  const openEditors = useOpenEditors()
   const { activePath, open } = useOpenFiles()
   const { artifacts, activeKeys } = useOpenArtifacts()
   const pendingReveal = useRef<{ readonly path: string; readonly from: number } | null>(null)
 
   useEffect(() => {
-    editors.forEach((editor, path) => {
-      if (path !== activePath) deactivate(editor)
+    openEditors.forEach((entry, path) => {
+      if (path !== activePath) deactivate(entry.editor)
     })
-  }, [activePath, editors])
+  }, [activePath, openEditors])
 
   useEffect(() => {
     const pending = pendingReveal.current
     if (!pending || pending.path !== activePath) return
-    const editor = editors.get(pending.path)
+    const editor = openEditors.get(pending.path)?.editor
     if (editor) reveal(editor, pending.from)
     pendingReveal.current = null
-  }, [activePath, editors])
+  }, [activePath, openEditors])
 
   const select = (artifact: Artifact): void => {
-    const editor = editors.get(artifact.path)
+    const editor = openEditors.get(artifact.path)?.editor
     if (!editor) return
     const wasActive = activeKeys.has(artifactKey(artifact))
     activate({ editor, artifact, wasActive })
@@ -99,15 +99,15 @@ function ArtifactsPanelController(): React.JSX.Element {
   }
 
   const accept = (artifact: Artifact): void => {
-    const editor = editors.get(artifact.path)
+    const editor = openEditors.get(artifact.path)?.editor
     if (editor) acceptProposal({ editor, id: artifact.id })
   }
   const reject = (artifact: Artifact): void => {
-    const editor = editors.get(artifact.path)
+    const editor = openEditors.get(artifact.path)?.editor
     if (editor) rejectProposal({ editor, id: artifact.id })
   }
   const dismiss = (artifact: Artifact): void => {
-    const editor = editors.get(artifact.path)
+    const editor = openEditors.get(artifact.path)?.editor
     if (editor) delAnnotation({ editor, id: artifact.id })
   }
 

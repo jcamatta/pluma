@@ -1,16 +1,16 @@
-// The tab strip's live per-file pending-suggestion counts: subscribes to every registered editor's
+// The tab strip's live per-file pending-suggestion counts: subscribes to every open editor's
 // transactions and runs the pure suggestion-list over each one, keyed by path. useSyncExternalStore over
 // the editors map — each editor is an external store, its `transaction` event is the change stream, and
 // the snapshot is cached against the per-editor list of EditorState identities so reads between
 // transactions are referentially stable. Mirrors artifacts/useOpenArtifacts.ts (left untouched, removed
 // with artifacts/ in PR 2); one pure suggestion-list module, two callers (this and useEditorSuggestions).
 
-import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react'
 import type { Editor } from '@tiptap/core'
 import type { EditorState } from '@tiptap/pm/state'
 import { getAnnotations } from './extensions/annotations'
 import { getProposals } from './extensions/proposals'
-import { useActiveEditor } from './ActiveEditorContext'
+import { useOpenEditors } from './useOpenEditors'
 import { toSuggestionList } from './suggestion-list'
 
 type PendingCounts = ReadonlyMap<string, number>
@@ -37,7 +37,13 @@ function sameStates(left: readonly EditorState[], right: readonly EditorState[])
 }
 
 function useEditorPendingCounts(): PendingCounts {
-  const { editors } = useActiveEditor()
+  const entries = useOpenEditors()
+  // Project the entry map to an editor-only map; the suggestion-list read only needs the editor, and
+  // keying the memo on the snapshot keeps this map referentially stable until a real transition.
+  const editors = useMemo<ReadonlyMap<string, Editor>>(
+    () => new Map([...entries].map(([path, entry]) => [path, entry.editor])),
+    [entries]
+  )
   const cache = useRef<Snapshot>({ key: [], value: empty })
 
   const subscribe = useCallback(
