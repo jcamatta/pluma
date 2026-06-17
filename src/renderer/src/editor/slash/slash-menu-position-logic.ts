@@ -14,7 +14,11 @@ type MenuPlacement = {
 
 const GAP = 4
 const EDGE_MARGIN = 8
-const PREFERRED_MAX_HEIGHT = 320
+// Tall enough to show the whole command catalogue without an inner scroll (nine rows + the heading is
+// ~360px); the menu still caps to the available space near a screen edge. Kept above the catalogue height
+// so the last command (Divider) is not clipped below the fold — the inner scroll area can't be reached by
+// keyboard, so a clipped row would be selectable but unseen.
+const PREFERRED_MAX_HEIGHT = 420
 
 function slashMenuPlacement(caret: CaretRect, viewportHeight: number): MenuPlacement {
   const spaceBelow = viewportHeight - caret.bottom - GAP - EDGE_MARGIN

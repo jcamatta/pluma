@@ -7,7 +7,7 @@ import { slashMenuPlacement } from '../slash-menu-position-logic'
 describe('slashMenuPlacement', () => {
   it('opens below the caret when there is room, capped to the preferred height', () => {
     const placement = slashMenuPlacement({ top: 100, bottom: 120, left: 50 }, 800)
-    expect(placement).toEqual({ left: 50, top: 124, bottom: null, maxHeight: 320 })
+    expect(placement).toEqual({ left: 50, top: 124, bottom: null, maxHeight: 420 })
   })
 
   it('flips above the caret when there is much more room above (near the bottom edge)', () => {
@@ -15,7 +15,7 @@ describe('slashMenuPlacement', () => {
     expect(placement.top).toBeNull()
     expect(placement.bottom).toBe(800 - (760 - 4))
     expect(placement.left).toBe(50)
-    expect(placement.maxHeight).toBe(320)
+    expect(placement.maxHeight).toBe(420)
   })
 
   it('caps the height to the space below when it stays below but cannot fit the full menu', () => {
