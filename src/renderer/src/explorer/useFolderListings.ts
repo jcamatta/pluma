@@ -1,6 +1,6 @@
 // Query hook for many folder listings at once. Given the paths to list (root + every open folder), it
 // runs one ['folder', path] query per path via useQueries and returns a lookup from a path to its
-// entries (undefined while loading or on ok: false) plus isPending, true only while a path's listing is
+// entries (undefined while loading or on ok: false) plus isLoading, true only while a path's listing is
 // loading for the first time (no cached data) — a background refetch keeps the prior data and isn't
 // pending, so the explorer's skeleton shows on first open but not on a watcher re-list. The reader port
 // is the seam — no window.api. This is the read side the tree builds from; commands live in the
@@ -14,7 +14,7 @@ import type { ListingLookup } from './explorer-tree-build'
 
 type FolderListings = {
   readonly lookup: ListingLookup
-  readonly isPending: (path: string) => boolean
+  readonly isLoading: (path: string) => boolean
 }
 
 function useFolderListings(paths: readonly string[]): FolderListings {
@@ -36,7 +36,7 @@ function useFolderListings(paths: readonly string[]): FolderListings {
     const pending = new Map(paths.map((path, index) => [path, results[index]?.isPending ?? true]))
     return {
       lookup: (path: string) => entries.get(path),
-      isPending: (path: string) => pending.get(path) ?? false
+      isLoading: (path: string) => pending.get(path) ?? false
     }
   }, [paths, results])
 }
