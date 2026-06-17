@@ -22,10 +22,18 @@ function wrapper({ children }: { readonly children: ReactNode }): React.JSX.Elem
   return <AgentToolsProvider>{children}</AgentToolsProvider>
 }
 
-// Deps that resolve the active file to `editor`; a null editor models "no document open".
+// Deps that resolve/ensure the active file to `editor`; a null editor models "no document open". The
+// acting tools go through `ensure`: it yields the editor at PATH and fails (recoverably) for any other
+// path, isolating the handler logic from the bridge's open-on-demand wiring.
 function depsFor(editor: Editor | null): Parameters<typeof useEditorTools>[0] {
   return {
     resolve: (path: string) => (editor !== null && path === PATH ? editor : null),
+    ensure: (path: string) =>
+      Promise.resolve(
+        editor !== null && path === PATH
+          ? { status: 'ready', editor }
+          : { status: 'failed', message: `${path} does not exist or cannot be read` }
+      ),
     activePath: editor === null ? null : PATH,
     openPaths: () => (editor === null ? [] : [PATH])
   }
@@ -86,7 +94,7 @@ describe('useEditorTools', () => {
     }
   })
 
-  it('errors when the acting path is not an open editor', async () => {
+  it('reports the ensure failure when the acting path cannot be made available', async () => {
     const editor = createTestEditor('hello world')
     try {
       const registry = renderRegistry(depsFor(editor))
@@ -95,7 +103,10 @@ describe('useEditorTools', () => {
         .byName(proposeEditTool.name)
         ?.handler({ path: '/missing.md', passage: 'world', text: 'earth' })
 
-      expect(result).toEqual({ ok: false, error: 'no_open_editor:/missing.md' })
+      expect(result).toEqual({
+        ok: false,
+        error: '/missing.md does not exist or cannot be read'
+      })
     } finally {
       editor.destroy()
     }
