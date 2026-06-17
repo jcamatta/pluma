@@ -48,7 +48,7 @@ export function ComposerField({
   }, [composerFocus])
 
   return (
-    <Scrollable className="max-h-40">
+    <Scrollable viewportClassName="max-h-40">
       <textarea
         data-rail-composer
         ref={textareaRef}
