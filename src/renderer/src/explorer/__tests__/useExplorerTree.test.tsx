@@ -50,6 +50,14 @@ describe('useExplorerTree read side', () => {
     await waitFor(() => expect(treeNames(result.current.tree)).toEqual(['sub', 'a.md']))
   })
 
+  it('reports loading until the root listing resolves', async () => {
+    const repos = createFakeFolderRepository({ '/root': [{ name: 'a.md', type: 'file' }] })
+    const { result } = renderTree({ repos })
+
+    expect(result.current.isLoading).toBe(true)
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+  })
+
   it('toggles a folder open and lists its children', async () => {
     const repos = createFakeFolderRepository({
       '/root': [{ name: 'sub', type: 'directory' }],

@@ -22,6 +22,7 @@ export function ExplorerController({
   const { t } = useTranslation()
   const {
     tree,
+    isLoading,
     draft,
     renamingPath,
     toggle,
@@ -46,9 +47,11 @@ export function ExplorerController({
         renameFolder: t('explorer.renameFolder'),
         collapse: t('explorer.collapse'),
         untitled: t('explorer.untitled'),
-        empty: t('explorer.empty')
+        empty: t('explorer.empty'),
+        loading: t('explorer.loading')
       }}
       tree={tree}
+      isLoading={isLoading}
       selected={selected}
       draft={draft}
       renamingPath={renamingPath}

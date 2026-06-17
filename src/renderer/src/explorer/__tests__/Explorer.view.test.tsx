@@ -15,7 +15,8 @@ const labels: ExplorerLabels = {
   renameFolder: 'Rename folder',
   collapse: 'Collapse files',
   untitled: 'Untitled',
-  empty: 'No files yet.'
+  empty: 'No files yet.',
+  loading: 'Loading files…'
 }
 
 const noop = (): void => undefined
@@ -25,6 +26,7 @@ const emptyTree: readonly TreeNodeModel[] = []
 const baseProps = {
   labels,
   tree: emptyTree,
+  isLoading: false,
   selected: null,
   draft: null,
   renamingPath: null,
@@ -116,6 +118,14 @@ describe('ExplorerView', () => {
     )
     fireEvent.keyDown(screen.getByPlaceholderText('Untitled'), { key: 'Escape' })
     expect(onCancelDraft).toHaveBeenCalled()
+  })
+})
+
+describe('ExplorerView loading', () => {
+  it('shows the loading skeleton instead of the empty message while loading', () => {
+    render(<ExplorerView {...baseProps} isLoading />)
+    expect(screen.getByRole('status', { name: 'Loading files…' })).toBeInTheDocument()
+    expect(screen.queryByText('No files yet.')).not.toBeInTheDocument()
   })
 })
 
