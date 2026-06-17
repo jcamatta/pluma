@@ -22,6 +22,7 @@ const FEATURES = [
   'thread-history',
   'artifacts',
   'artifacts-cross-file',
+  'agent-background-file',
   'agent-filesystem-approval',
   'agent-text-authoring',
   'inline-suggestion-review'
