@@ -31,6 +31,12 @@ describe('Launcher view', () => {
     expect(screen.getByRole('img', { name: 'Preview of the Pluma workspace' })).toBeInTheDocument()
   })
 
+  it('does not render the dropped preview captions', () => {
+    renderView(() => {})
+    expect(screen.queryByText('A peek at your workspace')).not.toBeInTheDocument()
+    expect(screen.queryByText(/The blank page/)).not.toBeInTheDocument()
+  })
+
   it('invokes onPick when the Open Folder button is clicked', () => {
     const onPick = vi.fn()
     renderView(onPick)

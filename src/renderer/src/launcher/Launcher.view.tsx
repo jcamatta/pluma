@@ -1,7 +1,8 @@
 // The launcher screen: the app's entry point before a folder is picked. Pure layout (no hooks, no IPC)
-// — it receives the pick action as a prop. Left half is the call to action (wordmark, serif headline,
-// description, Open Folder button); right half is the animated WorkspacePreview skeleton, capped in
-// height and centered. Ported from the design's open-folder screen, rendered in our tokens.
+// — it receives the pick action as a prop. The call to action (wordmark, serif headline, description,
+// Open Folder button) always shows; the animated WorkspacePreview skeleton sits beside it on wide
+// windows and is dropped once the window is too narrow to fit both, so the CTA stays readable as the
+// window resizes. Ported from the design's open-folder screen, rendered in our tokens.
 
 import { motion } from 'motion/react'
 import { Button } from '@base-ui/react'
@@ -27,13 +28,13 @@ function Launcher({ labels, onPick }: LauncherViewProps): React.JSX.Element {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 0.61, 0.36, 1] }}
-        className="flex w-1/2 flex-col justify-center gap-6 px-16"
+        className="flex w-full flex-col justify-center gap-6 overflow-y-auto px-8 py-12 sm:px-12 lg:w-1/2 lg:px-16"
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-text-secondary">
           <span className="size-2 rounded-full bg-action-primary" />
           {labels.wordmark}
         </span>
-        <h1 className="font-editor text-5xl leading-tight font-semibold whitespace-pre-line text-text-primary">
+        <h1 className="font-editor text-4xl leading-tight font-semibold whitespace-pre-line text-text-primary sm:text-5xl">
           {labels.heading}
         </h1>
         <p className="max-w-md text-base leading-relaxed text-text-secondary">
@@ -62,7 +63,7 @@ function Launcher({ labels, onPick }: LauncherViewProps): React.JSX.Element {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 0.61, 0.36, 1] }}
-        className="flex w-1/2 items-center justify-center  bg-surface-2 p-8"
+        className="hidden w-1/2 items-center justify-center bg-surface-2 p-8 lg:flex"
       >
         <div className="h-full max-h-160 w-full">
           <WorkspacePreview />

@@ -1,8 +1,8 @@
 // The animated skeleton shown on the right of the launcher: a low-fidelity preview of the workspace a
-// user lands in after picking a folder — a slim explorer column, the open page with "The blank page
-// awaits.", and the assistant chat rail (header, Chat/Review tabs, sparkle empty state, composer).
-// Pure visual component (no state, no IPC). Every shimmer line pulses on a staggered loop via Motion so
-// the preview feels alive without being literal.
+// user lands in after picking a folder — a slim explorer column, the open page (shimmer lines only),
+// and the assistant chat rail (header, Chat/Review tabs, sparkle empty state, composer). Pure visual
+// component (no state, no IPC). Every shimmer line pulses on a staggered loop via Motion so the preview
+// feels alive without being literal.
 
 import { useTranslation } from 'react-i18next'
 import { ArrowUp, Folder, Sparkles } from 'lucide-react'
@@ -32,16 +32,8 @@ function ExplorerColumn(): React.JSX.Element {
 }
 
 function PageColumn(): React.JSX.Element {
-  const { t } = useTranslation()
   return (
-    <div className="relative flex min-w-0 flex-1 flex-col gap-4 rounded-2xl bg-surface-3 p-6 pt-16">
-      <span className="absolute top-4 right-4 flex max-w-40 items-center gap-2 rounded-full border border-(--line) bg-surface-3 px-3 py-1 text-xs font-semibold tracking-wide text-text-muted uppercase">
-        <span className="size-2 flex-none rounded-full bg-action-primary" />
-        {t('launcher.previewBadge')}
-      </span>
-      <h2 className="max-w-xs font-editor text-xl leading-tight font-semibold whitespace-pre-line text-text-primary">
-        {t('launcher.previewHeading')}
-      </h2>
+    <div className="relative flex min-w-0 flex-1 flex-col gap-4 rounded-2xl bg-surface-3 p-6">
       <div className="mt-2 flex flex-col gap-3">
         {PAGE_LINES.map((delay) => (
           <Shimmer key={delay} className="h-3 w-full rounded-full bg-(--line2)" delay={delay} />
