@@ -5,6 +5,7 @@
 // while active. With no file open it shows the empty state instead of a writable editor — there is no
 // path to autosave to, so a phantom editor would only invite typing that is then discarded.
 
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tabs } from '@base-ui/react/tabs'
 import { EditorController } from './Editor.controller'
@@ -20,7 +21,10 @@ interface EditorStackProps {
   readonly onOpenSettings: () => void
 }
 
-function EditorStack({ open, onOpenSettings }: EditorStackProps): React.JSX.Element {
+const EditorStack = memo(function EditorStack({
+  open,
+  onOpenSettings
+}: EditorStackProps): React.JSX.Element {
   const { t } = useTranslation()
   const { open: activate, close } = useOpenFiles()
   const pendingCounts = useEditorPendingCounts()
@@ -62,7 +66,7 @@ function EditorStack({ open, onOpenSettings }: EditorStackProps): React.JSX.Elem
       ))}
     </Tabs.Root>
   )
-}
+})
 
 export { EditorStack }
 export type { EditorStackProps }

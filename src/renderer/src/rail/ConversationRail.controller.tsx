@@ -3,6 +3,7 @@
 // resumes its session and seeds the agent with its history (so the chat half renders the transcript),
 // then returns to chat; starting a new thread clears the agent. Closing the rail is lifted to the shell.
 
+import { memo } from 'react'
 import { ThreadsPanelController } from '../threads/ThreadsPanel.controller'
 import { ChatRailController } from './ChatRail.controller'
 import { useThreadSession } from './useThreadSession'
@@ -12,7 +13,7 @@ interface ConversationRailControllerProps {
   readonly onClose: () => void
 }
 
-export function ConversationRailController({
+const ConversationRailController = memo(function ConversationRailController({
   cwd,
   onClose
 }: ConversationRailControllerProps): React.JSX.Element {
@@ -39,6 +40,7 @@ export function ConversationRailController({
       onClose={onClose}
     />
   )
-}
+})
 
+export { ConversationRailController }
 export type { ConversationRailControllerProps }

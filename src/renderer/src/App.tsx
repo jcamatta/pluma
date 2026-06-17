@@ -3,7 +3,7 @@
 // panels are open. Composes the three columns — Explorer | editor | (rail, later) — matching
 // .references/pluma-design, rendered in our tokens.
 
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditorStack } from './editor/EditorStack'
 import { noOpenFiles, openFile, openFileInBackground, closeFile } from './editor/open-files-logic'
@@ -23,16 +23,14 @@ import { ChatShortcutBridge } from './rail/ChatShortcutBridge'
 import { ComposerFocusProvider } from './rail/ComposerFocusProvider'
 import { SettingsDialog } from './settings/SettingsDialog'
 import { useSettings } from './settings/useSettings'
+import { usePanels } from './usePanels'
 
 export const App = (): React.JSX.Element => {
   const { t } = useTranslation()
   const [root, setRoot] = useState<string | null>(null)
   const [open, setOpen] = useState(noOpenFiles)
-  const [explorerOpen, setExplorerOpen] = useState(true)
-  const [railOpen, setRailOpen] = useState(true)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const settings = useSettings()
-  const openRail = useCallback(() => setRailOpen(true), [])
+  const panels = usePanels()
   const openFiles = useMemo<OpenFilesNav>(
     () => ({
       activePath: open.active,
@@ -51,50 +49,50 @@ export const App = (): React.JSX.Element => {
         <ComposerFocusProvider>
           <OpenFilesContext.Provider value={openFiles}>
             <EditorToolsBridge />
-            <ChatShortcutBridge openRail={openRail} />
+            <ChatShortcutBridge openRail={panels.openRail} />
             <InitialFileBridge root={root} />
             <DeletedFilesBridge />
             <main className="flex h-screen gap-3 bg-surface-1 p-4 font-ui text-text-primary">
-              {explorerOpen && (
+              {panels.explorerOpen && (
                 <div className="flex-none" style={{ width: 'var(--explorer-w)' }}>
                   <ExplorerController
                     root={root}
                     selected={open.active}
-                    onSelect={(path) => setOpen((current) => openFile(current, path))}
-                    onClose={() => setExplorerOpen(false)}
+                    onSelect={openFiles.open}
+                    onClose={panels.closeExplorer}
                   />
                 </div>
               )}
 
               <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-surface-3">
-                <EditorStack open={open} onOpenSettings={() => setSettingsOpen(true)} />
-                {!explorerOpen && (
+                <EditorStack open={open} onOpenSettings={panels.openSettings} />
+                {!panels.explorerOpen && (
                   <EdgeTab
                     side="left"
                     label={t('explorer.open')}
                     icon={<PanelLeft size={17} />}
-                    onOpen={() => setExplorerOpen(true)}
+                    onOpen={panels.openExplorer}
                   />
                 )}
-                {!railOpen && (
+                {!panels.railOpen && (
                   <EdgeTab
                     side="right"
                     label={t('rail.open')}
                     icon={<MessagesSquare size={17} />}
-                    onOpen={() => setRailOpen(true)}
+                    onOpen={panels.openRail}
                   />
                 )}
               </div>
 
-              {railOpen && (
+              {panels.railOpen && (
                 <div className="flex-none" style={{ width: 'var(--rail-w)' }}>
-                  <ConversationRailController cwd={root} onClose={() => setRailOpen(false)} />
+                  <ConversationRailController cwd={root} onClose={panels.closeRail} />
                 </div>
               )}
 
               <SettingsDialog
-                open={settingsOpen}
-                onOpenChange={setSettingsOpen}
+                open={panels.settingsOpen}
+                onOpenChange={panels.setSettingsOpen}
                 settings={settings}
               />
             </main>
