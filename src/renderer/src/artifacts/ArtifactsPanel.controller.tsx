@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useOpenEditors } from '../editor/useOpenEditors'
 import { useOpenFiles } from '../editor/OpenFilesContext'
 import {
-  delAnnotation,
+  deleteAnnotation,
   getActiveAnnotationId,
   setActiveAnnotation
 } from '../editor/extensions/annotations'
@@ -108,7 +108,7 @@ function ArtifactsPanelController(): React.JSX.Element {
   }
   const dismiss = (artifact: Artifact): void => {
     const editor = openEditors.get(artifact.path)?.editor
-    if (editor) delAnnotation({ editor, id: artifact.id })
+    if (editor) deleteAnnotation({ editor, id: artifact.id })
   }
 
   return (

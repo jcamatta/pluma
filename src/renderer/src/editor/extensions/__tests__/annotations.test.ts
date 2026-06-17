@@ -6,7 +6,7 @@ import {
   annotationActiveClass,
   annotationReadClass,
   createAnnotation,
-  delAnnotation,
+  deleteAnnotation,
   getActiveAnnotationId,
   getAnnotations,
   markAnnotationRead,
@@ -90,7 +90,7 @@ describe('annotations extension', () => {
       const annotation = annotate(editor, { label: 'one' })
       setActiveAnnotation({ editor, id: annotation.id })
 
-      delAnnotation({ editor, id: annotation.id })
+      deleteAnnotation({ editor, id: annotation.id })
 
       expect(getAnnotations(editor)).toHaveLength(0)
       expect(getActiveAnnotationId(editor)).toBeNull()
@@ -103,7 +103,7 @@ describe('annotations extension', () => {
       const second = annotate(editor, { label: 'two' })
       setActiveAnnotation({ editor, id: second.id })
 
-      delAnnotation({ editor, id: first.id })
+      deleteAnnotation({ editor, id: first.id })
 
       expect(getActiveAnnotationId(editor)).toBe(second.id)
     })

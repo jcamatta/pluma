@@ -47,7 +47,7 @@ type CreateAnnotationInput = {
   readonly annotation: Omit<Annotation, 'id' | 'status'>
 }
 
-type DelAnnotationInput = {
+type DeleteAnnotationInput = {
   readonly editor: Editor
   readonly id: string
 }
@@ -128,7 +128,7 @@ function createAnnotation({ editor, annotation }: CreateAnnotationInput): Annota
   return created ?? { ...annotation, id: `a_${idBefore}`, status: 'pending' }
 }
 
-function delAnnotation({ editor, id }: DelAnnotationInput): void {
+function deleteAnnotation({ editor, id }: DeleteAnnotationInput): void {
   editor.view.dispatch(
     editor.state.tr.setMeta(annotationsPluginKey, {
       id,
@@ -271,7 +271,7 @@ export {
   getActiveAnnotationId,
   setActiveAnnotation,
   createAnnotation,
-  delAnnotation,
+  deleteAnnotation,
   markAnnotationRead
 }
 export type {
@@ -279,7 +279,7 @@ export type {
   AnnotationStatus,
   Annotation,
   CreateAnnotationInput,
-  DelAnnotationInput,
+  DeleteAnnotationInput,
   MarkAnnotationReadInput,
   SetActiveAnnotationInput
 }
