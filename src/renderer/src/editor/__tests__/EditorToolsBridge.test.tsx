@@ -56,7 +56,7 @@ describe('EditorToolsBridge', () => {
       })
       expect(before).toEqual({ ok: false, error: `no_open_editor:${PATH}` })
 
-      act(() => result.current.active.registerEditor(PATH, editor))
+      act(() => result.current.active.store.mount(PATH, editor))
 
       const after = await result.current.registry.byName(proposeEditTool.name)?.handler({
         path: PATH,

@@ -19,7 +19,11 @@ type SyncCase = {
   readonly path: string
 }
 
-function renderSync({ repos, editor, path }: SyncCase): ReturnType<typeof renderHook<void, void>> {
+function renderSync({
+  repos,
+  editor,
+  path
+}: SyncCase): ReturnType<typeof renderHook<{ readonly loaded: boolean }, void>> {
   const wrapper = ({ children }: { readonly children: ReactNode }): React.JSX.Element => (
     <ReposHarness repos={repos}>{children}</ReposHarness>
   )
@@ -43,6 +47,19 @@ describe('useEditorFileSync', () => {
     renderSync({ repos, editor, path: '/a.md' })
 
     await waitFor(() => expect(editor.getMarkdown()).toContain('# Loaded'))
+
+    editor.destroy()
+  })
+
+  it('flips loaded true only once the disk content is in the document', async () => {
+    const repos = createFakeFolderRepository({}, { '/a.md': '# Loaded' })
+    const editor = createTestEditor('')
+    const { result } = renderSync({ repos, editor, path: '/a.md' })
+
+    expect(result.current.loaded).toBe(false)
+
+    await waitFor(() => expect(result.current.loaded).toBe(true))
+    expect(editor.getMarkdown()).toContain('# Loaded')
 
     editor.destroy()
   })

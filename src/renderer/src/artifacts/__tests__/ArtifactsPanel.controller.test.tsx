@@ -33,11 +33,11 @@ const PATH = '/test.md'
 type Entries = readonly (readonly [string, Editor])[]
 
 function RegisterEditors({ entries }: { readonly entries: Entries }): null {
-  const { registerEditor, unregisterEditor } = useActiveEditor()
+  const { store } = useActiveEditor()
   useEffect(() => {
-    entries.forEach(([path, editor]) => registerEditor(path, editor))
-    return () => entries.forEach(([path]) => unregisterEditor(path))
-  }, [entries, registerEditor, unregisterEditor])
+    entries.forEach(([path, editor]) => store.mount(path, editor))
+    return () => entries.forEach(([path]) => store.remove(path))
+  }, [entries, store])
   return null
 }
 
