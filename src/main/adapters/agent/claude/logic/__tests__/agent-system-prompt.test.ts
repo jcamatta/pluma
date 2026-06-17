@@ -52,7 +52,7 @@ describe('AGENT_SYSTEM_PROMPT', () => {
 
   it('directs the agent to discover open files and pass a path to the acting tools', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('list_open_files')
-    expect(AGENT_SYSTEM_PROMPT).toContain('get_content')
+    expect(AGENT_SYSTEM_PROMPT).toContain('get_current_selection')
     expect(AGENT_SYSTEM_PROMPT).toContain('require that path')
   })
 
