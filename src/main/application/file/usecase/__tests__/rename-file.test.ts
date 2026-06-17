@@ -1,5 +1,6 @@
 // Tests for the renameFile use case against an in-memory FileWriter fake. Covers the success path,
-// the markdown-path validation rules for both paths, and each typed failure the port can produce.
+// the .md-extension defaulting of a bare new name, the markdown-path validation rules for both paths,
+// and each typed failure the port can produce.
 
 import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
@@ -64,13 +65,12 @@ describe('renameFile', () => {
     expect(exit).toStrictEqual(Exit.fail(expect.objectContaining({ _tag: 'InvalidPath' })))
   })
 
-  it('fails with InvalidPath when the new path is not markdown, without touching the writer', () => {
+  it('defaults a bare new name to a .md file, renaming to and returning the extended path', () => {
     const renamed: Array<readonly [string, string]> = []
     const exit = run(renameFile('/notes/old.md', '/notes/new'), writerThatSucceeds(renamed))
 
-    expect(Exit.isFailure(exit)).toBe(true)
-    expect(renamed).toStrictEqual([])
-    expect(exit).toStrictEqual(Exit.fail(expect.objectContaining({ _tag: 'InvalidPath' })))
+    expect(exit).toStrictEqual(Exit.succeed('/notes/new.md'))
+    expect(renamed).toStrictEqual([['/notes/old.md', '/notes/new.md']])
   })
 
   it('propagates FileNotFound from the writer', () => {
