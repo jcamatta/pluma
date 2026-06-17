@@ -7,6 +7,11 @@ import { IconButton } from '../components/IconButton'
 import { NameInput } from './NameInput'
 import type { RowContext, TreeNodeModel } from './explorer-view-types'
 
+// Base left-padding + per-level step keep every tree row visually aligned.
+const INDENT_BASE = 11
+const INDENT_STEP = 15
+const indentFor = (depth: number): number => INDENT_BASE + depth * INDENT_STEP
+
 function RowActions({ children }: { readonly children: React.ReactNode }): React.JSX.Element {
   // Hidden until the row is hovered/focused; the `.row-actions` rule in App.css drives the reveal.
   return <span className="row-actions ml-auto flex flex-none items-center gap-px">{children}</span>
@@ -23,7 +28,7 @@ function DraftRow({
 }): React.JSX.Element {
   return (
     <div
-      style={{ paddingLeft: 11 + depth * 15 }}
+      style={{ paddingLeft: indentFor(depth) }}
       className="mb-px flex w-full items-center gap-2 rounded-xl py-2 pr-2"
     >
       <span className="flex flex-none text-text-muted">
@@ -112,7 +117,7 @@ function FolderRow({
         data-row
         data-testid={`folder-row:${node.path}`}
         onClick={renaming ? undefined : () => ctx.onToggle(node.path)}
-        style={{ paddingLeft: 11 + depth * 15 }}
+        style={{ paddingLeft: indentFor(depth) }}
         className="mb-px flex w-full items-center gap-2 rounded-xl py-2 pr-2 text-text-secondary transition-colors hover:bg-(--hover)"
       >
         <span
@@ -205,7 +210,7 @@ function FileRow({
       data-row
       data-testid={`file-row:${node.path}`}
       onClick={renaming ? undefined : () => ctx.onSelect(node.path)}
-      style={{ paddingLeft: 11 + depth * 15 }}
+      style={{ paddingLeft: indentFor(depth) }}
       className={`mb-px flex w-full items-center gap-2 rounded-xl border py-2 pr-2 transition-colors ${
         selected
           ? 'border-action-primary bg-[color-mix(in_srgb,var(--color-action-primary)_10%,transparent)] text-text-primary shadow-[0_0_0_2px_color-mix(in_srgb,var(--color-action-primary)_18%,transparent)]'
