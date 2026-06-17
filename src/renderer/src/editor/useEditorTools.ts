@@ -5,7 +5,6 @@ import type { AgentToolResult } from '../agent/tools/types'
 import { useFrontendTool } from '../agent/useFrontendTool'
 import {
   createAnnotationTool,
-  getContentTool,
   getCurrentSelectionTool,
   insertAtTool,
   insertTool,
@@ -13,7 +12,6 @@ import {
   proposeEditTool
 } from '../agent/tools/specs'
 import { createAnnotationTool as runCreateAnnotation } from '../agent/tools/tool-create-annotation'
-import { getContent } from '../agent/tools/tool-get-content'
 import { getCurrentSelection } from '../agent/tools/tool-get-current-selection'
 import { insert, insertAt } from '../agent/tools/tool-insert-text'
 import { listOpenFiles } from '../agent/tools/tool-list-open-files'
@@ -30,7 +28,6 @@ interface EditorToolDeps {
 interface EditorToolEntries {
   readonly list: ToolEntry
   readonly selection: ToolEntry
-  readonly content: ToolEntry
   readonly annotation: ToolEntry
   readonly proposal: ToolEntry
   readonly insertAt: ToolEntry
@@ -49,24 +46,15 @@ const noOpenEditor = (path: string): AgentToolResult => ({
   error: `no_open_editor:${path}`
 })
 
-// The read tools — discover the open files, read a named file, or read the active selection. get_content
-// takes the path the agent learned from list_open_files and reports it back; the selection reads the
-// active editor (the only one with a live cursor) and reports its path. Both hand the agent the path it
-// must then pass to the acting tools.
-function readEntries(
-  deps: EditorToolDeps
-): Pick<EditorToolEntries, 'list' | 'selection' | 'content'> {
+// The read tools — discover the open files or read the active selection. The selection reads the active
+// editor (the only one with a live cursor) and reports its path, handing the agent the path it must then
+// pass to the acting tools.
+function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'selection'> {
   const activeTarget = (): ActiveTarget | null => {
     const path = deps.activePath
     if (path === null) return null
     const editor = deps.resolve(path)
     return editor === null ? null : { editor, path }
-  }
-
-  const readContent = (args: unknown): AgentToolResult => {
-    assertWire<{ readonly path: string }>(args, getContentTool.name)
-    const editor = deps.resolve(args.path)
-    return editor ? getContent({ editor, path: args.path }) : noOpenEditor(args.path)
   }
 
   return {
@@ -80,8 +68,7 @@ function readEntries(
         const target = activeTarget()
         return target ? getCurrentSelection(target) : NO_DOCUMENT
       }
-    },
-    content: { spec: getContentTool, handler: readContent }
+    }
   }
 }
 
@@ -173,7 +160,6 @@ function useEditorTools(deps: EditorToolDeps): void {
   const entries = editorToolEntries(deps)
   useFrontendTool(entries.list)
   useFrontendTool(entries.selection)
-  useFrontendTool(entries.content)
   useFrontendTool(entries.annotation)
   useFrontendTool(entries.proposal)
   useFrontendTool(entries.insertAt)

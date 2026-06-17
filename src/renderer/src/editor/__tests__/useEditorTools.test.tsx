@@ -6,7 +6,6 @@ import { AgentToolsProvider } from '../../agent/AgentToolsProvider'
 import { useToolRegistry, type ToolRegistry } from '../../agent/AgentToolsContext'
 import {
   agentToolSpecs,
-  getContentTool,
   getCurrentSelectionTool,
   insertAtTool,
   insertTool,
@@ -100,28 +99,6 @@ describe('useEditorTools', () => {
     } finally {
       editor.destroy()
     }
-  })
-
-  it('reads an open file at a given path, tagged with that path', async () => {
-    const editor = createTestEditor('hello world')
-    try {
-      const registry = renderRegistry(depsFor(editor))
-
-      const result = await registry.byName(getContentTool.name)?.handler({ path: PATH })
-
-      if (!result?.ok || result.output.type !== 'json') return expect.fail('expected json output')
-      expect(result.output.value).toMatchObject({ path: PATH })
-    } finally {
-      editor.destroy()
-    }
-  })
-
-  it('errors when the read path is not an open editor', async () => {
-    const registry = renderRegistry(depsFor(null))
-
-    const result = await registry.byName(getContentTool.name)?.handler({ path: '/missing.md' })
-
-    expect(result).toEqual({ ok: false, error: 'no_open_editor:/missing.md' })
   })
 
   it('reports a recoverable error on the selection read while no editor is mounted', async () => {
