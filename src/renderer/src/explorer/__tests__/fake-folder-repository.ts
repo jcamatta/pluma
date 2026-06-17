@@ -10,6 +10,7 @@ import type { FolderEntry } from '../../../../shared/ipc/ipc-contract/folder'
 import type { FolderChange } from '../../../../shared/ipc/ipc-event-contract/folder'
 import type { FolderReaderPort } from '../ports/folder-reader.port'
 import type { FolderWriterPort } from '../ports/folder-writer.port'
+import type { FolderPickerPort } from '../ports/folder-picker.port'
 import type { FileReaderPort } from '../ports/file-reader.port'
 import type { FileWriterPort } from '../ports/file-writer.port'
 import type { Repositories } from '../RepositoriesContext'
@@ -75,6 +76,11 @@ function createFakeFolderRepository(
   const deleted: string[] = []
   const renamed: { from: string; to: string }[] = []
 
+  // Defaults to a cancelled pick; a test that exercises the launcher overrides this with a spy.
+  const picker: FolderPickerPort = {
+    pick: () => Promise.resolve({ ok: false, error: { _tag: 'FolderSelectionCancelled' } })
+  }
+
   const reader: FolderReaderPort = {
     list: (path) => {
       const entries = listings[path]
@@ -119,6 +125,7 @@ function createFakeFolderRepository(
   return {
     reader,
     writer,
+    picker,
     fileReader: fileStore.fileReader,
     fileWriter: fileStore.fileWriter,
     emit: (change) => subscribers.forEach((cb) => cb(change)),

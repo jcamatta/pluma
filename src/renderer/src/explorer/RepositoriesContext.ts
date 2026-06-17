@@ -6,12 +6,14 @@ import { createContext, useContext } from 'react'
 import { invariant } from '../../../shared/invariant'
 import type { FolderReaderPort } from './ports/folder-reader.port'
 import type { FolderWriterPort } from './ports/folder-writer.port'
+import type { FolderPickerPort } from './ports/folder-picker.port'
 import type { FileReaderPort } from './ports/file-reader.port'
 import type { FileWriterPort } from './ports/file-writer.port'
 
 interface Repositories {
   readonly reader: FolderReaderPort
   readonly writer: FolderWriterPort
+  readonly picker: FolderPickerPort
   readonly fileReader: FileReaderPort
   readonly fileWriter: FileWriterPort
 }

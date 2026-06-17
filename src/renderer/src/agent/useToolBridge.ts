@@ -3,8 +3,9 @@
 // suspended on that toolCallId, so the bridge must always answer — an unknown tool name and a rejecting
 // handler both resolve to an error result rather than escaping the subscription, or the run would hang.
 // A gated tool call (a mutating file command) is NOT dispatched to a handler: it is parked as a human
-// approval via requestApproval and answered on the same channel once the user decides. window.api is
-// injected (defaulting to the global) so tests drive it with a fake.
+// approval via requestApproval and answered on the same channel once the user decides. The api bridge
+// is injected — production supplies it from the agent adapter, tests a fake — so the hook itself never
+// reaches window.api.
 
 import { useEffect } from 'react'
 import { isGatedToolName } from '../../../shared/agent/gated-tools'
@@ -43,7 +44,7 @@ function answer(deps: ToolBridgeDeps, call: AgentToolCall): Promise<AgentToolRes
   return isGatedToolName(call.toolName) ? deps.requestApproval(call) : dispatch(deps.registry, call)
 }
 
-export function useToolBridge(deps: ToolBridgeDeps, api: WindowApi = window.api): void {
+export function useToolBridge(deps: ToolBridgeDeps, api: WindowApi): void {
   const { registry, requestApproval } = deps
   useEffect(() => {
     return api.on(AGENT_TOOL_CALL_CHANNEL, (call) => {

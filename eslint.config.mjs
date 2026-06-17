@@ -14,6 +14,7 @@ import {
   domainNoSharedImports,
   rendererNoDomTreeReaching,
   views,
+  noDirectIpcInModules,
   noDirectIpcInComponents
 } from './eslint/architecture.mjs'
 import { limits } from './eslint/limits.mjs'
@@ -42,6 +43,7 @@ export default defineConfig(
   react,
   tailwindClassnames,
   views,
+  noDirectIpcInModules,
   noDirectIpcInComponents,
   allowThrowInInvariant,
   e2e,

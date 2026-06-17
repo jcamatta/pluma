@@ -8,6 +8,7 @@ import {
   FOLDER_DELETE_CHANNEL,
   FOLDER_RENAME_CHANNEL,
   FOLDER_LIST_CHANNEL,
+  FOLDER_PICK_CHANNEL,
   FOLDER_WATCH_CHANNEL
 } from '../../../../shared/ipc/ipc-contract/folder'
 import {
@@ -20,17 +21,23 @@ import {
 import { FOLDER_CHANGED_CHANNEL } from '../../../../shared/ipc/ipc-event-contract/folder'
 import type { FolderReaderPort } from '../ports/folder-reader.port'
 import type { FolderWriterPort } from '../ports/folder-writer.port'
+import type { FolderPickerPort } from '../ports/folder-picker.port'
 import type { FileReaderPort } from '../ports/file-reader.port'
 import type { FileWriterPort } from '../ports/file-writer.port'
 
 function createFolderRepository(): {
   readonly reader: FolderReaderPort
   readonly writer: FolderWriterPort
+  readonly picker: FolderPickerPort
   readonly fileReader: FileReaderPort
   readonly fileWriter: FileWriterPort
 } {
   const reader: FolderReaderPort = {
     list: (path) => window.api.invoke(FOLDER_LIST_CHANNEL, path)
+  }
+
+  const picker: FolderPickerPort = {
+    pick: () => window.api.invoke(FOLDER_PICK_CHANNEL)
   }
 
   const fileReader: FileReaderPort = {
@@ -53,7 +60,7 @@ function createFolderRepository(): {
     onChange: (callback) => window.api.on(FOLDER_CHANGED_CHANNEL, callback)
   }
 
-  return { reader, writer, fileReader, fileWriter }
+  return { reader, writer, picker, fileReader, fileWriter }
 }
 
 export { createFolderRepository }
