@@ -43,7 +43,7 @@ export function useExplorerTree(root: string, selection: Selection): ExplorerTre
   const [renamingPath, setRenamingPath] = useState<string | null>(null)
 
   const paths = useMemo(() => [root, ...openPaths], [root, openPaths])
-  const { lookup, isPending } = useFolderListings(paths)
+  const { lookup, isLoading } = useFolderListings(paths)
   const tree = useMemo(() => buildTree({ root, openPaths, lookup }), [root, openPaths, lookup])
 
   const toggle = useCallback((path: string): void => {
@@ -99,7 +99,7 @@ export function useExplorerTree(root: string, selection: Selection): ExplorerTre
 
   return {
     tree,
-    isLoading: isPending(root),
+    isLoading: isLoading(root),
     draft,
     renamingPath,
     toggle,
