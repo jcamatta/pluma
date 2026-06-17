@@ -32,4 +32,9 @@ describe('ThreadTitleInput', () => {
     fireEvent.blur(field)
     expect(onCommit).toHaveBeenCalledTimes(1)
   })
+
+  it('carries the focus-ring opt-out hook so its accent border is not doubled by the global outline', () => {
+    render(<ThreadTitleInput initialValue="Old" onCommit={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.getByDisplayValue('Old')).toHaveAttribute('data-thread-title-input')
+  })
 })

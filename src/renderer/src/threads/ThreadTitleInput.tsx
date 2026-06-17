@@ -44,6 +44,7 @@ export function ThreadTitleInput({
     <Input
       ref={ref}
       value={value}
+      data-thread-title-input
       onClick={(e) => e.stopPropagation()}
       onChange={(e) => setValue(e.target.value)}
       onKeyDown={(e) => {

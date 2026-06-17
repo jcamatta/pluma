@@ -9,8 +9,8 @@
 
   /* Ink as warm sepia rather than neutral gray. */
   --text-primary: oklch(0.4 0.026 68);
-  --text-secondary: oklch(0.54 0.022 68);
-  --text-muted: oklch(0.63 0.018 68);
+  --text-secondary: oklch(0.5 0.022 68);
+  --text-muted: oklch(0.51 0.018 68);
   --text-on-accent: #f9f4ec;
 
   /* Terracotta/clay accent (the pluma-design #D97757 family) — sits with the golden warmth. */
@@ -53,14 +53,15 @@
    data-theme="light" always wins, even on a dark OS. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    /* Warm golden charcoal, not flat black-gray: same golden axis (hue 68°) as light mode. */
-    --surface-1: oklch(0.2 0.012 68);
-    --surface-2: oklch(0.255 0.013 68);
-    --surface-3: oklch(0.31 0.014 68);
+    /* Neutral charcoal: dark mode drops the golden hue and runs the surfaces and ink on a pure gray
+       axis (chroma 0). The accent family below keeps its color. */
+    --surface-1: oklch(0.2 0 0);
+    --surface-2: oklch(0.255 0 0);
+    --surface-3: oklch(0.31 0 0);
 
-    --text-primary: oklch(0.95 0.012 68);
-    --text-secondary: oklch(0.78 0.014 68);
-    --text-muted: oklch(0.62 0.014 68);
+    --text-primary: oklch(0.9 0 0);
+    --text-secondary: oklch(0.78 0 0);
+    --text-muted: oklch(0.68 0 0);
     --text-on-accent: #11100e;
 
     --color-accent: oklch(0.72 0.13 50);
@@ -79,14 +80,14 @@
 }
 
 :root[data-theme='dark'] {
-  /* Warm golden charcoal, kept identical to the system-dark block above. */
-  --surface-1: oklch(0.2 0.012 68);
-  --surface-2: oklch(0.255 0.013 68);
-  --surface-3: oklch(0.31 0.014 68);
+  /* Neutral charcoal, kept identical to the system-dark block above. */
+  --surface-1: oklch(0.2 0 0);
+  --surface-2: oklch(0.255 0 0);
+  --surface-3: oklch(0.31 0 0);
 
-  --text-primary: oklch(0.95 0.012 68);
-  --text-secondary: oklch(0.78 0.014 68);
-  --text-muted: oklch(0.62 0.014 68);
+  --text-primary: oklch(0.9 0 0);
+  --text-secondary: oklch(0.78 0 0);
+  --text-muted: oklch(0.68 0 0);
   --text-on-accent: #11100e;
 
   --color-accent: oklch(0.72 0.13 50);
@@ -155,6 +156,14 @@
   outline: none;
 }
 
+/* The inline rename fields (file/folder name, thread title) carry their own accent border as their active
+   state, so they opt out of the global accent outline — otherwise the offset ring stacks on the border as
+   a doubled outline. */
+[data-name-input]:focus-visible,
+[data-thread-title-input]:focus-visible {
+  outline: none;
+}
+
 html,
 body,
 #root {
@@ -175,6 +184,11 @@ body {
 }
 
 .ProseMirror {
+  /* Cap the manuscript to a comfortable reading measure and center it, so the text sits in a column
+     rather than spanning the full panel width. The measure is in ch, so it tracks the editor zoom. */
+  width: 100%;
+  max-width: 72ch;
+  margin-inline: auto;
   font-size: calc(1.5rem * var(--editor-zoom, 1));
   line-height: 1.6;
   overflow-wrap: break-word;
