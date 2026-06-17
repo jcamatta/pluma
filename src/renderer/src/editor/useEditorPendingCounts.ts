@@ -36,6 +36,10 @@ function sameStates(left: readonly EditorState[], right: readonly EditorState[])
   return left.length === right.length && left.every((state, index) => state === right[index])
 }
 
+function sameCounts(left: PendingCounts, right: PendingCounts): boolean {
+  return left.size === right.size && [...right].every(([path, count]) => left.get(path) === count)
+}
+
 function useEditorPendingCounts(): PendingCounts {
   const entries = useOpenEditors()
   // Project the entry map to an editor-only map; the suggestion-list read only needs the editor, and
@@ -60,7 +64,11 @@ function useEditorPendingCounts(): PendingCounts {
   const getSnapshot = useCallback((): PendingCounts => {
     const states = [...editors.values()].map((editor) => editor.state)
     if (!sameStates(cache.current.key, states)) {
-      cache.current = { key: states, value: readPendingCounts(editors) }
+      const next = readPendingCounts(editors)
+      // Keep the previous value's identity when the counts are unchanged so useSyncExternalStore does
+      // not re-render the tab strip on every keystroke — most transactions leave the counts untouched.
+      const value = sameCounts(cache.current.value, next) ? cache.current.value : next
+      cache.current = { key: states, value }
     }
     return cache.current.value
   }, [editors])
