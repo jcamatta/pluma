@@ -51,7 +51,18 @@ export const baseRestrictedSyntax = [
   ].map(({ tag, component }) => ({
     selector: `JSXOpeningElement[name.name='${tag}']`,
     message: `Raw <${tag}> is forbidden. Use ${component} from @base-ui/react instead.`
-  }))
+  })),
+  // Pluma is a desktop app and keeps native cursors — no pointer cursor on buttons, rows, or cards. Ban
+  // the Tailwind `cursor-pointer` class wherever it appears in a class string: a plain literal, a
+  // cn()/clsx argument, or a template-literal chunk.
+  {
+    selector: 'Literal[value=/(^|\\s)cursor-pointer(\\s|$)/]',
+    message: 'cursor-pointer is banned: Pluma uses native desktop cursors, not a pointer on buttons/rows/cards. Remove it.'
+  },
+  {
+    selector: 'TemplateElement[value.cooked=/(^|\\s)cursor-pointer(\\s|$)/]',
+    message: 'cursor-pointer is banned: Pluma uses native desktop cursors, not a pointer on buttons/rows/cards. Remove it.'
+  }
 ]
 
 export const style = {
