@@ -35,7 +35,7 @@ const PROMPT =
   `1. Call create_annotation on the word "cat" with label "${ANNOTATION_LABEL}" and description ` +
   '"Consider a sharper image.".\n' +
   '2. Call propose_edit to replace the word "mat" with "rug".\n' +
-  'First call list_open_files to find the path of the active file, then read it with get_content and ' +
+  'First call list_open_files to find the path of the active file, then read it with read_file and ' +
   'pass that path, plus the exact word, to create_annotation and propose_edit. ' +
   'Do not reply with prose and do not ask for confirmation.'
 
