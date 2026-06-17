@@ -25,6 +25,7 @@ function renderStack(open: OpenFiles, options: StackOptions): void {
   const nav: OpenFilesNav = {
     activePath: open.active,
     open: options.onActivate ?? vi.fn(),
+    openInBackground: vi.fn(),
     close: options.onClose ?? vi.fn()
   }
   render(

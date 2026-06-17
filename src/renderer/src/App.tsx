@@ -6,7 +6,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditorStack } from './editor/EditorStack'
-import { noOpenFiles, openFile, closeFile } from './editor/open-files-logic'
+import { noOpenFiles, openFile, openFileInBackground, closeFile } from './editor/open-files-logic'
 import { ActiveEditorProvider } from './editor/ActiveEditorProvider'
 import { OpenFilesContext } from './editor/OpenFilesContext'
 import type { OpenFilesNav } from './editor/OpenFilesContext'
@@ -37,6 +37,7 @@ export const App = (): React.JSX.Element => {
     () => ({
       activePath: open.active,
       open: (path) => setOpen((current) => openFile(current, path)),
+      openInBackground: (path) => setOpen((current) => openFileInBackground(current, path)),
       close: (path) => setOpen((current) => closeFile(current, path))
     }),
     [open.active]

@@ -17,12 +17,17 @@ import { insert, insertAt } from '../agent/tools/tool-insert-text'
 import { listOpenFiles } from '../agent/tools/tool-list-open-files'
 import { proposeEdit } from '../agent/tools/tool-propose-edit'
 import type { AnnotationSeverity } from './extensions/annotations'
-import type { EditorResolverPort } from './editor-resolver.port'
+import type { EditorEnsurePort, EditorResolverPort } from './editor-resolver.port'
 
 interface EditorToolDeps {
   readonly resolve: EditorResolverPort
+  // Opens-on-demand (and awaits load of) the file an acting tool names — the seam that lets a tool act
+  // on a closed file.
+  readonly ensure: EditorEnsurePort
   readonly activePath: string | null
-  readonly openPaths: readonly string[]
+  // A getter, not a captured array: list_open_files must report the open set fresh at call time, so a
+  // file opened mid-turn (a 'loading' background tab) still appears.
+  readonly openPaths: () => readonly string[]
 }
 
 interface EditorToolEntries {
@@ -41,11 +46,6 @@ interface ActiveTarget {
 
 const NO_DOCUMENT: AgentToolResult = { ok: false, error: 'No document is open in the editor.' }
 
-const noOpenEditor = (path: string): AgentToolResult => ({
-  ok: false,
-  error: `no_open_editor:${path}`
-})
-
 // The read tools — discover the open files or read the active selection. The selection reads the active
 // editor (the only one with a live cursor) and reports its path, handing the agent the path it must then
 // pass to the acting tools.
@@ -60,7 +60,7 @@ function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'se
   return {
     list: {
       spec: listOpenFilesTool,
-      handler: () => listOpenFiles({ openPaths: deps.openPaths, activePath: deps.activePath })
+      handler: () => listOpenFiles({ openPaths: deps.openPaths(), activePath: deps.activePath })
     },
     selection: {
       spec: getCurrentSelectionTool,
@@ -72,15 +72,23 @@ function readEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'list' | 'se
   }
 }
 
-type AtPath = (path: string, run: (editor: Editor) => AgentToolResult) => AgentToolResult
+type AtPath = (path: string, run: (editor: Editor) => AgentToolResult) => Promise<AgentToolResult>
+
+// Resolve (opening on demand) the file the acting/insert tools name, then run the tool on its editor.
+// A ready editor runs the tool; a failed ensure (unreadable path, or the tab closed before it loaded)
+// is a recoverable error carrying the ensure message — the same single failure path both tool families
+// share, so there is one place a closed/bad file is handled.
+function atPathVia(ensure: EditorEnsurePort): AtPath {
+  return async (path, run) => {
+    const outcome = await ensure(path)
+    return outcome.status === 'ready' ? run(outcome.editor) : { ok: false, error: outcome.message }
+  }
+}
 
 // The acting tools — annotate a passage or propose an edit, each by the passage's exact text. Each
-// requires the file `path`, resolved to its open editor; a path that is not open is a recoverable error.
+// requires the file `path`; the file is opened on demand if it is not already in the editor.
 function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotation' | 'proposal'> {
-  const atPath: AtPath = (path, run) => {
-    const editor = deps.resolve(path)
-    return editor ? run(editor) : noOpenEditor(path)
-  }
+  const atPath = atPathVia(deps.ensure)
 
   return {
     annotation: {
@@ -116,10 +124,7 @@ function actingEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'annotatio
 // tool choice with every field required, so the model never depends on an optional field changing
 // meaning.
 function insertEntries(deps: EditorToolDeps): Pick<EditorToolEntries, 'insertAt' | 'insert'> {
-  const atPath: AtPath = (path, run) => {
-    const editor = deps.resolve(path)
-    return editor ? run(editor) : noOpenEditor(path)
-  }
+  const atPath = atPathVia(deps.ensure)
 
   return {
     insertAt: {

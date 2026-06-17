@@ -5,7 +5,8 @@
 // on the client, so this renders nothing until it is ready. It registers the live editor into
 // ActiveEditorContext as the active editor only while active (isActive), so the rail's artifacts panel
 // reads whichever file the user is editing without several mounted editors clobbering the slot. It also
-// adds itself (by path) to the open-editors map so the panel can read every open file's artifacts. The
+// drives the open-editors store (mount on init, mark ready once its content loads, remove on unmount) so
+// the panel can read every open file's artifacts. The
 // panel chrome (the file tabs + settings) is the shared strip above the stack, not part of this surface.
 // The editor's frontend tools are contributed once at the shell (EditorToolsBridge), not here. Each editor
 // owns its own header row 2 — the suggestions sub-topbar — above its manuscript, so only the active editor's
@@ -31,8 +32,8 @@ export function EditorController({
 }: EditorControllerProps): React.JSX.Element | null {
   const editor = useManuscriptEditor()
   const { containerRef, zoom } = useEditorZoom()
-  const { register, registerEditor, unregisterEditor } = useActiveEditor()
-  useEditorFileSync(editor, path)
+  const { register, store } = useActiveEditor()
+  const { loaded } = useEditorFileSync(editor, path)
 
   useEffect(() => {
     if (!editor || !isActive) return
@@ -42,9 +43,15 @@ export function EditorController({
 
   useEffect(() => {
     if (!editor || path === null) return
-    registerEditor(path, editor)
-    return () => unregisterEditor(path)
-  }, [editor, path, registerEditor, unregisterEditor])
+    store.mount(path, editor)
+    return () => store.remove(path)
+  }, [editor, path, store])
+
+  useEffect(() => {
+    if (!editor || path === null || !loaded) return
+    // No-op if the entry is absent, so this can't outrace the mount effect above.
+    store.markReady(path)
+  }, [editor, path, loaded, store])
 
   if (!editor) return null
 

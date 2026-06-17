@@ -3,11 +3,12 @@
 // reports the file changed — coordinating all of it through one baseline (the content we last synced
 // with disk). disk-wins: an external change reloads the editor; the baseline advancing on our own
 // successful writes is what stops a debounced self-write, read back through the watcher, from looking
-// like an external change and reverting newer keystrokes. Returns void, like the autosave it replaces;
-// path is stable per editor instance (each open file is a key-ed controller), so the baseline starts
-// null and never needs resetting.
+// like an external change and reverting newer keystrokes. Reports `loaded`, which flips true in the same
+// effect that applies disk content (after it is in the document) so a reader acting on "ready" always
+// sees a populated document; path is stable per editor instance (each open file is a key-ed controller),
+// so the baseline starts null and, once loaded, stays loaded.
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Editor } from '@tiptap/react'
 import { useDebouncedCallback } from '../lib/useDebouncedCallback'
@@ -19,10 +20,13 @@ import { reconcileFileContent } from './reconcile-file-content'
 
 const SAVE_DELAY_MS = 1000
 
-function useEditorFileSync(editor: Editor | null, path: string | null): void {
+function useEditorFileSync(
+  editor: Editor | null,
+  path: string | null
+): { readonly loaded: boolean } {
   const fileContent = useFileContent(path)
-  const disk = fileContent && fileContent.ok ? fileContent.value : null
   const baseRef = useRef<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
   const write = useFileWrite()
   const { writer } = useRepos()
   const queryClient = useQueryClient()
@@ -38,6 +42,7 @@ function useEditorFileSync(editor: Editor | null, path: string | null): void {
   const debouncedWrite = useDebouncedCallback(persist, SAVE_DELAY_MS)
 
   useEffect(() => {
+    const disk = fileContent && fileContent.ok ? fileContent.value : null
     if (editor === null || disk === null) return
     if (reconcileFileContent(disk, baseRef.current) === 'skip') return
     baseRef.current = disk
@@ -46,7 +51,10 @@ function useEditorFileSync(editor: Editor | null, path: string | null): void {
       // an autosave that could write stale content back over a fresh external change.
       editor.commands.setContent(disk, { contentType: 'markdown', emitUpdate: false })
     }
-  }, [editor, disk])
+    // Flip loaded only here, with disk content already in the document, so a reader acting on "ready"
+    // never sees an empty editor.
+    setLoaded(true)
+  }, [editor, fileContent])
 
   useEffect(() => {
     if (editor === null || path === null) return
@@ -68,6 +76,8 @@ function useEditorFileSync(editor: Editor | null, path: string | null): void {
       }
     })
   }, [path, writer, queryClient])
+
+  return { loaded }
 }
 
 export { useEditorFileSync }

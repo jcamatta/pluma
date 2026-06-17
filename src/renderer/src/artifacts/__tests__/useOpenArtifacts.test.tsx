@@ -42,7 +42,7 @@ describe('useOpenArtifacts', () => {
       const { result } = renderHook(useHarness, { wrapper })
       expect(result.current.result.artifacts).toEqual([])
 
-      act(() => result.current.api.registerEditor('/a.md', editor))
+      act(() => result.current.api.store.mount('/a.md', editor))
       act(() => {
         createProposal({
           editor,
@@ -73,8 +73,8 @@ describe('useOpenArtifacts', () => {
     try {
       const { result } = renderHook(useHarness, { wrapper })
       act(() => {
-        result.current.api.registerEditor('/a.md', a)
-        result.current.api.registerEditor('/b.md', b)
+        result.current.api.store.mount('/a.md', a)
+        result.current.api.store.mount('/b.md', b)
       })
       act(() => {
         createAnnotation({ editor: a, annotation: ANNOTATION })

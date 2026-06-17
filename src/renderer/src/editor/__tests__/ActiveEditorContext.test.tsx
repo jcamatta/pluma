@@ -1,5 +1,6 @@
 // ActiveEditorContext shares the live editor across columns: the provider starts empty, exposes whatever
-// EditorController registers, and clears on deregister; reading it outside a provider is a usage error.
+// EditorController registers as active, and owns the open-editors store readers subscribe to; reading it
+// outside a provider is a usage error.
 
 import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
@@ -30,20 +31,20 @@ describe('ActiveEditorContext', () => {
     }
   })
 
-  it('tracks open-file editors by path and drops one on unregister', () => {
+  it('owns the open-editors store, recording mounts and removals in its snapshot', () => {
     const a = createTestEditor()
     const b = createTestEditor()
     try {
       const { result } = renderHook(useActiveEditor, { wrapper })
       act(() => {
-        result.current.registerEditor('/a.md', a)
-        result.current.registerEditor('/b.md', b)
+        result.current.store.mount('/a.md', a)
+        result.current.store.mount('/b.md', b)
       })
-      expect([...result.current.editors.keys()]).toEqual(['/a.md', '/b.md'])
-      expect(result.current.editors.get('/a.md')).toBe(a)
+      expect([...result.current.store.getSnapshot().keys()]).toEqual(['/a.md', '/b.md'])
+      expect(result.current.store.getSnapshot().get('/a.md')?.editor).toBe(a)
 
-      act(() => result.current.unregisterEditor('/a.md'))
-      expect([...result.current.editors.keys()]).toEqual(['/b.md'])
+      act(() => result.current.store.remove('/a.md'))
+      expect([...result.current.store.getSnapshot().keys()]).toEqual(['/b.md'])
     } finally {
       a.destroy()
       b.destroy()

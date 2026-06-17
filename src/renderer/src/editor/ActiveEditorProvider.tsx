@@ -1,11 +1,13 @@
-// Holds the active editor and the map of open-file editors in state and supplies them through
-// ActiveEditorContext. Mounted in the app shell wrapping both the editor column and the rail, so the
-// rail can reach the same editors the user edits. The callbacks are stable; the value identity changes
-// only when the active editor or the open-editors map changes.
+// Holds the active editor and owns the one OpenEditorsStore, supplying both through ActiveEditorContext.
+// Mounted in the app shell wrapping both the editor column and the rail, so the rail can reach the same
+// editors the user edits. The store is created once for the provider's lifetime; readers subscribe to its
+// live snapshot via useOpenEditors, so opening or closing a file no longer re-renders the whole subtree —
+// only the value identity (active editor / store) gates this provider's re-render.
 
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import type { Editor } from '@tiptap/core'
 import { ActiveEditorContext } from './ActiveEditorContext'
+import { createOpenEditorsStore } from './open-editors-store'
 
 interface ActiveEditorProviderProps {
   readonly children: ReactNode
@@ -13,22 +15,10 @@ interface ActiveEditorProviderProps {
 
 function ActiveEditorProvider({ children }: ActiveEditorProviderProps): React.JSX.Element {
   const [editor, setEditor] = useState<Editor | null>(null)
-  const [editors, setEditors] = useState<ReadonlyMap<string, Editor>>(new Map())
   const register = useCallback((next: Editor | null) => setEditor(next), [])
-  const registerEditor = useCallback((path: string, next: Editor) => {
-    setEditors((current) => new Map(current).set(path, next))
-  }, [])
-  const unregisterEditor = useCallback((path: string) => {
-    setEditors((current) => {
-      const next = new Map(current)
-      next.delete(path)
-      return next
-    })
-  }, [])
-  const value = useMemo(
-    () => ({ editor, register, editors, registerEditor, unregisterEditor }),
-    [editor, register, editors, registerEditor, unregisterEditor]
-  )
+  // Lazy initializer so the store is created exactly once and never recreated on re-render.
+  const [store] = useState(createOpenEditorsStore)
+  const value = useMemo(() => ({ editor, register, store }), [editor, register, store])
 
   return <ActiveEditorContext.Provider value={value}>{children}</ActiveEditorContext.Provider>
 }

@@ -40,7 +40,7 @@ describe('useReviewTab', () => {
       const { result } = renderHook(useHarness, { wrapper })
       expect(result.current.review.reviewCount).toBe(0)
 
-      act(() => result.current.api.registerEditor('/a.md', editor))
+      act(() => result.current.api.store.mount('/a.md', editor))
       act(() => {
         createProposal({
           editor,
