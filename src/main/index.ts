@@ -5,6 +5,7 @@ import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
 import * as Scope from 'effect/Scope'
 import icon from '../../resources/icon.png?asset'
+import { installApplicationMenu } from './menu'
 import { registerAgent, registerIpc, registerWatch } from './ipc/register'
 import { mainRuntime } from './runtime/main-runtime'
 
@@ -56,6 +57,8 @@ function createWindow(): BrowserWindow {
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
+
+  installApplicationMenu()
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
