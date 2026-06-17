@@ -91,6 +91,46 @@ export const domainNoSharedImports = {
   }
 }
 
+// The renderer must not reach across the component tree from `document` — querySelector(All) or
+// getElementById — to find and drive another component's DOM. That couples the caller to incidental
+// markup (often an e2e hook), with no type-safety, and breaks silently when the markup changes. To drive
+// a sibling component imperatively, register a handle through a context and call it — see
+// ComposerFocusContext / ActiveEditorContext. Two exceptions: tests, which legitimately query the
+// rendered DOM to assert on it, and main.tsx, which getElementById's the React mount root. Untouched
+// either way: element-scoped queries (`container.querySelector`, `editor.view.dom.querySelector`), whose
+// object is not `document`.
+export const rendererNoDomTreeReaching = {
+  files: ['src/renderer/**/*.{ts,tsx}'],
+  ignores: [
+    'src/renderer/**/__tests__/**',
+    'src/renderer/**/*.test.{ts,tsx}',
+    'src/renderer/**/main.tsx'
+  ],
+  rules: {
+    'no-restricted-properties': [
+      'error',
+      {
+        object: 'document',
+        property: 'querySelector',
+        message:
+          'Do not reach across the component tree with document.querySelector. Register an imperative handle through a context (e.g. ComposerFocusContext, ActiveEditorContext) and call it.'
+      },
+      {
+        object: 'document',
+        property: 'querySelectorAll',
+        message:
+          'Do not reach across the component tree with document.querySelectorAll. Register an imperative handle through a context (e.g. ComposerFocusContext, ActiveEditorContext) and call it.'
+      },
+      {
+        object: 'document',
+        property: 'getElementById',
+        message:
+          'Do not look up elements by id with document.getElementById in the renderer. Register an imperative handle through a context (e.g. ComposerFocusContext, ActiveEditorContext) and call it. The only exception, the React mount root, lives in main.tsx.'
+      }
+    ]
+  }
+}
+
 // Views are pure layout: no hooks (no use* calls) and no direct IPC. A view that needs data must
 // receive it through props from its controller.
 export const views = {
