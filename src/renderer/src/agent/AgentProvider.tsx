@@ -11,6 +11,7 @@ import { ThreadControlsContext, type ThreadControls } from './ThreadControlsCont
 import { useToolRegistry } from './AgentToolsContext'
 import { useAgentApprovals } from './AgentApprovalsContext'
 import { createApiAgent } from './adapters/create-api-agent'
+import { windowApi } from './adapters/window-api'
 import { useToolBridge } from './useToolBridge'
 
 interface AgentProviderProps {
@@ -35,7 +36,7 @@ export function AgentProvider({ cwd, children }: AgentProviderProps): React.JSX.
     agent.setCwd(cwd)
   }, [agent, cwd])
 
-  useToolBridge({ registry, requestApproval })
+  useToolBridge({ registry, requestApproval }, windowApi())
 
   return (
     <AgentContext.Provider value={agent}>
