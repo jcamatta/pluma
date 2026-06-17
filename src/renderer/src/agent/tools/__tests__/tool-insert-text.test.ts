@@ -19,7 +19,7 @@ function acceptStaged(editor: Editor): void {
 describe('insertAt start', () => {
   it('drafts paragraphs into an empty doc with no stray empty paragraph', () => {
     withEditor('', (editor) => {
-      const result = insertAt(editor, { position: 'start', text: 'first\n\nsecond' })
+      const result = insertAt({ editor, position: 'start', text: 'first\n\nsecond' })
       expect(result.ok).toBe(true)
 
       acceptStaged(editor)
@@ -31,7 +31,7 @@ describe('insertAt start', () => {
 
   it('prepends drafted blocks before existing content', () => {
     withEditor('original', (editor) => {
-      const result = insertAt(editor, { position: 'start', text: 'intro' })
+      const result = insertAt({ editor, position: 'start', text: 'intro' })
       expect(result.ok).toBe(true)
 
       acceptStaged(editor)
@@ -44,7 +44,7 @@ describe('insertAt start', () => {
 describe('insertAt end', () => {
   it('appends drafted blocks after existing content', () => {
     withEditor('original', (editor) => {
-      const result = insertAt(editor, { position: 'end', text: 'tail' })
+      const result = insertAt({ editor, position: 'end', text: 'tail' })
       expect(result.ok).toBe(true)
 
       acceptStaged(editor)
@@ -58,7 +58,7 @@ describe('insertAt end', () => {
 describe('insert after', () => {
   it('places the new block after the anchor block, not splitting it', () => {
     withEditor('alpha\n\nbeta', (editor) => {
-      const result = insert(editor, { mode: 'after', anchor: 'alpha', text: 'middle' })
+      const result = insert({ editor, mode: 'after', anchor: 'alpha', text: 'middle' })
       expect(result.ok).toBe(true)
 
       acceptStaged(editor)
@@ -71,14 +71,14 @@ describe('insert after', () => {
 
   it('fails not_found when the anchor is absent', () => {
     withEditor('alpha', (editor) => {
-      const result = insert(editor, { mode: 'after', anchor: 'missing', text: 'x' })
+      const result = insert({ editor, mode: 'after', anchor: 'missing', text: 'x' })
       expect(result).toEqual({ ok: false, error: 'not_found' })
     })
   })
 
   it('fails ambiguous when the anchor occurs more than once', () => {
     withEditor('the cat sat on the mat', (editor) => {
-      const result = insert(editor, { mode: 'after', anchor: 'the', text: 'x' })
+      const result = insert({ editor, mode: 'after', anchor: 'the', text: 'x' })
       if (result.ok) return expect.fail('expected failure')
       expect(result.error.startsWith('ambiguous\n')).toBe(true)
     })
@@ -88,7 +88,7 @@ describe('insert after', () => {
 describe('insert before', () => {
   it('places the new block before the anchor block, not splitting it', () => {
     withEditor('alpha\n\nbeta', (editor) => {
-      const result = insert(editor, { mode: 'before', anchor: 'beta', text: 'middle' })
+      const result = insert({ editor, mode: 'before', anchor: 'beta', text: 'middle' })
       expect(result.ok).toBe(true)
 
       acceptStaged(editor)
@@ -101,14 +101,14 @@ describe('insert before', () => {
 
   it('fails not_found when the anchor is absent', () => {
     withEditor('alpha', (editor) => {
-      const result = insert(editor, { mode: 'before', anchor: 'missing', text: 'x' })
+      const result = insert({ editor, mode: 'before', anchor: 'missing', text: 'x' })
       expect(result).toEqual({ ok: false, error: 'not_found' })
     })
   })
 
   it('fails ambiguous when the anchor occurs more than once', () => {
     withEditor('the cat sat on the mat', (editor) => {
-      const result = insert(editor, { mode: 'before', anchor: 'the', text: 'x' })
+      const result = insert({ editor, mode: 'before', anchor: 'the', text: 'x' })
       if (result.ok) return expect.fail('expected failure')
       expect(result.error.startsWith('ambiguous\n')).toBe(true)
     })

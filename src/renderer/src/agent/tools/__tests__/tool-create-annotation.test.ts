@@ -4,12 +4,13 @@
 import { describe, expect, it } from 'vitest'
 import { getAnnotations } from '../../../editor/extensions/annotations'
 import { withEditor } from '../../../editor/extensions/__tests__/editor-test-harness'
-import { createAnnotationTool } from '../tool-create-annotation'
+import { createAnnotation } from '../tool-create-annotation'
 
-describe('createAnnotationTool', () => {
+describe('createAnnotation', () => {
   it('annotates the resolved passage and defaults severity to warning', () => {
     withEditor('hello world', (editor) => {
-      const result = createAnnotationTool(editor, {
+      const result = createAnnotation({
+        editor,
         text: 'world',
         label: 'word choice',
         description: 'consider a stronger noun'
@@ -25,7 +26,8 @@ describe('createAnnotationTool', () => {
 
   it('honors an explicit severity', () => {
     withEditor('hello world', (editor) => {
-      const result = createAnnotationTool(editor, {
+      const result = createAnnotation({
+        editor,
         text: 'world',
         label: 'typo',
         description: 'fix this',
@@ -39,14 +41,14 @@ describe('createAnnotationTool', () => {
 
   it('fails not_found when the text is absent', () => {
     withEditor('hello world', (editor) => {
-      const result = createAnnotationTool(editor, { text: 'missing', label: 'x', description: 'y' })
+      const result = createAnnotation({ editor, text: 'missing', label: 'x', description: 'y' })
       expect(result).toEqual({ ok: false, error: 'not_found' })
     })
   })
 
   it('fails ambiguous when the text occurs more than once', () => {
     withEditor('the cat sat on the mat', (editor) => {
-      const result = createAnnotationTool(editor, { text: 'the', label: 'x', description: 'y' })
+      const result = createAnnotation({ editor, text: 'the', label: 'x', description: 'y' })
       if (result.ok) return expect.fail('expected failure')
       expect(result.error.startsWith('ambiguous\n')).toBe(true)
     })

@@ -19,12 +19,14 @@ import { createProposal } from '../../editor/extensions/proposals'
 import { resolveAnchor } from './resolve-anchor'
 import type { AgentToolResult } from './types'
 
-interface InsertAtArgs {
+interface InsertAtInput {
+  readonly editor: Editor
   readonly position: 'start' | 'end'
   readonly text: string
 }
 
-interface InsertArgs {
+interface InsertInput {
+  readonly editor: Editor
   readonly mode: 'before' | 'after'
   readonly anchor: string
   readonly text: string
@@ -75,8 +77,8 @@ function stageInsertion(editor: Editor, { point, text }: StagedInsertion): Agent
   }
 }
 
-function insertAt(editor: Editor, args: InsertAtArgs): AgentToolResult {
-  return stageInsertion(editor, { point: insertAtPoint(editor, args.position), text: args.text })
+function insertAt({ editor, position, text }: InsertAtInput): AgentToolResult {
+  return stageInsertion(editor, { point: insertAtPoint(editor, position), text })
 }
 
 interface AnchorBoundary {
@@ -95,15 +97,16 @@ function anchorBoundary(editor: Editor, { mode, span }: AnchorBoundary): number 
   return $from.before($from.depth)
 }
 
-function insert(editor: Editor, args: InsertArgs): AgentToolResult {
-  const resolved = resolveAnchor(editor, args.anchor)
+function insert({ editor, mode, anchor, text }: InsertInput): AgentToolResult {
+  const resolved = resolveAnchor(editor, anchor)
   if (!resolved.ok) return { ok: false, error: resolved.error }
 
   const pos = anchorBoundary(editor, {
-    mode: args.mode,
+    mode,
     span: { from: resolved.from, to: resolved.to }
   })
-  return stageInsertion(editor, { point: { from: pos, to: pos }, text: args.text })
+  return stageInsertion(editor, { point: { from: pos, to: pos }, text })
 }
 
 export { insertAt, insert }
+export type { InsertAtInput, InsertInput }

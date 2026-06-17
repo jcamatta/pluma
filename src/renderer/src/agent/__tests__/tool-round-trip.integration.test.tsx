@@ -43,7 +43,7 @@ function editorRegistry(editor: Editor): ToolRegistry {
             args,
             proposeEditTool.name
           )
-          return proposeEdit(editor, args)
+          return proposeEdit({ editor, passage: args.passage, text: args.text })
         }
       }
     ]
