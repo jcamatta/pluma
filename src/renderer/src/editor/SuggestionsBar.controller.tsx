@@ -30,7 +30,7 @@ function SuggestionsBarController({
   const reduceMotion = useReducedMotion() ?? false
   const { items, pendingCount } = useEditorSuggestions(editor)
   const visible = useSuggestionsVisible(editor)
-  const [listOpen, setListOpen] = useState(false)
+  const [open, setOpen] = useState(false)
   const listButtonRef = useRef<HTMLButtonElement>(null)
 
   const onToggleVisible = useCallback(
@@ -38,11 +38,11 @@ function SuggestionsBarController({
     [editor, visible]
   )
 
-  const onOpenList = useCallback(() => setListOpen((open) => !open), [])
+  const onOpenList = useCallback(() => setOpen((prev) => !prev), [])
 
   const onJump = useCallback(
     (item: Suggestion) => {
-      setListOpen(false)
+      setOpen(false)
       setSuggestionsVisible({ editor, visible: true })
       setActiveSuggestion({ editor, id: item.id })
       reveal(editor, item.from)
@@ -61,7 +61,7 @@ function SuggestionsBarController({
         visible={visible}
         reduceMotion={reduceMotion}
         listButtonRef={listButtonRef}
-        listOpen={listOpen}
+        open={open}
         labels={{
           suggestions: t('editor.suggestionsBar.suggestions'),
           toReview: t('editor.suggestionsBar.toReview', { count: pendingCount }),
@@ -74,8 +74,8 @@ function SuggestionsBarController({
         onOpenList={onOpenList}
       />
       <SuggestionsList
-        open={listOpen}
-        onOpenChange={setListOpen}
+        open={open}
+        onOpenChange={setOpen}
         anchor={listButtonRef}
         items={items}
         reduceMotion={reduceMotion}
