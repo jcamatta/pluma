@@ -157,13 +157,16 @@ Eight files — the review caught that `ActivityLabels` is constructed in four t
   shows the sign-in title and its remedy line, then send a second message and assert it fails the same
   way rather than going stale.
 
-The lever is verified from Node: with an empty `CLAUDE_CONFIG_DIR` the SDK returns
-`error: 'authentication_failed'` ("Not logged in · Please run /login"), without touching the user's real
-credentials and without needing a valid account. **Confirm it holds for the launched Electron app on
-Windows before writing the spec** — if credentials resolve from `%USERPROFILE%` or the OS store
-regardless, or the CLI prompts instead of failing fast, this step needs a different lever. Bound the spec
-with an explicit `test.setTimeout` far below the 180s the other agent specs use: this failure should
-land in seconds, and a slow run means the lever isn't working.
+The lever is **verified inside an Electron main process on Windows**: with an empty `CLAUDE_CONFIG_DIR`
+and the three auth env keys cleared, the SDK returns `error: 'authentication_failed'` with the text
+"Not logged in · Please run /login", against a control run in the ambient environment that fails with a
+different message ("401 OAuth access token has expired"). The differing messages prove the SDK really is
+reading the empty config dir rather than `~/.claude`. It fails within seconds and never prompts.
+
+Not proven: that the lever overrides *valid* credentials — this machine has none right now
+(the token behind the original bug report is still expired). Bound the spec with an explicit
+`test.setTimeout` far below the 180s the other agent specs use; a slow run means the lever stopped
+working.
 
 No new manifest id — no new UI region and no new IPC channel, so the spec claims the existing
 `feature:rail` tag.
