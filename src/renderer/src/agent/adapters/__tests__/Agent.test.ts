@@ -6,6 +6,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { EventType, type BaseEvent } from '@ag-ui/core'
 import type { RunAgentInput } from '@ag-ui/client'
+import { AgentRunError } from '../../agent-run-error'
 import { Agent, type StartRunResult } from '../Agent'
 
 class TestAgent extends Agent {
@@ -74,6 +75,29 @@ describe('Agent.run', () => {
     expect(next).not.toHaveBeenCalled()
   })
 
+  it('errors with the failure code the RUN_ERROR carries', () => {
+    const agent = new TestAgent()
+    const errors: unknown[] = []
+
+    agent.run(input).subscribe({ next: () => undefined, error: (e: unknown) => errors.push(e) })
+    agent.emit({ type: EventType.RUN_ERROR, message: 'boom', code: 'authentication' })
+
+    const [error] = errors
+    expect(error).toBeInstanceOf(AgentRunError)
+    expect(error instanceof AgentRunError ? error.failure : null).toBe('authentication')
+  })
+
+  it('errors as a generic failure when the RUN_ERROR carries no code', () => {
+    const agent = new TestAgent()
+    const errors: unknown[] = []
+
+    agent.run(input).subscribe({ next: () => undefined, error: (e: unknown) => errors.push(e) })
+    agent.emit({ type: EventType.RUN_ERROR, message: 'boom' })
+
+    const [error] = errors
+    expect(error instanceof AgentRunError ? error.failure : null).toBe('generic')
+  })
+
   it('detaches the listener on unsubscribe', () => {
     const agent = new TestAgent()
 
@@ -125,5 +149,25 @@ describe('Agent.run', () => {
 
     expect(() => agent.abortRun()).not.toThrow()
     expect(agent.aborted).not.toHaveBeenCalled()
+  })
+})
+
+// The failure code only reaches the rail if AG-UI hands our Error object to onRunFailed unchanged.
+// Subscribing to run() directly would skip that third-party hop, so this drives the real runAgent pipe.
+describe('Agent through AG-UI runAgent', () => {
+  it('delivers the failure code to onRunFailed as an AgentRunError', async () => {
+    const agent = new TestAgent()
+    const errors: unknown[] = []
+
+    const run = agent.runAgent({}, { onRunFailed: ({ error }) => void errors.push(error) })
+    await vi.waitFor(() => expect(agent.listeners.size).toBe(1))
+    agent.emit({ type: EventType.RUN_STARTED, threadId: 'sdk-session-1', runId: 'run-1' })
+    agent.emit({ type: EventType.RUN_ERROR, message: 'boom', code: 'authentication' })
+    // runAgent rethrows the failure once its subscribers have seen it.
+    await expect(run).rejects.toBeInstanceOf(AgentRunError)
+
+    const [error] = errors
+    expect(error).toBeInstanceOf(AgentRunError)
+    expect(error instanceof AgentRunError ? error.failure : null).toBe('authentication')
   })
 })
