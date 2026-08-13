@@ -138,13 +138,20 @@
     },
     "thinking": "Pensando…",
     "worked": "Listo",
-    "runFailed": "La ejecución falló",
     "step_one": "{{count}} paso",
     "step_other": "{{count}} pasos",
     "calling": "Llamando a {{tool}}…",
     "done": "{{tool}}",
     "toolFailed": "{{tool}} falló",
-    "runError": "La ejecución falló: {{message}}",
+    "runError": {
+      "authentication": {
+        "title": "Sesión caducada",
+        "remedy": "Vuelve a iniciar sesión en Claude desde la terminal y reinicia Pluma."
+      },
+      "generic": {
+        "title": "La ejecución falló"
+      }
+    },
     "approval": {
       "createFile": "Crear archivo",
       "renameFile": "Renombrar archivo",

@@ -12,7 +12,9 @@ import { LogRow } from './LogRow.view'
 interface ActivityLabels {
   readonly thinking: string
   readonly worked: string
-  readonly runFailed: string
+  // How the run failed: the header title, plus an optional line telling the writer what to do about it
+  // (only some failures have a remedy the app can name).
+  readonly runFailed: { readonly title: string; readonly remedy?: string }
   // Pluralizes the step count: step(n) → "1 step" / "3 steps".
   readonly step: (count: number) => string
 }
@@ -101,8 +103,15 @@ function headerLabel(
   labels: ActivityLabels
 ): string {
   if (run.status === 'working') return run.log.at(-1)?.text ?? labels.thinking
-  if (run.status === 'error') return labels.runFailed
+  if (run.status === 'error') return labels.runFailed.title
   return labels.worked
+}
+
+// The remedy belongs to the failure, not to the timeline, so it sits under the header and stays visible
+// while the steps are collapsed.
+function Remedy({ text }: { readonly text: string | undefined }): React.JSX.Element | null {
+  if (text === undefined) return null
+  return <p className="pl-5 text-xs text-text-muted">{text}</p>
 }
 
 export function ActivityView({
@@ -122,6 +131,7 @@ export function ActivityView({
         expanded={expanded}
         onToggleExpand={onToggleExpand}
       />
+      {status === 'error' && <Remedy text={labels.runFailed.remedy} />}
       {expanded && <Timeline log={log} />}
     </>
   )

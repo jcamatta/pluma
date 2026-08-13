@@ -240,7 +240,7 @@ describe('ConversationRailController run lifecycle', () => {
       agent.setRunning(false)
     })
 
-    expect(screen.getByText(i18n.t('rail.runFailed'))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t('rail.runError.generic.title'))).toBeInTheDocument()
   })
 
   it('scrolls the sent message into view, but not on assistant streaming', () => {

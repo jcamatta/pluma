@@ -10,6 +10,7 @@
 import type { TFunction } from 'i18next'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { AgentRunFailure } from '../../../shared/ipc/ipc-event-contract/agent-run-failure'
 import { useAgent } from '../agent/useAgent'
 import { ArtifactsPanelController } from '../artifacts/ArtifactsPanel.controller'
 import { ContextMeterController } from './ContextMeter.controller'
@@ -51,11 +52,23 @@ function railLabels(t: TFunction): RailLabels {
   }
 }
 
-function activityLabels(t: TFunction): ActivityLabels {
+// An expired sign-in is the one failure the app can tell the writer how to fix; everything else is
+// named but has no remedy we could print.
+function runFailedLabels(t: TFunction, failure: AgentRunFailure | null): ActivityLabels['runFailed'] {
+  if (failure === 'authentication') {
+    return {
+      title: t('rail.runError.authentication.title'),
+      remedy: t('rail.runError.authentication.remedy')
+    }
+  }
+  return { title: t('rail.runError.generic.title') }
+}
+
+function activityLabels(t: TFunction, failure: AgentRunFailure | null): ActivityLabels {
   return {
     thinking: t('rail.thinking'),
     worked: t('rail.worked'),
-    runFailed: t('rail.runFailed'),
+    runFailed: runFailedLabels(t, failure),
     step: (count) => t('rail.step', { count })
   }
 }
@@ -121,7 +134,7 @@ export function ChatRailController({
     >
       <ConversationView
         rows={convo.rows}
-        labels={activityLabels(t)}
+        labels={activityLabels(t, convo.failure)}
         overrides={overrides}
         onSetExpanded={(id, expanded) => setOverrides((prev) => new Map(prev).set(id, expanded))}
         scrollRefId={convo.lastUserId}

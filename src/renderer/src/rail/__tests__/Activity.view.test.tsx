@@ -9,7 +9,7 @@ import { ActivityView } from '../Activity.view'
 const labels = {
   thinking: 'Thinking…',
   worked: 'Worked',
-  runFailed: 'Run failed',
+  runFailed: { title: 'Sign-in expired', remedy: 'Sign in to Claude again.' },
   step: (count: number) => `${count} ${count === 1 ? 'step' : 'steps'}`
 }
 
@@ -71,11 +71,26 @@ describe('ActivityView', () => {
     expect(screen.queryByText('· 1 step')).not.toBeInTheDocument()
   })
 
-  it('when errored: shows "Run failed", not "Worked"', () => {
+  it('when errored: shows the failure title and its remedy, not "Worked"', () => {
     renderActivity(errored)
 
-    expect(screen.getByText('Run failed')).toBeInTheDocument()
+    expect(screen.getByText('Sign-in expired')).toBeInTheDocument()
+    expect(screen.getByText('Sign in to Claude again.')).toBeInTheDocument()
     expect(screen.queryByText('Worked')).not.toBeInTheDocument()
+  })
+
+  it('when errored without a remedy: shows the title alone', () => {
+    renderActivity(errored, { labels: { ...labels, runFailed: { title: 'Run failed' } } })
+
+    expect(screen.getByText('Run failed')).toBeInTheDocument()
+    expect(screen.queryByText('Sign in to Claude again.')).not.toBeInTheDocument()
+  })
+
+  it('while working or when done: shows no remedy line', () => {
+    renderActivity(working)
+    renderActivity(done)
+
+    expect(screen.queryByText('Sign in to Claude again.')).not.toBeInTheDocument()
   })
 
   it('hides the timeline when collapsed', () => {
