@@ -18,10 +18,17 @@ interface RunDeps {
   readonly contextWindow: number
 }
 
-const onQueryError = (deps: RunDeps): Stream.Stream<BaseEvent> =>
+// The thrown error decides no part of the emitted event — an abort still closes as an interrupt and
+// anything else as a failure — but it is the only description of what went wrong, so it is logged
+// rather than dropped.
+const onQueryError = (input: {
+  readonly deps: RunDeps
+  readonly error: unknown
+}): Stream.Stream<BaseEvent> =>
   Stream.unwrap(
-    deps.aborted.pipe(
-      Effect.map((wasAborted) => Stream.make(queryErrorEvent(wasAborted, deps.runId)))
+    Effect.logError('agent query failed', input.error).pipe(
+      Effect.zipRight(input.deps.aborted),
+      Effect.map((wasAborted) => Stream.make(queryErrorEvent(wasAborted, input.deps.runId)))
     )
   )
 
@@ -32,5 +39,5 @@ export const runEventStream = (query: Query, deps: RunDeps): Stream.Stream<BaseE
       stepRunEvent({ runId: deps.runId, contextWindow: deps.contextWindow })
     ),
     Stream.flattenIterables,
-    Stream.catchAll(() => onQueryError(deps))
+    Stream.catchAll((error) => onQueryError({ deps, error }))
   )
