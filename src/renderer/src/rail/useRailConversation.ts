@@ -5,6 +5,7 @@
 // message). No mutation lives here; expand state and submission stay in the controller.
 
 import type { AbstractAgent } from '@ag-ui/client'
+import type { AgentRunFailure } from '../../../shared/ipc/ipc-event-contract/agent-run-failure'
 import { useScrollSentMessageIntoView } from './useScrollSentMessageIntoView'
 import { useRunFailed } from './useRunFailed'
 import { createConversationRows, type Row, type StepLabels } from './conversation-rows'
@@ -16,6 +17,8 @@ interface RailConversation {
   readonly firstUserText: string | null
   readonly lastUserId: string | null
   readonly scrollRef: React.RefObject<HTMLDivElement | null>
+  // How the current run failed, or null while it has not; the controller turns it into a title + remedy.
+  readonly failure: AgentRunFailure | null
 }
 
 function runStatus(working: boolean, failed: boolean): RunStatus {
@@ -31,15 +34,16 @@ const lastUserId = (rows: readonly Row[]): string | null =>
   [...rows].reverse().find((row) => row.kind === 'user')?.id ?? null
 
 function useRailConversation(agent: AbstractAgent, labels: StepLabels): RailConversation {
-  const failed = useRunFailed(agent)
+  const failure = useRunFailed(agent)
   const rows = createConversationRows(labels)(agent.messages)
   const lastId = lastUserId(rows)
   const scrollRef = useScrollSentMessageIntoView(lastId)
   return {
-    rows: applyRunStatus(rows, runStatus(agent.isRunning, failed)),
+    rows: applyRunStatus(rows, runStatus(agent.isRunning, failure !== null)),
     firstUserText: firstUserText(rows),
     lastUserId: lastId,
-    scrollRef
+    scrollRef,
+    failure
   }
 }
 
