@@ -4,6 +4,8 @@
   "description": "An AI-assisted writing app for writers, like VS Code for writing.",
   "main": "./out/main/index.js",
   "author": "jcamatta",
+  "license": "MIT",
+  "repository": "github:jcamatta/pluma",
   "scripts": {
     "prepare": "husky && node scripts/set-husky-hookspath.mjs",
     "format": "prettier --write .",
