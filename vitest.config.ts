@@ -18,6 +18,7 @@ export default defineConfig({
           include: [
             'src/main/**/*.{test,spec}.ts',
             'src/preload/**/*.{test,spec}.ts',
+            'src/shared/**/*.{test,spec}.ts',
             'e2e/**/*.{test,spec}.ts'
           ]
         }

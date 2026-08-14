@@ -44,7 +44,12 @@ describe('stepRunEvent result handling', () => {
     const [, events] = stepRunEvent(deps)(acc, resultMessage('error_during_execution', true))
 
     expect(events).toStrictEqual([
-      { type: EventType.RUN_ERROR, runId: 'run-1', message: 'error_during_execution' }
+      {
+        type: EventType.RUN_ERROR,
+        runId: 'run-1',
+        message: 'error_during_execution',
+        code: 'generic'
+      }
     ])
   })
 
@@ -53,7 +58,64 @@ describe('stepRunEvent result handling', () => {
     const [, events] = stepRunEvent(deps)(acc, resultMessage('success', true))
 
     expect(events).toStrictEqual([
-      { type: EventType.RUN_ERROR, runId: 'run-1', message: 'agent run failed' }
+      { type: EventType.RUN_ERROR, runId: 'run-1', message: 'agent run failed', code: 'generic' }
+    ])
+  })
+})
+
+describe('stepRunEvent failure code', () => {
+  const failedAssistant = (id: string): SDKMessage => {
+    const literal = {
+      type: 'assistant',
+      error: 'authentication_failed',
+      message: { id, usage: { input_tokens: 1 } }
+    }
+    asSdkMessage(literal)
+    return literal
+  }
+
+  it('stamps the reason an assistant message reported onto the failing result', () => {
+    const step = stepRunEvent(deps)
+    const [acc] = step(newRunAccumulator(), failedAssistant('msg_a'))
+    const [, events] = step(acc, resultMessage('success', true))
+
+    expect(events).toStrictEqual([
+      {
+        type: EventType.RUN_ERROR,
+        runId: 'run-1',
+        message: 'agent run failed',
+        code: 'authentication'
+      }
+    ])
+  })
+
+  it('records the reason even when the assistant message repeats an earlier id', () => {
+    const step = stepRunEvent(deps)
+    const [acc1] = step(newRunAccumulator(), failedAssistant('msg_a'))
+    // Parallel tool calls reuse one message id, so this second message takes the duplicate-id path.
+    const [acc2, repeated] = step({ ...acc1, failure: 'generic' }, failedAssistant('msg_a'))
+    const [, events] = step(acc2, resultMessage('success', true))
+
+    expect(repeated).toStrictEqual([])
+    expect(events).toStrictEqual([
+      {
+        type: EventType.RUN_ERROR,
+        runId: 'run-1',
+        message: 'agent run failed',
+        code: 'authentication'
+      }
+    ])
+  })
+
+  it('leaves an assistant message that reported no error on the generic reason', () => {
+    const clean = { type: 'assistant', message: { id: 'msg_a', usage: { input_tokens: 1 } } }
+    asSdkMessage(clean)
+    const step = stepRunEvent(deps)
+    const [acc] = step(newRunAccumulator(), clean)
+
+    expect(acc.failure).toBe('generic')
+    expect(step(acc, resultMessage('success', false))[1]).toStrictEqual([
+      { type: EventType.RUN_FINISHED, threadId: '', runId: 'run-1', outcome: { type: 'success' } }
     ])
   })
 })

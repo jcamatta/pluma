@@ -15,21 +15,26 @@ type LaunchedApp = {
   readonly window: Page
 }
 
+// Per-spec environment tweaks for the launched app. A value of `undefined` REMOVES the key from the
+// inherited environment — a spec that needs the app to run without some ambient credential cannot get
+// there by adding keys, only by dropping them.
+type EnvOverrides = Readonly<Record<string, string | undefined>>
+
 // Electron must launch as a real desktop app, not as Node. Some shells/IDEs export
 // ELECTRON_RUN_AS_NODE=1, which makes electron.exe run the entry as a plain Node script (no
 // electron.app, and Chromium flags like --remote-debugging-port are rejected). Build the launch env
 // from process.env with that key dropped (and undefined values filtered out, since launch wants only
 // string values) so the launched app is the real GUI process regardless of the ambient environment.
-const guiEnv = (): Record<string, string> => {
-  const entries = Object.entries(process.env).filter(
+const guiEnv = (overrides: EnvOverrides): Record<string, string> => {
+  const entries = Object.entries({ ...process.env, ...overrides }).filter(
     (entry): entry is [string, string] =>
       entry[0] !== 'ELECTRON_RUN_AS_NODE' && entry[1] !== undefined
   )
   return Object.fromEntries(entries)
 }
 
-const launchApp = async (): Promise<LaunchedApp> => {
-  const app = await electron.launch({ args: [MAIN_ENTRY], env: guiEnv() })
+const launchApp = async (overrides: EnvOverrides = {}): Promise<LaunchedApp> => {
+  const app = await electron.launch({ args: [MAIN_ENTRY], env: guiEnv(overrides) })
   const window = await app.firstWindow()
   await window.waitForLoadState('domcontentloaded')
   return { app, window }

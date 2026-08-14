@@ -9,9 +9,11 @@ import type {
   SDKMessage,
   SDKResultMessage
 } from '@anthropic-ai/claude-agent-sdk'
+import type { RunFailure } from '../../../../application/agent/data/run-failure'
 import type { OpenBlock, StreamEvent } from '../data/sdk-types'
 import { toContextUsage } from './to-context-usage'
 import { toolResultEvents } from './tool-result-events'
+import { toRunFailure } from './to-run-failure'
 import { transformStreamEvent } from './transform-stream-event'
 
 export interface RunAccumulator {
@@ -25,6 +27,9 @@ export interface RunAccumulator {
   // calls emit several assistant messages sharing one id with identical usage; tracking the id lets the
   // fold skip the duplicates so the meter is not re-emitted for the same figure.
   readonly lastUsageMessageId: string
+  // Why the run failed, as last reported by an assistant message. The SDK names the reason there and
+  // not on the result message, so it has to be remembered until the result closes the run.
+  readonly failure: RunFailure
 }
 
 // What the fold needs for the whole run: the runId stamped on every event, and the model's context
@@ -38,7 +43,8 @@ const newRunAccumulator = (): RunAccumulator => ({
   threadId: '',
   blocks: new Map(),
   currentMessageId: '',
-  lastUsageMessageId: ''
+  lastUsageMessageId: '',
+  failure: 'generic'
 })
 
 // A `message_start` opens a new assistant message: adopt its id so later text blocks key off it. Every
@@ -57,14 +63,15 @@ const onStreamEvent = (
 // The closing event for a result message. A result can close the run as a failure (e.g. resuming a
 // session the SDK never opened): the SDK sets `is_error` and reports the reason in `subtype`. Surface
 // that as RUN_ERROR so the rail shows the failure instead of a misleading "Worked"; only a clean result
-// finishes the run successfully.
+// finishes the run successfully. The recorded failure is what the UI branches on: an expired sign-in
+// arrives as `is_error` with `subtype: 'success'`, so `subtype` alone cannot tell the reason.
 const resultEvent = (
   message: SDKResultMessage,
   run: RunAccumulator & { runId: string }
 ): BaseEvent => {
   if (message.is_error) {
     const reason = message.subtype === 'success' ? 'agent run failed' : message.subtype
-    return { type: EventType.RUN_ERROR, runId: run.runId, message: reason }
+    return { type: EventType.RUN_ERROR, runId: run.runId, message: reason, code: run.failure }
   }
   return {
     type: EventType.RUN_FINISHED,
@@ -78,15 +85,21 @@ const resultEvent = (
 // renderer's context meter reflects how full the window is, skipping the duplicate ids parallel tool
 // calls produce. The snapshot replaces `agent.state` wholesale, which is fine: contextUsage is the only
 // key we keep there.
+//
+// Any failure the message reports is recorded before the duplicate-id guard: that guard returns the
+// accumulator untouched, and parallel tool calls reuse a message id, so recording after it would drop
+// the reason for the failure that follows.
 const onAssistant = (
   acc: RunAccumulator,
   input: { readonly message: SDKAssistantMessage; readonly contextWindow: number }
 ): readonly [RunAccumulator, readonly BaseEvent[]] => {
+  const error = input.message.error
+  const seen = error ? { ...acc, failure: toRunFailure(error) } : acc
   const id = input.message.message.id
-  if (id === acc.lastUsageMessageId) return [acc, []]
+  if (id === seen.lastUsageMessageId) return [seen, []]
   const contextUsage = toContextUsage(input.message.message.usage, input.contextWindow)
   return [
-    { ...acc, lastUsageMessageId: id },
+    { ...seen, lastUsageMessageId: id },
     [{ type: EventType.STATE_SNAPSHOT, snapshot: { contextUsage } }]
   ]
 }

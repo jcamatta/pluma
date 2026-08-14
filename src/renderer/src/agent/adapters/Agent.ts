@@ -18,6 +18,7 @@ import type { AgentContextUsage } from '../../../../shared/agent/context-usage'
 import { AGENT_ABORT_CHANNEL, AGENT_RUN_CHANNEL } from '../../../../shared/ipc/ipc-contract/agent'
 import { AGENT_EVENT_CHANNEL } from '../../../../shared/ipc/ipc-event-contract/agent'
 import type { WindowApi } from '../../../../shared/ipc/window-api'
+import { AgentRunError } from '../agent-run-error'
 import { routeAgentEvent } from '../route-agent-event'
 import { toRunInput } from '../to-run-input'
 
@@ -173,7 +174,7 @@ function emitEvent(subscriber: Subscriber<BaseEvent>, event: BaseEvent): boolean
     return false
   }
   if (outcome.kind === 'finish') subscriber.complete()
-  else subscriber.error(new Error(outcome.message))
+  else subscriber.error(new AgentRunError(outcome.message, outcome.failure))
   return true
 }
 

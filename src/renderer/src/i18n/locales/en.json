@@ -138,13 +138,20 @@
     },
     "thinking": "Thinking…",
     "worked": "Worked",
-    "runFailed": "Run failed",
     "step_one": "{{count}} step",
     "step_other": "{{count}} steps",
     "calling": "Calling {{tool}}…",
     "done": "{{tool}}",
     "toolFailed": "{{tool}} failed",
-    "runError": "Run failed: {{message}}",
+    "runError": {
+      "authentication": {
+        "title": "Sign-in expired",
+        "remedy": "Sign in to Claude again from your terminal, then restart Pluma."
+      },
+      "generic": {
+        "title": "Run failed"
+      }
+    },
     "approval": {
       "createFile": "Create file",
       "renameFile": "Rename file",

@@ -10,7 +10,7 @@ import { AssistantRowView } from '../AssistantRow.view'
 const labels = {
   thinking: 'Thinking…',
   worked: 'Worked',
-  runFailed: 'Run failed',
+  runFailed: { title: 'Run failed' },
   step: (count: number) => `${count} ${count === 1 ? 'step' : 'steps'}`
 }
 
