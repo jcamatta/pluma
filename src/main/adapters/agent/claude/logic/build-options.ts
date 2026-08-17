@@ -31,6 +31,9 @@ interface BuildOptionsInput {
   readonly tools: readonly Tool[]
   readonly backendToolServer?: McpSdkServerConfigWithInstance
   readonly backendTools?: readonly Tool[]
+  // Set only when the app ships its own Claude binary outside the asar; absent everywhere else, so the
+  // SDK keeps its own module resolution.
+  readonly executablePath?: string
 }
 
 // The no-op hook that keeps the streaming-input query open while a suspended tool handler awaits the
@@ -80,7 +83,10 @@ const buildOptions = (input: BuildOptionsInput): ClaudeRunOptions => ({
   effort: input.state?.effort ?? DEFAULT_EFFORT,
   ...toolServerOptions(input),
   ...(input.threadId === undefined ? {} : { resume: input.threadId }),
-  ...(input.cwd === undefined ? {} : { cwd: input.cwd })
+  ...(input.cwd === undefined ? {} : { cwd: input.cwd }),
+  ...(input.executablePath === undefined
+    ? {}
+    : { pathToClaudeCodeExecutable: input.executablePath })
 })
 
 export {

@@ -11,6 +11,10 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+  # The Claude binary must live outside the asar: the OS cannot execute a path inside the archive, so
+  # the SDK's spawn fails and every agent run dies before it starts. npm installs only the host's
+  # optional dependency, so this glob unpacks exactly one package per build.
+  - node_modules/@anthropic-ai/claude-agent-sdk-*/**
 win:
   executableName: pluma
 nsis:

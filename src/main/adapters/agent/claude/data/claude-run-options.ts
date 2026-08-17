@@ -18,4 +18,5 @@ export type ClaudeRunOptions = Pick<
   | 'mcpServers'
   | 'hooks'
   | 'systemPrompt'
+  | 'pathToClaudeCodeExecutable'
 >

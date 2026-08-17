@@ -23,6 +23,7 @@ import {
 } from '../../../../application/agent/port/runtime-agent.port'
 import { buildOptions, DEFAULT_MODEL } from '../logic/build-options'
 import { contextWindowForModel } from '../logic/context-window'
+import { packagedClaudeExecutable } from './claude-executable'
 import { buildFrontendToolServer } from './build-frontend-tool-server'
 import { buildBackendToolServer } from './build-backend-tool-server'
 import { backendTools } from '../../tools/backend'
@@ -38,6 +39,10 @@ interface ActiveRun {
 }
 
 type ActiveRef = Ref.Ref<ActiveRun | undefined>
+
+// Resolved once: the app's layout cannot change while it runs, and every run would otherwise repeat the
+// same directory scan.
+const executablePath = packagedClaudeExecutable()
 
 interface RunRequest {
   readonly input: RunAgentInput
@@ -66,7 +71,8 @@ const startRun = (
             toolServer,
             tools: input.tools,
             backendToolServer,
-            backendTools: backend.map((t) => t.spec)
+            backendTools: backend.map((t) => t.spec),
+            executablePath
           })
         }),
       catch: () => new RunAgentFailed({ runId })
