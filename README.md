@@ -1,41 +1,121 @@
 # Pluma
 
-A desktop writing app with an AI collaborator built into the document — like VS Code, but for prose.
+A desktop writing app with an AI collaborator that works inside the document — Electron and React over a
+hexagonal, Effect-based main process.
 
-<!-- TODO: replace with the demo video (GitHub renders an uploaded .mp4 inline — drag it into an issue
-     comment to get a hosted URL, then paste that URL here). -->
+Pluma opens a folder of Markdown files as a workspace. An agent can read those files, propose edits that
+render inline for you to accept or reject, and leave review notes anchored to specific passages. Nothing
+is written to disk without explicit approval.
 
-_Demo video coming soon._
+The app is the vehicle. The reason this repo is worth reading is the engineering underneath it: strict
+architectural boundaries that are enforced by tooling rather than described in a style guide.
 
-<!-- TODO: add 2-3 screenshots. Suggested: the editor with an inline proposal open; the chat rail
-     mid-run with the approval card; the annotations panel. Put files in docs/media/. -->
+## Architecture
 
-## The idea
+### Main process: ports and adapters
 
-Most AI writing tools are a chat window next to your text. You copy a paragraph out, ask for help, and
-paste something back. The document and the conversation never actually meet.
+The main process is hexagonal. Use cases in `src/main/application` depend only on port interfaces and
+know nothing about Electron, the filesystem, or the Claude SDK. The adapters that implement those ports
+live in `src/main/adapters` and are composed in at the edge as Effect layers.
 
-Pluma puts the assistant inside the document. It can read the files in your workspace, see what you have
-selected, and propose changes as inline edits you accept or reject — the same review loop a developer
-gets from an IDE, applied to prose. Nothing is written to your files without you approving it.
+Everything is written in [Effect](https://effect.website): errors are tagged values in the type
+signature rather than thrown exceptions, dependencies are resolved through the context rather than
+imported, and commands are kept separate from queries. Code is organised as data, calculations, and
+actions, with the actions pushed to the boundary.
 
-It is built for people working on something long: a novel, a thesis, documentation, a body of essays.
-The workspace is a folder of Markdown files on your disk. There is no account, no cloud storage, and no
-lock-in — your writing stays in plain files you already own.
+Every value crossing the IPC boundary is a typed `Result`. The renderer cannot receive an exception —
+it receives a success or a tagged failure and has to handle both, checked at compile time.
 
-## Requirements
+### Renderer: the same discipline
 
-- **[Claude Code](https://claude.com/claude-code)**, installed and signed in. Pluma uses it as its agent
-  runtime and inherits your existing authentication — Pluma never asks for an API key. If Claude Code is
-  missing, everything except the assistant still works.
-- **Node.js 20+** and npm, to build from source.
+Components split into a view that renders and a controller that decides. Data access goes through ports
+resolved from a repository context, so hooks depend on interfaces rather than on the preload bridge.
 
-## Install
+Three boundaries are worth calling out because they're enforced rather than encouraged:
 
-<!-- TODO: once the release workflow is set up, replace this section with download links to the
-     GitHub Releases page for Windows, macOS, and Linux. -->
+- Only modules under `adapters/` may reference `window.api`. Everything else goes through a port.
+- No component may reach into the DOM to drive a sibling. Cross-component handles are registered
+  through context instead.
+- Views may not contain business logic; controllers may not contain markup.
 
-Prebuilt installers are not published yet. To run Pluma from source:
+Each of these is a custom ESLint rule in `eslint/`, so a violation fails the build rather than waiting
+for someone to notice it in review.
+
+### The agent integration
+
+The assistant is built on the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript),
+speaking the [AG-UI](https://github.com/ag-ui-protocol/ag-ui) event protocol. Tools are exposed to the
+model as in-process MCP servers — one for tools that act on the editor, one for tools that act on the
+workspace.
+
+The part that took real design work is the human-in-the-loop gate. When the model calls a tool that
+mutates something, the SDK tool handler suspends: its promise stays pending while the call is forwarded
+to the renderer, an approval card is shown, and the user decides. The handler resolves only when the
+answer comes back, and the whole outstanding set is rejected cleanly on abort. The model experiences a
+normal tool call; the user experiences a decision.
+
+## Enforcement
+
+The conventions above are not aspirational. They are configs, and a commit that violates them does not
+land:
+
+| Gate | What it enforces |
+| --- | --- |
+| ESLint (`eslint/`) | Layer boundaries, view/controller split, functional style, no type-safety escape hatches |
+| `type-coverage --strict` | 95% minimum; no `as` casts, no `any` leaking through |
+| Vitest coverage | 80% minimum, plus an audit that every e2e-covered behaviour has a manifest entry |
+| [veto](https://www.npmjs.com/package/@jcamatta/veto) | A semantic reviewer that reads the staged diff against a rule set at every commit |
+| Commit budget | 300 weighted lines, 15 source files; over 30 lines of source must touch a test |
+| Locale parity | Any user-facing string must exist in both `en.json` and `es.json` |
+| Git hooks | `pre-commit` runs size check, lint-staged, veto; `pre-push` runs coverage, type-coverage, build |
+
+`@jcamatta/veto` is a separate tool I wrote and published for this — a doc-blind semantic reviewer that
+catches what a linter structurally cannot.
+
+## How it was built
+
+The repo carries its own development workflow in `.claude/`: specialised agent definitions for backend
+and frontend work, a plan-review agent, an independent change-validator, and skills that sequence a
+change from design through to pull request.
+
+Every change follows the same pipeline — write a plan, get it independently reviewed, implement it in
+small commits split by layer, validate the result against the plan by exercising the real app, then open
+a PR. The commit-size budget exists to keep that loop honest: over 450 commits, none of them a
+thousand-line dump.
+
+## What the app does
+
+A Markdown editor built on TipTap 3 with custom ProseMirror extensions for inline edit proposals,
+passage-anchored annotations, slash commands, and image handling. Bilingual spellcheck flags a word only
+when it is wrong in both English and Spanish, so Spanish prose stops getting underlined in an English
+document.
+
+A workspace file tree that follows changes on disk, multi-file tabs, and a chat rail with streaming
+replies, revisitable conversation threads, and a context-window meter.
+
+Six tools act on open documents — listing them, reading the current selection, proposing an edit,
+inserting text at a position or against an anchor, and annotating a passage. Every edit is a proposal
+the user accepts or rejects.
+
+Five more act on the workspace. The three that mutate it are gated:
+
+| Tool | Gated |
+| --- | --- |
+| `list_folder`, `read_file` | No |
+| `create_file`, `rename_file`, `delete_file` | Yes — explicit approve or reject |
+
+## Stack
+
+Electron, React 19, TypeScript, Vite via electron-vite, packaged with electron-builder. Effect in the
+main process. TipTap 3 on ProseMirror. Tailwind CSS 4, Base UI, Motion, TanStack Query, i18next.
+Vitest and Testing Library for unit and component tests; Playwright driving the real Electron binary
+end to end.
+
+## Running it
+
+Requires Node 20+ and [Claude Code](https://claude.com/claude-code) installed and signed in — Pluma uses
+it as its agent runtime and inherits that authentication, so there is no API key to configure. Without
+it, everything except the assistant still works.
 
 ```bash
 git clone https://github.com/jcamatta/pluma.git
@@ -49,102 +129,19 @@ cd pluma && npm install
 npm run dev
 ```
 
-To produce a packaged build for your platform, use `npm run build:win`, `npm run build:mac`, or
-`npm run build:linux`.
-
-## What you can do
-
-**Write.** A rich Markdown editor built on TipTap — headings, lists, quotes, code blocks, tables of
-content structure, images by drag and drop, and a slash-command menu. Bilingual spellcheck (English and
-Spanish together) flags a word only when it is wrong in both, so Spanish prose stops getting underlined
-in an English document.
-
-**Organize.** Open a folder as a workspace and get a live file tree that follows changes on disk. Create,
-rename, and delete files. Open several documents at once in tabs.
-
-**Collaborate.** A chat rail alongside the editor, with streaming replies, conversation threads you can
-rename and revisit, and a context meter showing how much of the model's window is in use.
-
-**Review.** Every change the assistant wants to make arrives as something you judge, not something that
-already happened. Proposed edits render inline in the document with accept and reject controls.
-Annotations collect in a side panel, each tied to the passage it refers to and tinted by severity.
-
-### What the assistant can do
-
-Six tools act on documents you have open. Each edit is a proposal you accept or reject:
-
-| Tool | What it does |
-| --- | --- |
-| `list_open_files` | See which documents are open and which one you are working in |
-| `get_current_selection` | Read the passage you have selected |
-| `propose_edit` | Suggest replacing an exact passage, shown inline for review |
-| `insert` | Add text before or after a passage you name |
-| `insert_at` | Add text at the start or end of a document |
-| `create_annotation` | Leave a review note on a passage, as info, caution, or issue |
-
-Five more act on the workspace. The three that change files are gated behind an explicit Approve or
-Reject card before they take effect:
-
-| Tool | What it does | Gated |
-| --- | --- | --- |
-| `list_folder` | Browse the workspace tree | No |
-| `read_file` | Read any file, including ones not open | No |
-| `create_file` | Create a new Markdown file | Yes |
-| `rename_file` | Rename a file | Yes |
-| `delete_file` | Delete a file | Yes |
-
-## Built with
-
-**App shell** — Electron, React 19, TypeScript, Vite via electron-vite, packaged with electron-builder.
-
-**Editor** — TipTap 3 on ProseMirror, with custom extensions for annotations, inline edit proposals,
-slash commands, and image handling.
-
-**Main process** — [Effect](https://effect.website) throughout, in a hexagonal architecture.
-
-**Assistant** — the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript),
-speaking the [AG-UI](https://github.com/ag-ui-protocol/ag-ui) event protocol, with tools exposed as
-in-process MCP servers.
-
-**Interface** — Tailwind CSS 4, Base UI primitives, Motion for animation, TanStack Query for server
-state, i18next for English and Spanish.
-
-**Testing** — Vitest with Testing Library for unit and component tests, Playwright driving the real
-Electron app end to end.
-
-## Architecture
-
-The main process is hexagonal — ports and adapters. Use cases in `src/main/application` depend only on
-port interfaces; the adapters that implement them (filesystem, folder watching, the Claude SDK) sit in
-`src/main/adapters` and are swapped in at the edge. Commands and queries are kept separate, errors are
-tagged values rather than thrown exceptions, and everything crossing the IPC boundary is a typed
-`Result` so the renderer handles failure explicitly instead of catching.
-
-The renderer mirrors that shape. Components split into a view that renders and a controller that decides,
-data access goes through ports resolved from a repository context, and only adapter modules are permitted
-to touch the preload bridge — enforced by custom ESLint rules rather than convention.
-
-The repo also carries the workflow that built it: agent definitions and skills in `.claude/`, and a
-semantic pre-commit reviewer configured in `.veto/`. Commits are size-budgeted and every one has to pass
-lint, type coverage, tests, and that reviewer before it lands.
-
-<!-- TODO: consider a docs/architecture.md with a diagram of main / preload / renderer and where the
-     ports sit, linked from here. -->
+Packaged builds: `npm run build:win`, `build:mac`, or `build:linux`.
 
 ## Your data
 
-Your documents are plain Markdown files in a folder you choose. Pluma does not upload them anywhere, and
-there is no account or sync.
-
-When you use the assistant, the content it needs — the passages it reads, your selection, the files it
-opens — is sent to Anthropic through Claude Code, under whatever plan you are signed in with.
-Conversation history is stored locally by Claude Code. Pluma collects no telemetry and makes no network
-requests of its own.
+Your documents are plain Markdown files in a folder you choose. There is no account, no sync, and no
+telemetry. When you use the assistant, the content it reads is sent to Anthropic through Claude Code
+under whatever plan you are signed in with; conversation history is stored locally by Claude Code.
+Pluma makes no network requests of its own.
 
 ## Status
 
-Pluma is a personal project, built in the open. It works and I use it, but it is not a product and comes
-with no support commitment — issues and pull requests may go unanswered.
+A personal project, built in the open. It works, but it is not a product and carries no support
+commitment.
 
 ## License
 
