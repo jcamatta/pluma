@@ -30,15 +30,15 @@ describe('listFolderTool', () => {
         ok: true,
         output: {
           type: 'json',
-          value: expect.arrayContaining([
-            { name: 'chapters', type: 'directory', path: join(dir, 'chapters') },
-            { name: 'note.md', type: 'file', path: join(dir, 'note.md') }
-          ])
+          value: {
+            path: dir,
+            entries: expect.arrayContaining([
+              { name: 'chapters', type: 'directory', path: join(dir, 'chapters') },
+              { name: 'note.md', type: 'file', path: join(dir, 'note.md') }
+            ])
+          }
         }
       })
-      if (result.ok && result.output.type === 'json' && Array.isArray(result.output.value)) {
-        expect(result.output.value).toHaveLength(2)
-      }
     }))
 
   it('reports FolderNotFound for a missing folder', () =>
@@ -60,8 +60,21 @@ describe('listFolderTool', () => {
         ok: true,
         output: {
           type: 'json',
-          value: [{ name: 'note.md', type: 'file', path: join(dir, 'note.md') }]
+          value: {
+            path: dir,
+            entries: [{ name: 'note.md', type: 'file', path: join(dir, 'note.md') }]
+          }
         }
+      })
+    }))
+
+  it('states the listed path for an empty folder', () =>
+    withTempDir(async (dir) => {
+      const result = await Effect.runPromise(listFolderTool(dir).run({}))
+
+      expect(result).toEqual({
+        ok: true,
+        output: { type: 'json', value: { path: dir, entries: [] } }
       })
     }))
 

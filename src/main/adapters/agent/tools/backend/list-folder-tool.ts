@@ -12,7 +12,7 @@ import type { BackendTool } from './backend-tool'
 const spec: Tool = {
   name: 'list_folder',
   description:
-    'List the immediate children (one level deep) of a folder by absolute path. If path is omitted, lists the workspace root. Returns each entry name, type, and absolute path. To go deeper, call again with a subfolder absolute path.',
+    'List the immediate children (one level deep) of a folder by absolute path. If path is omitted, lists the workspace root. Returns the absolute path that was listed, plus each entry name, type, and absolute path. To go deeper, call again with a subfolder absolute path.',
   parameters: {
     type: 'object',
     additionalProperties: false,
@@ -70,7 +70,12 @@ const listFolderTool = (cwd: string | undefined): BackendTool => ({
         Effect.provide(FsFolderReaderLive),
         Effect.provide(NodeContext.layer)
       ),
-      toOutput: (entries) => ({ type: 'json', value: toEntries(entries, resolved.path) }),
+      // Stating the listed path lets the agent re-derive the workspace root at any point, including
+      // when the root is empty and no entry carries it.
+      toOutput: (entries) => ({
+        type: 'json',
+        value: { path: resolved.path, entries: toEntries(entries, resolved.path) }
+      }),
       fallback: 'list_folder_failed'
     })
   }

@@ -37,3 +37,36 @@ describe('streamInput', () => {
     expect(contents).toStrictEqual(['hello'])
   })
 })
+
+describe('streamInput · workspace root', () => {
+  const cwd = 'C:\\Users\\camat\\Documents\\my-novel'
+
+  it('states the workspace path in the opening context of a fresh run', async () => {
+    const contents = await collect({ messages, tools: [], cwd })
+
+    expect(contents[0]).toContain('<context>')
+    expect(contents[0]).toContain(cwd)
+  })
+
+  it('leads the opening context with the workspace root', async () => {
+    const contents = await collect({ messages, tools: [], cwd, context })
+
+    expect(contents[0]).toBe(
+      [
+        '<context>',
+        'The absolute path of the open workspace root. Files you create belong under it unless the user says otherwise.',
+        cwd,
+        '',
+        'About Pluma',
+        'A writing app.',
+        '</context>'
+      ].join('\n')
+    )
+  })
+
+  it('does not re-state the workspace root on a resume', async () => {
+    const contents = await collect({ messages, tools: [], cwd, threadId: 'thread-1' })
+
+    expect(contents).toStrictEqual(['hello'])
+  })
+})

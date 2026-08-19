@@ -91,6 +91,16 @@ describe('AGENT_SYSTEM_PROMPT · backend read tools', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain('one level')
     expect(AGENT_SYSTEM_PROMPT).toContain('absolute path')
   })
+
+  it('points at the workspace root given at the start of the conversation', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('given to you at the start of the conversation')
+    expect(AGENT_SYSTEM_PROMPT).toContain('workspace root')
+  })
+
+  it('says to state that no folder is open when no root was given', () => {
+    expect(AGENT_SYSTEM_PROMPT).toContain('no folder is open')
+    expect(AGENT_SYSTEM_PROMPT).toContain('rather than guessing or inventing a path')
+  })
 })
 
 describe('AGENT_SYSTEM_PROMPT · gated file-tree write tools', () => {
